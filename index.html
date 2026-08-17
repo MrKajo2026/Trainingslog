@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0c0c0e">
+<title>Trainingslog</title>
+<style>
+:root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:74px;min-height:100vh}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:16px 16px 10px;z-index:10}
+header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
+#hinfo{float:right;font-size:11px;color:var(--mut)}
+main{padding:16px;display:flex;flex-direction:column;gap:12px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:13px 0;background:none;border:none;color:var(--mut);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
+.card{background:var(--s1);border:1px solid var(--s2);border-radius:14px;padding:14px}
+.card.hl{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.45)}
+.card.warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.4)}
+.card.ok{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35)}
+button{font-family:inherit;cursor:pointer}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;font-weight:800;font-size:14px}
+.btn.red{background:var(--red);color:#fff}.btn.dim{background:var(--s2);color:var(--mut)}.btn.grn{background:var(--grn2);color:#fff}.btn.amb{background:var(--amb);color:#111}
+.btn:disabled{opacity:.35}
+.row{display:flex;gap:8px;align-items:center}
+.small{font-size:12px;color:var(--mut)}.tiny{font-size:11px;color:var(--dim)}
+.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.chip{padding:6px 10px;border-radius:8px;border:none;background:var(--s2);color:var(--mut);font-size:12px;font-weight:700}
+.chip.on-g{background:var(--grn2);color:#fff}.chip.on-n{background:var(--s3);color:#fff}.chip.on-r{background:var(--red);color:#fff}.chip.on-a{background:var(--amb);color:#111}
+input[type=text],textarea,select{background:var(--s2);border:1px solid var(--s3);border-radius:9px;color:var(--tx);padding:9px 10px;font-size:14px;width:100%;font-family:inherit;-webkit-appearance:none}
+input:focus,textarea:focus{outline:none;border-color:var(--red2)}
+.win{width:64px;text-align:center}.winr{width:56px;text-align:center}
+.rir{width:33px;height:33px;border-radius:8px;border:none;background:var(--s2);color:var(--dim);font-weight:800;font-size:12px}
+.rir.g{background:var(--grn);color:#052}.rir.y{background:var(--amb);color:#210}.rir.r{background:var(--red);color:#fff}.rir.d{background:var(--s3);color:#fff}
+.exname{font-weight:700;font-size:14px}
+.rec{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--grn);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0}
+.note-a{color:rgba(245,158,11,.85);font-size:12px}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+.hrow{display:flex;justify-content:space-between;padding:10px 0 4px}
+.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat3 .card{text-align:center;padding:12px 6px}
+.stat3 b{font-size:18px}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--s1);border-top:1px solid var(--s3);border-radius:18px 18px 0 0;padding:16px;max-height:70vh;overflow-y:auto}
+.libitem{display:block;width:100%;text-align:left;background:var(--s2);border:1px solid var(--s3);border-radius:9px;padding:10px;margin-top:6px;color:var(--tx);font-size:13px}
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--grn2);color:#fff;padding:9px 16px;border-radius:99px;font-size:13px;font-weight:700;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.swap{color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:7px;padding:3px 9px;font-size:13px;font-weight:800}
+svg text{font-family:ui-monospace,Menlo,monospace}
+input[type=range]{width:100%;accent-color:var(--red2)}
+.hline{border-bottom:1px solid var(--s2);padding:5px 0;display:flex;justify-content:space-between;font-size:12px}
+.hline:last-child{border:none}
+h2{font-size:20px;font-weight:900;letter-spacing:-.02em}
+.del{color:var(--red2);background:var(--s2);border:none;border-radius:7px;padding:5px 9px;font-size:11px;font-weight:700}
+.del.sure{background:var(--red);color:#fff}
+</style>
+</head>
+<body>
+<header><h1>Trainingslog</h1><span id="hinfo" class="mono"></span><div id="hbanner"></div></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+<div id="overlay"></div>
+<div id="toastbox"></div>
+<script>
+"use strict";
+// ================= Daten =================
+const DEFAULT_PLAN={id:"aufbau-08-26",name:"AUFBAU 08/26",createdAt:"2026-08-01",
+rules:["Rhythmus: jeden 2. Tag | UK A → OK A → UK B → OK B","Kalorien: +200-300kcal | Protein ~160g | Waage <2kg/Monat","RIR: schwere Hauptübung 2/2/0 | Isos ans Limit (RIR0)","Ausnahme: Face Pull leicht (Prehab) | Seitheben Antest RIR2-3","Progression: Wdh im Zielbereich hoch, dann +2,5kg","Straps bei ALLEN Zügen + Deadlift","Kein direkter Bizeps bis Arm-Abklärung","Keine volle Endstreckung unter Last"],
+sessions:[
+{id:"uk-a",name:"UK A",sub:"Quad",warmup:["5min Rad locker","Hüftmobilität"],exercises:[
+{id:"hack-squat",name:"Hack Squat",sets:3,reps:"6-9",scheme:"2/2/0",start:70},
+{id:"beinpresse-einbeinig",name:"Beinpresse einbeinig",sets:2,reps:"10-15",scheme:"RIR1-2",start:50,note:"L/R, leichter, kontrolliert"},
+{id:"beinbeuger-liegend",name:"Beinbeuger liegend",sets:2,reps:"8-12",scheme:"ans Limit",start:27.5},
+{id:"wadenpresse-oben",name:"Wadenpresse oben slow",sets:2,reps:"8-12",scheme:"ans Limit",start:65,note:"L/R, volle Dehnung"},
+{id:"dead-bug",name:"Dead Bug",sets:2,reps:"20",scheme:"BW",start:0},
+{id:"ellenbogen",name:"Ellenbogen exz. Flex+Ext",sets:3,reps:"15",scheme:"3s ablassen",start:2}]},
+{id:"ok-a",name:"OK A",sub:"Push",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],exercises:[
+{id:"schraegbank",name:"Schrägbankdrücken KH",sets:3,reps:"8-12",scheme:"2/2/0",start:24},
+{id:"schulterdruecken",name:"Schulterdrücken KH neutral",sets:3,reps:"8-12",scheme:"RIR1-2",start:12,note:"sitzend, Lehne 80-85°"},
+{id:"rudermaschine",name:"Rudermaschine (Straps)",sets:3,reps:"8-12",scheme:"2/2/0",start:65},
+{id:"seitheben",name:"Seitheben Kabel",sets:2,reps:"12-20",scheme:"RIR2-3 Antest",start:5,note:"Handschlaufe, bis Schulterhöhe"},
+{id:"pushdown",name:"Trizeps Pushdown Seil",sets:2,reps:"12-15",scheme:"ans Limit",start:18.75},
+{id:"pallof",name:"Pallof Press",sets:2,reps:"10/Seite",scheme:"Core",start:10}]},
+{id:"uk-b",name:"UK B",sub:"Hinge",warmup:["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],exercises:[
+{id:"deadlift",name:"Deadlift (Straps)",sets:3,reps:"5-8",scheme:"2/2/0",start:140,note:"Kopf neutral"},
+{id:"hip-thrust",name:"Hip Thrust",sets:3,reps:"8-12",scheme:"2/2/0",start:150},
+{id:"beinbeuger-sitzend",name:"Beinbeuger sitzend",sets:2,reps:"8-12",scheme:"ans Limit",start:57.5},
+{id:"beinstrecker",name:"Beinstrecker slow",sets:2,reps:"8-10",scheme:"ans Limit",start:50,note:"slow nicht opfern"},
+{id:"wadenpresse-unten",name:"Wadenpresse unten",sets:2,reps:"10-12",scheme:"ans Limit",start:50},
+{id:"dead-bug-b",name:"Dead Bug",sets:2,reps:"20",scheme:"BW",start:0},
+{id:"ellenbogen-b",name:"Ellenbogen exz. Flex+Ext",sets:3,reps:"15",scheme:"3s ablassen",start:2}]},
+{id:"ok-b",name:"OK B",sub:"Pull + Drück-Aufbau",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],exercises:[
+{id:"rudern-kabel",name:"Rudern Kabel eng (Straps)",sets:3,reps:"6-10",scheme:"2/2/0",start:80,note:"Rücken spüren, nicht Griff"},
+{id:"latzug",name:"Latzug Neutralgriff (Straps)",sets:3,reps:"8-12",scheme:"S1 RIR2",start:75},
+{id:"bankdruecken",name:"Bankdrücken KH flach",sets:3,reps:"10-15",scheme:"+2Wdh/+2kg pro Wo",start:20},
+{id:"ueberzug",name:"Überzug",sets:2,reps:"10-15",scheme:"ans Limit",start:33.75},
+{id:"reverse-fly",name:"Reverse Cable Fly",sets:2,reps:"12-15",scheme:"ans Limit",start:6.25},
+{id:"face-pull",name:"Face Pull Seil",sets:2,reps:"15-20",scheme:"leicht, Prehab",start:13.75,note:"Daumen nach hinten, max 15kg"}]}]};
+const S=(w,r,rir=null)=>({w,r,rir});
+const SEED_LOGS=[
+{id:"seed-1",date:"2026-07-27",planId:"aufbau-08-26",sessionId:"uk-b",sessionName:"UK B",note:"",entries:[
+{exerciseId:"deadlift",name:"Deadlift (Straps)",reps:"5-8",scheme:"2/2/0",sets:[S(140,7,0),S(140,8,0),S(140,7,0)]},
+{exerciseId:"hip-thrust",name:"Hip Thrust",reps:"8-12",scheme:"2/2/0",sets:[S(150,10,0),S(150,9,0)]},
+{exerciseId:"beinbeuger-sitzend",name:"Beinbeuger sitzend",reps:"8-12",scheme:"ans Limit",sets:[S(57.5,12,2),S(57.5,11,0)]},
+{exerciseId:"beinstrecker",name:"Beinstrecker slow",reps:"8-10",scheme:"ans Limit",sets:[S(50,9,0),S(50,8,0)]},
+{exerciseId:"wadenpresse-unten",name:"Wadenpresse unten",reps:"10-12",scheme:"ans Limit",sets:[S(50,11,1),S(50,11,0)]},
+{exerciseId:"dead-bug-b",name:"Dead Bug",reps:"20",scheme:"BW",sets:[S(0,40),S(0,26)]}]},
+{id:"seed-2",date:"2026-07-29",planId:"aufbau-08-26",sessionId:"ok-b",sessionName:"OK B",note:"Rudern: Bizeps spürbar (nach Übung, 24h ok). Latzug: Bizeps/Unterarm 3/10.",entries:[
+{exerciseId:"rudern-kabel",name:"Rudern Kabel eng (Straps)",reps:"6-10",scheme:"2/2/0",sets:[S(90,9,1),S(90,9,0),S(90,8,0)]},
+{exerciseId:"latzug",name:"Latzug Neutralgriff (Straps)",reps:"8-12",scheme:"S1 RIR2",sets:[S(82,10,0),S(82,7,0),S(82,7,0)]},
+{exerciseId:"bankdruecken",name:"Bankdrücken KH flach",reps:"10-15",scheme:"+2Wdh/+2kg pro Wo",sets:[S(20,15,2),S(20,15,0),S(20,14,0)]},
+{exerciseId:"face-pull",name:"Face Pull Seil",reps:"15-20",scheme:"leicht, Prehab",sets:[S(13.75,20),S(13.75,16)]}]},
+{id:"seed-3",date:"2026-07-31",planId:"aufbau-08-26",sessionId:"uk-a",sessionName:"UK A",note:"Wadenpresse runter auf 42,5kg — besser gespürt.",entries:[
+{exerciseId:"hack-squat",name:"Hack Squat",reps:"6-9",scheme:"2/2/0",sets:[S(70,7,3),S(70,7,2),S(70,9,0)]},
+{exerciseId:"beinpresse-einbeinig",name:"Beinpresse einbeinig",reps:"10-15",scheme:"RIR1-2",sets:[S(70,8,2),S(70,9,1),S(70,8,0)]},
+{exerciseId:"beinbeuger-liegend",name:"Beinbeuger liegend",reps:"8-12",scheme:"ans Limit",sets:[S(27.5,10,0),S(27.5,8,0)]},
+{exerciseId:"wadenpresse-oben",name:"Wadenpresse oben slow",reps:"8-12",scheme:"ans Limit",sets:[S(65,9,0),S(42.5,10,0)]},
+{exerciseId:"dead-bug",name:"Dead Bug",reps:"20",scheme:"BW",sets:[S(0,40),S(0,28)]}]},
+{id:"seed-4",date:"2026-08-02",planId:"aufbau-08-26",sessionId:"ok-a",sessionName:"OK A",note:"Seitheben + Pallof erstmalig.",entries:[
+{exerciseId:"schraegbank",name:"Schrägbankdrücken KH",reps:"8-12",scheme:"2/2/0",sets:[S(24,14,2),S(24,13,2),S(28,12,0)]},
+{exerciseId:"schulterdruecken",name:"Schulterdrücken KH neutral",reps:"8-12",scheme:"RIR1-2",sets:[S(14,14,2),S(14,14,2),S(16,12,0)]},
+{exerciseId:"rudermaschine",name:"Rudermaschine (Straps)",reps:"8-12",scheme:"2/2/0",sets:[S(65,10,2),S(65,9,2),S(65,9)]},
+{exerciseId:"seitheben",name:"Seitheben Kabel",reps:"12-20",scheme:"RIR2-3 Antest",sets:[S(3.75,20),S(6.25,15)]},
+{exerciseId:"pushdown",name:"Trizeps Pushdown Seil",reps:"12-15",scheme:"ans Limit",sets:[S(18.75,16)]},
+{exerciseId:"pallof",name:"Pallof Press",reps:"10/Seite",scheme:"Core",sets:[S(6.25,10),S(6.25,10)]}]},
+{id:"seed-5",date:"2026-08-04",planId:"aufbau-08-26",sessionId:"uk-b",sessionName:"UK B",note:"",entries:[
+{exerciseId:"deadlift",name:"Deadlift (Straps)",reps:"5-8",scheme:"2/2/0",sets:[S(140,7,1),S(140,6,1),S(140,8,0)]},
+{exerciseId:"hip-thrust",name:"Hip Thrust",reps:"8-12",scheme:"2/2/0",sets:[S(150,10,2),S(150,9,2),S(150,10,0)]},
+{exerciseId:"beinstrecker",name:"Beinstrecker slow",reps:"8-10",scheme:"ans Limit",sets:[S(50,10,1),S(50,10)]},
+{exerciseId:"beinbeuger-sitzend",name:"Beinbeuger sitzend",reps:"8-12",scheme:"ans Limit",sets:[S(57.5,11),S(57.5,12)]},
+{exerciseId:"wadenpresse-unten",name:"Wadenpresse unten",reps:"10-12",scheme:"ans Limit",sets:[S(50,12,0),S(50,11)]},
+{exerciseId:"dead-bug-b",name:"Dead Bug",reps:"20",scheme:"BW",sets:[S(0,38),S(0,30)]}]},
+{id:"seed-6",date:"2026-08-06",planId:"aufbau-08-26",sessionId:"ok-b",sessionName:"OK B",note:"",entries:[
+{exerciseId:"rudern-kabel",name:"Rudern Kabel eng (Straps)",reps:"6-10",scheme:"2/2/0",sets:[S(80,10,2),S(80,9,2),S(80,9,0)]},
+{exerciseId:"latzug",name:"Latzug Neutralgriff (Straps)",reps:"8-12",scheme:"S1 RIR2",sets:[S(75,11,2),S(75,11,2),S(75,8,0)]},
+{exerciseId:"bankdruecken",name:"Bankdrücken KH flach",reps:"10-15",scheme:"+2Wdh/+2kg pro Wo",sets:[S(22,15,2),S(22,15,2),S(22,11,0)]},
+{exerciseId:"ueberzug",name:"Überzug",reps:"10-15",scheme:"ans Limit",sets:[S(35,10,0),S(35,10,0)]},
+{exerciseId:"reverse-fly",name:"Reverse Cable Fly",reps:"12-15",scheme:"ans Limit",sets:[S(6.25,15),S(6.25,15)]},
+{exerciseId:"face-pull",name:"Face Pull Seil",reps:"15-20",scheme:"leicht, Prehab",sets:[S(13.75,11),S(13.75,12)]}]},
+{id:"seed-7",date:"2026-08-08",planId:"aufbau-08-26",sessionId:"uk-a",sessionName:"UK A",note:"Beinpresse neu leicht/slow: 50kg RIR1-2.",entries:[
+{exerciseId:"hack-squat",name:"Hack Squat",reps:"6-9",scheme:"2/2/0",sets:[S(70,8,2),S(70,8,2),S(70,9,0)]},
+{exerciseId:"beinpresse-einbeinig",name:"Beinpresse einbeinig",reps:"10-15",scheme:"RIR1-2",sets:[S(50,12,2),S(50,14,1)]},
+{exerciseId:"beinbeuger-liegend",name:"Beinbeuger liegend",reps:"8-12",scheme:"ans Limit",sets:[S(27.5,12,0),S(27.5,11,0)]},
+{exerciseId:"wadenpresse-oben",name:"Wadenpresse oben slow",reps:"8-12",scheme:"ans Limit",sets:[S(50,9,0),S(42.5,10,0)]},
+{exerciseId:"dead-bug",name:"Dead Bug",reps:"20",scheme:"BW",sets:[S(0,40),S(0,28)]}]},
+{id:"seed-8",date:"2026-08-11",planId:"aufbau-08-26",sessionId:"ok-a",sessionName:"OK A",note:"Seitheben RIR1 statt Antest RIR2-3. Pushdown-Gewicht korrigiert (18,75kg).",checkin:{gefuehl:"normal",schlaf:"normal",essen:"wenig",befinden:7},entries:[
+{exerciseId:"schraegbank",name:"Schrägbankdrücken KH",reps:"8-12",scheme:"2/2/0",sets:[S(28,13,2),S(28,12,2),S(28,10,0)]},
+{exerciseId:"schulterdruecken",name:"Schulterdrücken KH neutral",reps:"8-12",scheme:"RIR1-2",sets:[S(16,15,2),S(16,13,1),S(16,11,1)]},
+{exerciseId:"rudermaschine",name:"Rudermaschine (Straps)",reps:"8-12",scheme:"2/2/0",sets:[S(65,11,2),S(65,10,2),S(65,9,0)]},
+{exerciseId:"seitheben",name:"Seitheben Kabel",reps:"12-20",scheme:"RIR2-3 Antest",sets:[S(5,15,1),S(5,13,1)]},
+{exerciseId:"pushdown",name:"Trizeps Pushdown Seil",reps:"12-15",scheme:"ans Limit",sets:[S(18.75,13,0),S(18.75,11,0)]},
+{exerciseId:"pallof",name:"Pallof Press",reps:"10/Seite",scheme:"Core",sets:[S(5,11,0),S(5,9,0)]}]}];
+const MUSCLE_GROUPS={"hack-squat":"Quads","beinpresse-einbeinig":"Quads","beinstrecker":"Quads","beinbeuger-liegend":"Hamstrings","beinbeuger-sitzend":"Hamstrings","deadlift":"Glutes/Hinge","hip-thrust":"Glutes/Hinge","wadenpresse-oben":"Waden","wadenpresse-unten":"Waden","schraegbank":"Brust","bankdruecken":"Brust","schulterdruecken":"Schulter","seitheben":"Schulter","rudermaschine":"Rücken","rudern-kabel":"Rücken","latzug":"Rücken","ueberzug":"Rücken","reverse-fly":"Hint. Schulter","pushdown":"Trizeps"};
+// ================= Helpers =================
+const uid=()=>Math.random().toString(36).slice(2,10);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
+const e1rm=(w,r)=>(w>0&&r>0?Math.round(w*(1+r/30)*10)/10:0);
+const roundPlate=w=>Math.round(w/2.5)*2.5;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function rirRange(scheme,si,n){if(!scheme)return null;if(/2\/2\/0/.test(scheme))return si===n-1?[0,1]:[2,2];if(/limit/i.test(scheme))return[0,0];const m=scheme.match(/RIR\s?(\d)(?:\s?-\s?(\d))?/i);if(m)return[+m[1],+(m[2]??m[1])];return null}
+function rirStatus(range,rir){if(!range||rir===null||rir===undefined)return null;const[lo,hi]=range;if(rir>=lo&&rir<=hi)return"g";if(rir===lo-1||rir===hi+1)return"y";if(rir<lo-1)return"r";return"y"}
+// ================= Storage (localStorage mit Fallback) =================
+let MEM={},useMem=false;
+try{localStorage.setItem("__t","1");localStorage.removeItem("__t")}catch(e){useMem=true}
+const st={get:k=>{try{return useMem?(MEM[k]??null):localStorage.getItem("tl_"+k)}catch(e){return MEM[k]??null}},
+set:(k,v)=>{MEM[k]=v;try{if(!useMem)localStorage.setItem("tl_"+k,v)}catch(e){}},
+del:k=>{delete MEM[k];try{if(!useMem)localStorage.removeItem("tl_"+k)}catch(e){}}};
+const loadJ=(k,fb)=>{const v=st.get(k);if(v===null)return fb;try{return JSON.parse(v)}catch(e){return fb}};
+const saveJ=(k,v)=>st.set(k,JSON.stringify(v));
+// ================= State =================
+let state={plans:null,logs:null,settings:null,library:null,tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:""};
+function boot(){
+  state.plans=loadJ("plans",null)||[DEFAULT_PLAN];
+  let logs=loadJ("logs",[]);
+  const ids=new Set(logs.map(l=>l.id));
+  const miss=SEED_LOGS.filter(s=>!ids.has(s.id));
+  if(miss.length){logs=[...miss,...logs].sort((a,b)=>a.date.localeCompare(b.date))}
+  state.logs=logs;
+  state.settings=loadJ("settings",null)||{cycleStart:"2026-07-27",activePlanId:DEFAULT_PLAN.id};
+  if(!loadJ("plans",null))saveJ("plans",state.plans);
+  saveJ("logs",state.logs);saveJ("settings",state.settings);
+  let lib=loadJ("library",null);
+  if(!lib){const seen={};lib=DEFAULT_PLAN.sessions.flatMap(s=>s.exercises).filter(e=>seen[e.id]?false:(seen[e.id]=true)).map(({id,name,reps,scheme,start,note})=>({id,name,reps,scheme,start,note:note||""}));saveJ("library",lib)}
+  state.library=lib;
+  const draft=loadJ("draft",null);
+  if(draft&&draft.entries&&draft.entries.length)state.active=draft;
+  render();
+  if(useMem)banner("⚠ Kein dauerhafter Speicher verfügbar (Vorschau-Modus?). Datei herunterladen und in Safari öffnen — sonst gehen Daten beim Schließen verloren.");
+}
+// ================= Kern-Logik =================
+const activePlan=()=>state.plans.find(p=>p.id===state.settings.activePlanId)||state.plans[0];
+const weeks=()=>Math.floor((Date.now()-new Date(state.settings.cycleStart).getTime())/6048e5);
+function lastByEx(){const m={};[...state.logs].sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
+function pushUndo(){state.undo.push(JSON.stringify(state.active));if(state.undo.length>100)state.undo.shift();updUndoBtn()}
+function doUndo(){const p=state.undo.pop();if(p){state.active=JSON.parse(p);draftSave();render()}}
+let draftT=null;function draftSave(){clearTimeout(draftT);draftT=setTimeout(()=>{if(state.active)saveJ("draft",state.active)},400)}
+function startSession(sid){
+  const s=activePlan().sessions.find(x=>x.id===sid);const last=lastByEx();
+  state.undo=[];
+  state.active={id:uid(),date:todayISO(),planId:activePlan().id,sessionId:s.id,sessionName:s.name,warmup:s.warmup||[],note:"",
+    checkin:{gefuehl:null,schlaf:null,essen:null,befinden:null},
+    entries:s.exercises.map(ex=>{const lv=last[ex.id];return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,note:ex.note||"",exNote:"",
+      sets:Array.from({length:ex.sets},(_,i)=>({w:lv&&lv.sets[i]?lv.sets[i].w:ex.start,r:"",rir:null}))}})};
+  saveJ("draft",state.active);render();
+}
+function finishSession(){
+  const c={...state.active,entries:state.active.entries.map(e=>({...e,sets:e.sets.filter(s=>s.r!==""&&+s.r>0).map(s=>({w:+s.w||0,r:+s.r,rir:s.rir}))})).filter(e=>e.sets.length)};
+  if(!c.entries.length){toast("Keine Sätze eingetragen");return}
+  state.logs=[...state.logs,c].sort((a,b)=>a.date.localeCompare(b.date));
+  saveJ("logs",state.logs);st.del("draft");state.active=null;state.undo=[];state.tab="statistik";render();toast("Einheit gespeichert ✓");
+}
+function cancelSession(){st.del("draft");state.active=null;state.undo=[];render()}
+// ================= UI-Basis =================
+const $=id=>document.getElementById(id);
+function toast(msg){$("toastbox").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>$("toastbox").innerHTML="",2500)}
+function banner(msg){$("hbanner").innerHTML='<div class="card warn" style="margin-top:8px;padding:9px 12px;font-size:12px;color:var(--amb)">'+esc(msg)+'</div>'}
+function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===0}}
+function render(){
+  $("hinfo").textContent=activePlan().name+" · Wo "+(weeks()+1);
+  const dl=weeks()>=6;
+  $("hbanner").innerHTML=dl&&state.tab!=="deload"?'<button class="card warn" style="width:100%;text-align:left;margin-top:8px;padding:9px 12px;font-size:13px;color:var(--amb);font-weight:600" onclick="go(\'deload\')">⚠ Deload fällig — Woche '+(weeks()+1)+'. Tippen für Deload-Plan.</button>':"";
+  $("nav").innerHTML=[["training","Training"],["plaene","Pläne"],["statistik","Statistik"]].map(([id,l])=>'<button class="'+(state.tab===id?"on":"")+'" onclick="go(\''+id+'\')">'+l+'</button>').join("");
+  const m=$("main");
+  if(state.tab==="training")m.innerHTML=state.active?vLogger():vHome();
+  else if(state.tab==="plaene")m.innerHTML=vPlans();
+  else if(state.tab==="statistik")m.innerHTML=vStats();
+  else if(state.tab==="deload")m.innerHTML=vDeload();
+  if(state.tab==="statistik")drawCharts();
+  updUndoBtn();
+}
+function go(t){state.tab=t;state.confirmDel=null;render();window.scrollTo(0,0)}
+// ================= Training Home =================
+function vHome(){
+  const p=activePlan();const ll=[...state.logs].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const order=p.sessions.map(s=>s.id);let next=order[0];
+  if(ll&&order.includes(ll.sessionId))next=order[(order.indexOf(ll.sessionId)+1)%order.length];
+  let h=ll?'<p class="tiny mono">Zuletzt: '+esc(ll.sessionName)+' am '+fmtD(ll.date)+'</p>':"";
+  p.sessions.forEach(s=>{const isN=s.id===next;
+    h+='<button class="card'+(isN?" hl":"")+'" style="text-align:left;width:100%" onclick="startSession(\''+s.id+'\')">'
+    +'<div class="row" style="justify-content:space-between"><span><b style="font-size:17px">'+esc(s.name)+'</b> <span class="small">'+esc(s.sub||"")+'</span></span>'
+    +(isN?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Dran →</span>':"")+'</div>'
+    +'<p class="tiny" style="margin-top:4px">'+s.exercises.length+' Übungen · '+s.exercises.slice(0,3).map(e=>esc(e.name.split(" ")[0])).join(", ")+'…</p></button>'});
+  h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Regeln</p>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</div>';
+  return h;
+}
+// ================= Logger =================
+function vLogger(){
+  const a=state.active;
+  let h='<div class="row" style="justify-content:space-between"><h2>'+esc(a.sessionName)+'</h2><div class="row">'
+  +'<button id="undobtn" class="chip" onclick="doUndo()">↩ Rückgängig</button><span class="tiny mono">'+fmtD(a.date)+'</span></div></div>';
+  if(a.warmup&&a.warmup.length)h+='<div class="card" style="padding:10px 12px"><p class="lbl" style="margin-bottom:4px">Warmup</p>'+a.warmup.map(w=>'<p class="tiny">· '+esc(w)+'</p>').join("")+'</div>';
+  // Check-in
+  const ci=a.checkin||{};
+  const ciRow=(lbl,key,opts,cls)=>'<div class="row"><span class="tiny" style="width:56px">'+lbl+'</span>'+opts.map((o,i)=>'<button class="chip'+(ci[key]===o?" "+cls[i]:"")+'" style="flex:1" onclick="setCI(\''+key+'\',\''+o+'\')">'+o+'</button>').join("")+'</div>';
+  const bf=ci.befinden;
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:8px"><p class="lbl">Check-in</p>'
+  +ciRow("Gefühl","gefuehl",["stark","normal","schwach"],["on-g","on-n","on-r"])
+  +ciRow("Schlaf","schlaf",["gut","normal","schlecht"],["on-g","on-n","on-r"])
+  +ciRow("Essen","essen",["viel","normal","wenig"],["on-g","on-n","on-a"])
+  +'<div class="row"><span class="tiny" style="width:56px">Befinden</span><input type="range" min="0" max="10" value="'+(bf??5)+'" oninput="setBef(this.value)"><b id="befval" class="mono" style="width:26px;text-align:center;color:'+(bf==null?"var(--dim)":bf>=7?"var(--grn)":bf>=4?"var(--amb)":"var(--red2)")+'">'+(bf??"—")+'</b></div></div>';
+  // Übungen
+  a.entries.forEach((e,ei)=>{
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="exname">'+esc(e.name)+(e.swapped?' <span style="color:var(--sky);font-size:11px;font-weight:400">⇄ getauscht</span>':"")+'</span>'
+    +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
+    if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
+    h+='<div style="display:flex;flex-direction:column;gap:7px">';
+    e.sets.forEach((s,si)=>{
+      h+='<div class="row"><span class="tiny mono" style="width:12px">'+(si+1)+'</span>'
+      +'<input type="text" inputmode="decimal" class="win mono" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo()">'
+      +'<span class="tiny">kg ×</span>'
+      +'<input type="text" inputmode="numeric" class="winr mono" value="'+esc(s.r)+'" placeholder="Wdh" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo()">'
+      +'<span class="row" style="gap:4px" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</span></div>';
+    });
+    h+='</div><div class="row" style="margin-top:8px"><button class="chip" onclick="addSet('+ei+')">+ Satz</button>'
+    +'<input type="text" style="flex:1;font-size:12px;padding:7px 9px" placeholder="Notiz zur Übung…" value="'+esc(e.exNote||"")+'" oninput="setExNote('+ei+',this.value)" onfocus="pushUndo()"></div>';
+    h+='</div>';
+  });
+  h+='<textarea rows="3" placeholder="Notiz zur Einheit (Energie, Gelenke, Folgeübungen frisch/platt…)" oninput="setNote(this.value)" onfocus="pushUndo()">'+esc(a.note||"")+'</textarea>';
+  h+='<div class="row"><button class="btn dim" style="flex:1" onclick="cancelSession()">Abbrechen</button><button class="btn red" style="flex:1" onclick="finishSession()">Einheit speichern</button></div>';
+  return h;
+}
+function rirChips(e,ei,si){const s=e.sets[si];const rg=rirRange(e.scheme,si,e.sets.length);const stt=rirStatus(rg,s.rir);
+  return[0,1,2,3,4].map(n=>{let cls="rir";if(s.rir===n)cls+=" "+(stt||"d");return'<button class="'+cls+'" onclick="setRir('+ei+','+si+','+n+')">'+n+'</button>'}).join("")}
+function setCI(k,v){pushUndo();state.active.checkin[k]=state.active.checkin[k]===v?null:v;draftSave();render()}
+function setBef(v){state.active.checkin.befinden=+v;const b=$("befval");if(b){b.textContent=v;b.style.color=v>=7?"var(--grn)":v>=4?"var(--amb)":"var(--red2)"}draftSave()}
+function setW(ei,si,v){state.active.entries[ei].sets[si].w=v;draftSave()}
+function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
+function setRir(ei,si,n){pushUndo();const s=state.active.entries[ei].sets[si];s.rir=s.rir===n?null:n;draftSave();const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(state.active.entries[ei],ei,si)}
+function setExNote(ei,v){state.active.entries[ei].exNote=v;draftSave()}
+function setNote(v){state.active.note=v;draftSave()}
+function addSet(ei){pushUndo();const e=state.active.entries[ei];e.sets.push({w:e.sets[e.sets.length-1]?.w||0,r:"",rir:null});draftSave();render()}
+// Swap
+function openSwap(ei){
+  let h='<div class="sheet-bg" onclick="closeSwap(event)"><div class="sheet" onclick="event.stopPropagation()">'
+  +'<div class="row" style="justify-content:space-between;margin-bottom:6px"><b>Übung tauschen</b><button class="chip" onclick="closeSwap()">✕</button></div>'
+  +'<p class="tiny" style="margin-bottom:8px">Gerät belegt? Ersatz wählen — letztes Gewicht wird vorbefüllt.</p>'
+  +'<input type="text" id="swapsearch" placeholder="Übung suchen…" oninput="filterSwap('+ei+',this.value)" style="margin-bottom:6px">'
+  +'<div id="swaplist">'+swapList(ei,"")+'</div></div></div>';
+  $("overlay").innerHTML=h;setTimeout(()=>{const i=$("swapsearch");if(i)i.focus()},50);
+}
+function swapList(ei,q){const f=state.library.filter(l=>l.name.toLowerCase().includes(q.toLowerCase()));
+  if(!f.length)return'<p class="tiny" style="text-align:center;padding:14px">Keine Übung gefunden. Neue unter Pläne → Bibliothek anlegen.</p>';
+  return f.map(l=>'<button class="libitem" onclick="doSwap('+ei+',\''+l.id+'\')"><b>'+esc(l.name)+'</b> <span class="tiny mono">'+esc(l.reps)+' · '+esc(l.scheme)+(l.start?' · '+l.start+'kg':"")+'</span></button>').join("")}
+function filterSwap(ei,q){$("swaplist").innerHTML=swapList(ei,q)}
+function doSwap(ei,libId){pushUndo();const lib=state.library.find(l=>l.id===libId);const last=lastByEx()[libId];
+  const n=Math.max(state.active.entries[ei].sets.length||2,2);
+  state.active.entries[ei]={exerciseId:lib.id,name:lib.name,reps:lib.reps,scheme:lib.scheme,note:lib.note||"",exNote:"",swapped:true,
+    sets:Array.from({length:n},(_,i)=>({w:last&&last.sets[i]?last.sets[i].w:lib.start,r:"",rir:null}))};
+  draftSave();closeSwap();render()}
+function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
+// ================= Pläne =================
+let editPlanId=null,showLib=false,showNewPlan=false;
+function vPlans(){
+  if(editPlanId)return vPlanEditor();
+  let h="";
+  state.plans.forEach(p=>{const act=p.id===state.settings.activePlanId;
+    h+='<div class="card'+(act?" hl":"")+'"><div class="row" style="justify-content:space-between"><div><b>'+esc(p.name)+'</b><p class="tiny mono">'+p.sessions.length+' Einheiten · seit '+fmtD(p.createdAt)+'</p></div>'
+    +(act?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Aktiv</span>':"")+'</div>'
+    +'<div class="row" style="margin-top:10px">'
+    +(!act?'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button>':"")
+    +'<button class="chip" onclick="editPlan(\''+p.id+'\')">Bearbeiten</button>'
+    +(state.plans.length>1?'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Wirklich löschen?":"Löschen")+'</button>':"")
+    +'</div></div>'});
+  h+=showNewPlan
+    ?'<div class="card row"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
+    :'<button class="card" style="width:100%;border-style:dashed;color:var(--mut);font-weight:800;font-size:13px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>';
+  // Bibliothek
+  h+='<div class="card"><button style="width:100%;background:none;border:none;color:var(--tx);display:flex;justify-content:space-between;font-weight:900;font-size:15px" onclick="showLib=!showLib;render()"><span>Übungs-Bibliothek</span><span class="tiny mono">'+state.library.length+' Übungen '+(showLib?"▲":"▼")+'</span></button>';
+  if(showLib){
+    h+='<div style="margin-top:10px;max-height:260px;overflow-y:auto">';
+    [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
+      h+='<div class="row" style="justify-content:space-between;background:rgba(63,63,70,.35);border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px">'+esc(e.name)+' <span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span></span>'
+      +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></div>'});
+    h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="lbl">Neue Übung</p>'
+    +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
+    +'<div class="row"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"></div>'
+    +'<button class="chip" style="padding:10px" onclick="addLib()">+ In Bibliothek aufnehmen</button></div>';
+  }
+  h+='</div>';
+  return h;
+}
+function activatePlan(id){state.settings.activePlanId=id;state.settings.cycleStart=todayISO();saveJ("settings",state.settings);render();toast("Plan aktiviert, Zyklus gestartet")}
+function delPlan(id){if(state.confirmDel!=="p:"+id){state.confirmDel="p:"+id;render();setTimeout(()=>{if(state.confirmDel==="p:"+id){state.confirmDel=null;render()}},3000);return}
+  state.plans=state.plans.filter(p=>p.id!==id);saveJ("plans",state.plans);state.confirmDel=null;render();toast("Plan gelöscht (Logs bleiben)")}
+function addPlan(){const n=($("npname").value||"").trim();if(!n){toast("Bitte Namen eingeben");return}
+  const np={id:uid(),name:n,createdAt:todayISO(),rules:[],sessions:[]};state.plans.push(np);saveJ("plans",state.plans);showNewPlan=false;editPlanId=np.id;render()}
+function delLib(id){if(state.confirmDel!=="l:"+id){state.confirmDel="l:"+id;render();setTimeout(()=>{if(state.confirmDel==="l:"+id){state.confirmDel=null;render()}},3000);return}
+  state.library=state.library.filter(e=>e.id!==id);saveJ("library",state.library);state.confirmDel=null;render()}
+function addLib(){const n=($("lname").value||"").trim();if(!n){toast("Name fehlt");return}
+  state.library.push({id:uid(),name:n,reps:$("lreps").value||"8-12",scheme:$("lscheme").value||"RIR1-2",start:+($("lstart").value)||0,note:""});
+  saveJ("library",state.library);render();toast("Übung angelegt")}
+// Plan-Editor
+let pickFor=null,showNewSess=false;
+function editPlan(id){editPlanId=id;pickFor=null;showNewSess=false;render()}
+function vPlanEditor(){
+  const p=state.plans.find(x=>x.id===editPlanId);
+  let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="editPlanId=null;render()">← Zurück</button><button class="btn red" style="width:auto;padding:10px 16px" onclick="savePlanEdit()">Speichern</button></div>';
+  h+='<input type="text" id="pename" value="'+esc(p.name)+'" style="font-weight:900;font-size:17px">';
+  p.sessions.forEach((s,si)=>{
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:7px"><div class="row">'
+    +'<input type="text" style="width:90px;font-weight:800" value="'+esc(s.name)+'" oninput="peSess('+si+',\'name\',this.value)">'
+    +'<input type="text" style="flex:1;color:var(--mut)" placeholder="Fokus" value="'+esc(s.sub||"")+'" oninput="peSess('+si+',\'sub\',this.value)"></div>';
+    s.exercises.forEach((ex,ei)=>{
+      h+='<div style="border:1px solid var(--s2);border-radius:9px;padding:7px;display:flex;flex-direction:column;gap:5px">'
+      +'<div class="row"><input type="text" style="flex:1;font-size:13px" value="'+esc(ex.name)+'" oninput="peEx('+si+','+ei+',\'name\',this.value)"><button class="del" onclick="peRm('+si+','+ei+')">✕</button></div>'
+      +'<div class="row"><input type="text" class="mono" style="width:42px;text-align:center;font-size:12px" title="Sätze" value="'+ex.sets+'" oninput="peEx('+si+','+ei+',\'sets\',this.value)">'
+      +'<input type="text" class="mono" style="width:60px;text-align:center;font-size:12px" title="Wdh" value="'+esc(ex.reps)+'" oninput="peEx('+si+','+ei+',\'reps\',this.value)">'
+      +'<input type="text" style="flex:1;font-size:12px" title="Schema" value="'+esc(ex.scheme)+'" oninput="peEx('+si+','+ei+',\'scheme\',this.value)">'
+      +'<input type="text" class="mono" style="width:56px;text-align:center;font-size:12px" title="Start-kg" value="'+ex.start+'" oninput="peEx('+si+','+ei+',\'start\',this.value)"></div></div>';
+    });
+    if(pickFor===si){
+      h+='<div style="border:1px solid rgba(56,189,248,.4);border-radius:9px;padding:8px;background:rgba(56,189,248,.05)">'
+      +'<div class="row"><input type="text" id="pesearch" placeholder="Bibliothek durchsuchen…" style="font-size:12px" oninput="peFilter('+si+',this.value)"><button class="chip" onclick="pickFor=null;render()">✕</button></div>'
+      +'<div id="pelist" style="max-height:160px;overflow-y:auto;margin-top:5px">'+peList(si,"")+'</div>'
+      +'<button class="chip" style="width:100%;margin-top:6px" onclick="peBlank('+si+')">＋ Ganz neue Übung anlegen</button></div>';
+    }else{
+      h+='<button style="background:none;border:none;color:var(--sky);font-size:12px;font-weight:700;text-align:left" onclick="pickFor='+si+';render();setTimeout(()=>$(\'pesearch\')&&$(\'pesearch\').focus(),50)">+ Übung aus Bibliothek</button>';
+    }
+    h+='</div>';
+  });
+  h+=showNewSess
+    ?'<div class="card row"><input type="text" id="nsname" placeholder="Name der Einheit (z.B. UK C)"><button class="btn red" style="width:auto;padding:10px 14px" onclick="peAddSess()">OK</button><button class="chip" onclick="showNewSess=false;render()">✕</button></div>'
+    :'<button class="card" style="width:100%;border-style:dashed;color:var(--mut);font-weight:800;font-size:13px" onclick="showNewSess=true;render()">+ Einheit hinzufügen</button>';
+  return h;
+}
+function peSess(si,f,v){state.plans.find(x=>x.id===editPlanId).sessions[si][f]=v}
+function peEx(si,ei,f,v){const ex=state.plans.find(x=>x.id===editPlanId).sessions[si].exercises[ei];ex[f]=(f==="sets"||f==="start")?(+v||0):v}
+function peRm(si,ei){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];s.exercises.splice(ei,1);render()}
+function peList(si,q){const f=state.library.filter(l=>l.name.toLowerCase().includes(q.toLowerCase()));
+  return f.map(l=>'<button class="libitem" style="padding:7px 9px;font-size:12px" onclick="peAdd('+si+',\''+l.id+'\')">'+esc(l.name)+' <span class="tiny mono">'+esc(l.reps)+'</span></button>').join("")||'<p class="tiny" style="padding:8px">Nichts gefunden.</p>'}
+function peFilter(si,q){$("pelist").innerHTML=peList(si,q)}
+function peAdd(si,libId){const lib=state.library.find(l=>l.id===libId);
+  state.plans.find(x=>x.id===editPlanId).sessions[si].exercises.push({id:lib.id,name:lib.name,sets:2,reps:lib.reps,scheme:lib.scheme,start:lib.start,note:lib.note||""});pickFor=null;render()}
+function peBlank(si){state.plans.find(x=>x.id===editPlanId).sessions[si].exercises.push({id:uid(),name:"Neue Übung",sets:2,reps:"8-12",scheme:"RIR1-2",start:0});pickFor=null;render()}
+function peAddSess(){const n=($("nsname").value||"").trim();if(!n)return;
+  state.plans.find(x=>x.id===editPlanId).sessions.push({id:uid(),name:n,sub:"",warmup:[],exercises:[]});showNewSess=false;render()}
+function savePlanEdit(){const p=state.plans.find(x=>x.id===editPlanId);p.name=$("pename").value||p.name;
+  saveJ("plans",state.plans);
+  // Bibliothek-Upsert
+  const map=Object.fromEntries(state.library.map(e=>[e.id,e]));
+  p.sessions.flatMap(s=>s.exercises).forEach(ex=>{map[ex.id]={id:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,start:ex.start,note:ex.note||""}});
+  state.library=Object.values(map);saveJ("library",state.library);
+  editPlanId=null;render();toast("Plan gespeichert")}
+// ================= Statistik =================
+function vStats(){
+  const p=state.plans.find(x=>x.id===(state.statPlan||state.settings.activePlanId))||activePlan();
+  state.statPlan=p.id;
+  const pl=state.logs.filter(l=>l.planId===p.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const allEx=p.sessions.flatMap(s=>s.exercises);
+  if(!state.statEx||!allEx.some(e=>e.id===state.statEx))state.statEx=allEx[0]?allEx[0].id:null;
+  const tonn=pl.map(l=>({d:fmtD(l.date),v:Math.round(l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.w*s.r,0),0))}));
+  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)).toFixed(1):"0";
+  let h='<select onchange="state.statPlan=this.value;state.statEx=null;render()">'+state.plans.map(x=>'<option value="'+x.id+'"'+(x.id===p.id?" selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select>';
+  h+='<div class="stat3"><div class="card"><b class="mono">'+pl.length+'</b><p class="tiny">Einheiten</p></div><div class="card"><b class="mono">'+wk+'</b><p class="tiny">pro Woche</p></div><div class="card"><b class="mono">'+(tonn.length?Math.round(tonn.reduce((a,t)=>a+t.v,0)/tonn.length).toLocaleString("de-DE"):0)+'</b><p class="tiny">Ø Tonnage</p></div></div>';
+  // Gesamt-Zuwachs
+  const g=growth(pl,allEx);
+  if(g.overall!==null){
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Gesamt-Zuwachs (e1RM)</span><b class="mono" style="font-size:17px;color:'+(g.overall>0?"var(--grn)":g.overall<0?"var(--red2)":"var(--mut)")+'">'+(g.overall>0?"+":"")+g.overall+'%</b></div>'
+    +'<div id="gchart"></div>'
+    +'<details style="margin-top:6px"><summary class="tiny">Je Übung anzeigen ▼</summary><div style="margin-top:6px">'
+    +g.perEx.map(e=>'<div class="hline mono"><span style="color:var(--tx)">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(e.pct>0?"+":"")+e.pct.toFixed(1)+'%</b></span></div>').join("")
+    +'</div></details><p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core & Face Pull zählen nicht. Mind. 2 Einheiten je Übung.</p></div>';
+  }
+  // Übungs-Chart
+  h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Übung</p>'
+  +'<select onchange="state.statEx=this.value;render()">'+p.sessions.map(s=>s.exercises.map(ex=>'<option value="'+ex.id+'"'+(ex.id===state.statEx?" selected":"")+'>'+esc(s.name)+' — '+esc(ex.name)+'</option>').join("")).join("")+'</select>'
+  +'<div id="exchart" style="margin-top:8px"></div></div>';
+  // Tonnage
+  if(tonn.length>=2)h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Tonnage je Einheit (kg)</p><div id="tchart"></div></div>';
+  // Historie
+  h+='<p class="lbl">Historie</p>';
+  [...pl].reverse().forEach(l=>{
+    const ci=l.checkin;
+    h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">'+esc(l.sessionName)+'</span><span class="tiny mono">'+fmtD(l.date)+'</span></summary><div style="padding:0 14px 12px;display:flex;flex-direction:column;gap:4px">';
+    if(ci&&(ci.gefuehl||ci.schlaf||ci.essen||ci.befinden!=null))h+='<p class="tiny mono">Check-in: '+(ci.gefuehl?'Gefühl '+ci.gefuehl:'')+(ci.schlaf?' · Schlaf '+ci.schlaf:'')+(ci.essen?' · Essen '+ci.essen:'')+(ci.befinden!=null?' · Befinden '+ci.befinden+'/10':'')+'</p>';
+    l.entries.forEach(e=>{h+='<p class="tiny mono" style="color:var(--mut)"><span style="color:var(--tx)">'+esc(e.name)+':</span> '+e.sets.map(s=>s.w+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join(' | ')+(e.exNote?' <span class="note-a">— „'+esc(e.exNote)+'"</span>':'')+'</p>'});
+    if(l.note)h+='<p class="note-a" style="font-style:italic">„'+esc(l.note)+'"</p>';
+    h+='<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" style="align-self:flex-start;margin-top:4px" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Eintrag löschen")+'</button></div></details>';
+  });
+  if(!pl.length)h+='<p class="tiny" style="text-align:center;padding:12px">Noch keine Einheiten geloggt.</p>';
+  // Backup
+  h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">Daten-Backup</span><span class="tiny">▼</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
+  +'<div><p class="lbl" style="margin-bottom:4px">Sichern</p><p class="tiny" style="margin-bottom:6px">Backup kopieren und im Claude-Chat oder einer Notiz ablegen. Der Chat-Trainer kann daraus auch die Analyse machen.</p>'
+  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Backup erzeugen</button><button class="chip" style="padding:10px" onclick="dlBackup()">⬇ Datei</button></div>'
+  +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px;margin-top:6px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea><p class="tiny" style="color:var(--grn);margin-top:3px">Antippen = markiert & kopiert.</p>':'')
+  +'</div><div style="border-top:1px solid var(--s2);padding-top:10px"><p class="lbl" style="margin-bottom:4px">Wiederherstellen</p><p class="tiny" style="margin-bottom:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
+  +'<textarea rows="3" id="imptext" class="mono" style="font-size:11px" placeholder=\'{"version":1,...}\'></textarea>'
+  +'<button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></div></div></details>';
+  return h;
+}
+function growth(pl,allEx){
+  const perEx=[];
+  allEx.forEach(ex=>{const pts=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===ex.id);if(!e)return null;const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?b:null}).filter(Boolean);
+    const grp=MUSCLE_GROUPS[ex.id];
+    if(pts.length>=2&&grp)perEx.push({name:ex.name,group:grp,first:pts[0],last:pts[pts.length-1],pct:(pts[pts.length-1]-pts[0])/pts[0]*100})});
+  const byG={};perEx.forEach(e=>{(byG[e.group]=byG[e.group]||[]).push(e.pct)});
+  const groups=Object.entries(byG).map(([g,a])=>({g,v:Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10})).sort((a,b)=>b.v-a.v);
+  return{perEx:perEx.sort((a,b)=>b.pct-a.pct),groups,overall:perEx.length?Math.round(perEx.reduce((a,e)=>a+e.pct,0)/perEx.length*10)/10:null};
+}
+function delLog(id){if(state.confirmDel!=="h:"+id){state.confirmDel="h:"+id;render();setTimeout(()=>{if(state.confirmDel==="h:"+id){state.confirmDel=null;render()}},3000);return}
+  state.logs=state.logs.filter(l=>l.id!==id);saveJ("logs",state.logs);state.confirmDel=null;render();toast("Eintrag gelöscht")}
+// SVG-Charts
+function drawCharts(){
+  const p=state.plans.find(x=>x.id===state.statPlan)||activePlan();
+  const pl=state.logs.filter(l=>l.planId===p.id).sort((a,b)=>a.date.localeCompare(b.date));
+  // Gruppen-Balken
+  const g=growth(pl,p.sessions.flatMap(s=>s.exercises));
+  const gc=$("gchart");
+  if(gc&&g.groups.length){
+    const max=Math.max(...g.groups.map(x=>Math.abs(x.v)),1);const W=320,rowH=24,H=g.groups.length*rowH;
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+    g.groups.forEach((x,i)=>{const y=i*rowH;const bw=Math.abs(x.v)/max*(W-150);
+      svg+='<text x="0" y="'+(y+15)+'" fill="#a1a1aa" font-size="10">'+esc(x.g)+'</text>'
+      +'<rect x="95" y="'+(y+4)+'" width="'+Math.max(bw,2)+'" height="14" rx="4" fill="'+(x.v>=0?"#34d399":"#ef4444")+'"/>'
+      +'<text x="'+(100+Math.max(bw,2))+'" y="'+(y+15)+'" fill="#71717a" font-size="10">'+(x.v>0?"+":"")+x.v+'%</text>'});
+    gc.innerHTML=svg+'</svg>';
+  }
+  // Übungs-Linienchart
+  const ec=$("exchart");
+  if(ec){
+    const data=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===state.statEx);if(!e)return null;
+      return{d:fmtD(l.date),e:e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0),w:e.sets.reduce((a,s)=>Math.max(a,s.w),0)}}).filter(Boolean);
+    if(data.length<2){ec.innerHTML='<p class="tiny" style="text-align:center;padding:16px">Mind. 2 Einheiten für den Verlauf nötig.</p>'}
+    else{
+      const W=320,H=170,P=28;
+      const vals=data.flatMap(x=>[x.e,x.w]);const mn=Math.min(...vals)*0.95,mx=Math.max(...vals)*1.05;
+      const X=i=>P+i/(data.length-1)*(W-P-8);const Y=v=>H-18-(v-mn)/(mx-mn||1)*(H-34);
+      const line=(key,col)=>'<polyline fill="none" stroke="'+col+'" stroke-width="2" points="'+data.map((x,i)=>X(i)+','+Y(x[key])).join(" ")+'"/>'
+        +data.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x[key])+'" r="2.5" fill="'+col+'"/>').join("");
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      [0,.5,1].forEach(f=>{const v=mn+(mx-mn)*f;svg+='<line x1="'+P+'" y1="'+Y(v)+'" x2="'+W+'" y2="'+Y(v)+'" stroke="#27272a" stroke-dasharray="3 3"/><text x="0" y="'+(Y(v)+3)+'" fill="#52525b" font-size="9">'+Math.round(v)+'</text>'});
+      svg+=line("w","#38bdf8")+line("e","#ef4444");
+      data.forEach((x,i)=>{if(data.length<=8||i%2===0||i===data.length-1)svg+='<text x="'+X(i)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+x.d+'</text>'});
+      svg+='<text x="'+P+'" y="10" fill="#ef4444" font-size="9">— e1RM</text><text x="'+(P+55)+'" y="10" fill="#38bdf8" font-size="9">— Top-Gewicht</text>';
+      const d=data[data.length-1].e-data[data.length-2].e;
+      ec.innerHTML=svg+'</svg><p class="tiny mono" style="text-align:right;color:'+(d>0?"var(--grn)":d<0?"var(--red2)":"var(--mut)")+'">'+(d>0?"▲ +":d<0?"▼ ":"→ ")+Math.abs(d).toFixed(1)+' e1RM zur Voreinheit</p>';
+    }
+  }
+  // Tonnage-Balken
+  const tc=$("tchart");
+  if(tc){
+    const tonn=pl.map(l=>({d:fmtD(l.date),v:Math.round(l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.w*s.r,0),0))}));
+    if(tonn.length>=2){
+      const W=320,H=130;const mx=Math.max(...tonn.map(t=>t.v),1);const bw=Math.min(30,(W-20)/tonn.length-4);
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      tonn.forEach((t,i)=>{const x=10+i*((W-20)/tonn.length);const bh=t.v/mx*(H-32);
+        svg+='<rect x="'+x+'" y="'+(H-18-bh)+'" width="'+bw+'" height="'+bh+'" rx="3" fill="#ef4444"/>'
+        +(tonn.length<=8?'<text x="'+(x+bw/2)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+t.d+'</text>':'')});
+      tc.innerHTML=svg+'</svg>';
+    }
+  }
+}
+// Backup
+function mkBackup(){state.backupText=JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs});render()}
+function dlBackup(){try{const blob=new Blob([JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs})],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="trainingslog-backup-"+todayISO()+".json";a.click()}catch(e){toast("Download nicht möglich — Text-Weg nutzen")}}
+function impBackup(){const t=($("imptext").value||"").trim();if(!t)return;
+  try{const b=JSON.parse(t);if(!b||!Array.isArray(b.logs))throw 0;
+    const ids=new Set(state.logs.map(l=>l.id));
+    state.logs=[...state.logs,...b.logs.filter(l=>!ids.has(l.id))].sort((a,c)=>a.date.localeCompare(c.date));saveJ("logs",state.logs);
+    if(Array.isArray(b.plans)&&b.plans.length){state.plans=b.plans;saveJ("plans",state.plans)}
+    if(Array.isArray(b.library)&&b.library.length){state.library=b.library;saveJ("library",state.library)}
+    if(b.settings){state.settings=b.settings;saveJ("settings",state.settings)}
+    render();toast("Backup importiert — "+state.logs.length+" Einheiten gesamt ✓")
+  }catch(e){toast("Backup unlesbar — Text prüfen")}}
+// ================= Deload =================
+function vDeload(){
+  const p=activePlan();const last=lastByEx();
+  let h='<div class="card warn"><b style="color:var(--amb)">Deload — Woche '+(weeks()+1)+'</b><p class="tiny" style="margin-top:4px;line-height:1.5">1 kompletter Durchlauf (A/B): gleiche Übungen, <b class="mono" style="color:var(--amb)">−30% Gewicht</b>, RIR 3–4, saubere Technik. Kein Satz ans Limit. Danach neuen Zyklus starten.</p></div>';
+  p.sessions.forEach(s=>{
+    h+='<div class="card"><b style="font-size:14px">'+esc(s.name)+'</b> <span class="small">'+esc(s.sub||"")+'</span><div style="margin-top:6px">';
+    s.exercises.forEach(ex=>{const base=last[ex.id]?Math.max(...last[ex.id].sets.map(x=>x.w)):ex.start;
+      h+='<div class="hline mono"><span style="color:var(--tx)">'+esc(ex.name)+'</span><span class="tiny">'+base+'kg → <b style="color:var(--amb)">'+roundPlate(base*0.7)+'kg</b></span></div>'});
+    h+='</div></div>'});
+  h+='<button class="btn amb" onclick="resetCycle()">Deload abgeschlossen — neuen Zyklus starten</button>';
+  return h;
+}
+function resetCycle(){state.settings.cycleStart=todayISO();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
+// Start
+boot();
+</script>
+</body>
+</html>
