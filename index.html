@@ -196,7 +196,18 @@ function boot(){
 // ================= Kern-Logik =================
 const activePlan=()=>state.plans.find(p=>p.id===state.settings.activePlanId)||state.plans[0];
 const weeks=()=>Math.floor((Date.now()-new Date(state.settings.cycleStart).getTime())/6048e5);
-function lastByEx(){const m={};[...state.logs].sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
+function lastByEx(){const m={};[...state.logs].filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
+// Regelbasierte Progressions-Empfehlung
+function recommendFor(entry){
+  if(/prehab/i.test(entry.scheme||""))return null;
+  const last=lastByEx()[entry.exerciseId];if(!last)return null;
+  const ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
+  const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
+  const lo=+m[1],hi=+m[2];const s1=ls[0];const w=+s1.w||0;if(!w)return null;
+  if(s1.r>=hi&&(s1.rir==null||s1.rir>=1))return{w:roundPlate(w+2.5),txt:"+2,5kg — Zielbereich oben erreicht ("+w+"×"+s1.r+")"};
+  if(ls.every(s=>s.r<lo&&s.rir===0))return{w:roundPlate(Math.max(w-2.5,0)),txt:"−2,5kg — unter Zielbereich trotz RIR0"};
+  return null;
+}
 function pushUndo(){state.undo.push(JSON.stringify(state.active));if(state.undo.length>100)state.undo.shift();updUndoBtn()}
 function doUndo(){const p=state.undo.pop();if(p){state.active=JSON.parse(p);draftSave();render()}}
 let draftT=null;function draftSave(){clearTimeout(draftT);draftT=setTimeout(()=>{if(state.active)saveJ("draft",state.active)},400)}
@@ -224,7 +235,14 @@ function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===
 function render(){
   $("hinfo").textContent=activePlan().name+" · Wo "+(weeks()+1);
   const dl=weeks()>=6;
-  $("hbanner").innerHTML=dl&&state.tab!=="deload"?'<button class="card warn" style="width:100%;text-align:left;margin-top:8px;padding:9px 12px;font-size:13px;color:var(--amb);font-weight:600" onclick="go(\'deload\')">⚠ Deload fällig — Woche '+(weeks()+1)+'. Tippen für Deload-Plan.</button>':"";
+  let bn="";
+  if(dl&&state.tab!=="deload")bn='<button class="card warn" style="width:100%;text-align:left;margin-top:8px;padding:9px 12px;font-size:13px;color:var(--amb);font-weight:600" onclick="go(\'deload\')">⚠ Deload fällig — Woche '+(weeks()+1)+'. Tippen für Deload-Plan.</button>';
+  else if(state.tab!=="deload"){
+    const rec3=[...state.logs].filter(l=>!l.deload).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+    const bad=rec3.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
+    if(rec3.length>=3&&bad>=2)bn='<button class="card warn" style="width:100%;text-align:left;margin-top:8px;padding:9px 12px;font-size:13px;color:var(--amb);font-weight:600" onclick="go(\'deload\')">⚠ Erholungssignale in '+bad+' von 3 Einheiten — vorgezogener Deload empfohlen. Tippen für Plan.</button>';
+  }
+  $("hbanner").innerHTML=bn;
   $("nav").innerHTML=[["training","Training"],["plaene","Pläne"],["statistik","Statistik"]].map(([id,l])=>'<button class="'+(state.tab===id?"on":"")+'" onclick="go(\''+id+'\')">'+l+'</button>').join("");
   const m=$("main");
   if(state.tab==="training")m.innerHTML=state.active?vLogger():vHome();
@@ -264,17 +282,24 @@ function vLogger(){
   +ciRow("Schlaf","schlaf",["gut","normal","schlecht"],["on-g","on-n","on-r"])
   +ciRow("Essen","essen",["viel","normal","wenig"],["on-g","on-n","on-a"])
   +'<div class="row"><span class="tiny" style="width:56px">Befinden</span><input type="range" min="0" max="10" value="'+(bf??5)+'" oninput="setBef(this.value)"><b id="befval" class="mono" style="width:26px;text-align:center;color:'+(bf==null?"var(--dim)":bf>=7?"var(--grn)":bf>=4?"var(--amb)":"var(--red2)")+'">'+(bf??"—")+'</b></div></div>';
+  // Deload-Schalter
+  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="pushUndo();state.active.deload=this.checked;draftSave();render()"> Deload-Einheit (−30%, RIR3-4 — zählt nicht in die Zuwachs-Wertung)</label></div>';
   // Übungen
+  const lbe=lastByEx();
   a.entries.forEach((e,ei)=>{
+    const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
+    const rec=a.deload?null:recommendFor(e);
     h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="exname">'+esc(e.name)+(e.swapped?' <span style="color:var(--sky);font-size:11px;font-weight:400">⇄ getauscht</span>':"")+'</span>'
     +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
+    if(rec)h+='<button class="rec" style="width:100%;text-align:left;cursor:pointer" onclick="applyRec('+ei+','+rec.w+')">🎯 Empfehlung: <b>'+rec.w+'kg</b> — '+esc(rec.txt)+' · <u>übernehmen</u></button>';
     h+='<div style="display:flex;flex-direction:column;gap:7px">';
     e.sets.forEach((s,si)=>{
-      h+='<div class="row"><span class="tiny mono" style="width:12px">'+(si+1)+'</span>'
-      +'<input type="text" inputmode="decimal" class="win mono" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo()">'
+      const lr=lastSets[si]&&lastSets[si].r?lastSets[si].r:"";
+      h+='<div class="row"><button class="tiny mono" style="width:16px;background:none;border:none;color:'+(lr?"var(--sky)":"var(--dim)")+';padding:0" title="Vorwert übernehmen" onclick="fillR('+ei+','+si+')">'+(si+1)+'</button>'
+      +'<input type="text" inputmode="decimal" class="win mono" id="w-'+ei+'-'+si+'" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo()">'
       +'<span class="tiny">kg ×</span>'
-      +'<input type="text" inputmode="numeric" class="winr mono" value="'+esc(s.r)+'" placeholder="Wdh" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo()">'
+      +'<input type="text" inputmode="numeric" class="winr mono" id="r-'+ei+'-'+si+'" value="'+esc(s.r)+'" placeholder="'+esc(lr)+'" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo()">'
       +'<span class="row" style="gap:4px" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</span></div>';
     });
     h+='</div><div class="row" style="margin-top:8px"><button class="chip" onclick="addSet('+ei+')">+ Satz</button>'
@@ -294,6 +319,9 @@ function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
 function setRir(ei,si,n){pushUndo();const s=state.active.entries[ei].sets[si];s.rir=s.rir===n?null:n;draftSave();const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(state.active.entries[ei],ei,si)}
 function setExNote(ei,v){state.active.entries[ei].exNote=v;draftSave()}
 function setNote(v){state.active.note=v;draftSave()}
+function fillR(ei,si){const lbe=lastByEx();const ls=lbe[state.active.entries[ei].exerciseId];const lr=ls&&ls.sets[si]?ls.sets[si].r:null;if(!lr)return;
+  pushUndo();state.active.entries[ei].sets[si].r=lr;const inp=$("r-"+ei+"-"+si);if(inp)inp.value=lr;draftSave()}
+function applyRec(ei,w){pushUndo();state.active.entries[ei].sets.forEach((s,si)=>{s.w=w;const inp=$("w-"+ei+"-"+si);if(inp)inp.value=w});draftSave();toast("Gewicht übernommen: "+w+"kg")}
 function addSet(ei){pushUndo();const e=state.active.entries[ei];e.sets.push({w:e.sets[e.sets.length-1]?.w||0,r:"",rir:null});draftSave();render()}
 // Swap
 function openSwap(ei){
@@ -320,8 +348,9 @@ function vPlans(){
   if(editPlanId)return vPlanEditor();
   let h="";
   state.plans.forEach(p=>{const act=p.id===state.settings.activePlanId;
-    h+='<div class="card'+(act?" hl":"")+'"><div class="row" style="justify-content:space-between"><div><b>'+esc(p.name)+'</b><p class="tiny mono">'+p.sessions.length+' Einheiten · seit '+fmtD(p.createdAt)+'</p></div>'
+    h+='<div class="card'+(act?" hl":"")+'"><div class="row" style="justify-content:space-between"><div><b>'+esc(p.name)+'</b> <span class="tiny mono">v'+(p.version||1)+'</span><p class="tiny mono">'+p.sessions.length+' Einheiten · seit '+fmtD(p.createdAt)+'</p></div>'
     +(act?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Aktiv</span>':"")+'</div>'
+    +(p.versions&&p.versions.length?'<details style="margin-top:6px"><summary class="tiny">Versionshistorie ('+p.versions.length+') ▼</summary><div style="margin-top:5px">'+[...p.versions].reverse().map(v=>'<div class="hline"><span class="tiny mono">v'+v.v+' · '+fmtD(v.date)+'</span><span class="tiny" style="text-align:right;max-width:60%">'+esc(v.comment)+'</span></div>').join("")+'</div></details>':"")
     +'<div class="row" style="margin-top:10px">'
     +(!act?'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button>':"")
     +'<button class="chip" onclick="editPlan(\''+p.id+'\')">Bearbeiten</button>'
@@ -357,18 +386,20 @@ function addLib(){const n=($("lname").value||"").trim();if(!n){toast("Name fehlt
   saveJ("library",state.library);render();toast("Übung angelegt")}
 // Plan-Editor
 let pickFor=null,showNewSess=false;
-function editPlan(id){editPlanId=id;pickFor=null;showNewSess=false;render()}
+function editPlan(id){editPlanId=id;pickFor=null;showNewSess=false;state.tab="plaene";render()}
 function vPlanEditor(){
   const p=state.plans.find(x=>x.id===editPlanId);
   let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="editPlanId=null;render()">← Zurück</button><button class="btn red" style="width:auto;padding:10px 16px" onclick="savePlanEdit()">Speichern</button></div>';
   h+='<input type="text" id="pename" value="'+esc(p.name)+'" style="font-weight:900;font-size:17px">';
+  h+='<input type="text" id="pecomment" placeholder="Kommentar zur neuen Version (Pflicht) — z.B. \'Seitheben auf 3 Sätze\'">';
   p.sessions.forEach((s,si)=>{
     h+='<div class="card" style="display:flex;flex-direction:column;gap:7px"><div class="row">'
     +'<input type="text" style="width:90px;font-weight:800" value="'+esc(s.name)+'" oninput="peSess('+si+',\'name\',this.value)">'
     +'<input type="text" style="flex:1;color:var(--mut)" placeholder="Fokus" value="'+esc(s.sub||"")+'" oninput="peSess('+si+',\'sub\',this.value)"></div>';
     s.exercises.forEach((ex,ei)=>{
       h+='<div style="border:1px solid var(--s2);border-radius:9px;padding:7px;display:flex;flex-direction:column;gap:5px">'
-      +'<div class="row"><input type="text" style="flex:1;font-size:13px" value="'+esc(ex.name)+'" oninput="peEx('+si+','+ei+',\'name\',this.value)"><button class="del" onclick="peRm('+si+','+ei+')">✕</button></div>'
+      +'<div class="row"><span style="display:flex;flex-direction:column;gap:2px"><button class="chip" style="padding:1px 8px;font-size:11px" '+(ei===0?"disabled":"")+' onclick="peMove('+si+','+ei+',-1)">▲</button><button class="chip" style="padding:1px 8px;font-size:11px" '+(ei===s.exercises.length-1?"disabled":"")+' onclick="peMove('+si+','+ei+',1)">▼</button></span>'
+      +'<input type="text" style="flex:1;font-size:13px" value="'+esc(ex.name)+'" oninput="peEx('+si+','+ei+',\'name\',this.value)"><button class="del" onclick="peRm('+si+','+ei+')">✕</button></div>'
       +'<div class="row"><input type="text" class="mono" style="width:42px;text-align:center;font-size:12px" title="Sätze" value="'+ex.sets+'" oninput="peEx('+si+','+ei+',\'sets\',this.value)">'
       +'<input type="text" class="mono" style="width:60px;text-align:center;font-size:12px" title="Wdh" value="'+esc(ex.reps)+'" oninput="peEx('+si+','+ei+',\'reps\',this.value)">'
       +'<input type="text" style="flex:1;font-size:12px" title="Schema" value="'+esc(ex.scheme)+'" oninput="peEx('+si+','+ei+',\'scheme\',this.value)">'
@@ -392,6 +423,8 @@ function vPlanEditor(){
 function peSess(si,f,v){state.plans.find(x=>x.id===editPlanId).sessions[si][f]=v}
 function peEx(si,ei,f,v){const ex=state.plans.find(x=>x.id===editPlanId).sessions[si].exercises[ei];ex[f]=(f==="sets"||f==="start")?(+v||0):v}
 function peRm(si,ei){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];s.exercises.splice(ei,1);render()}
+function peMove(si,ei,dir){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];const j=ei+dir;if(j<0||j>=s.exercises.length)return;
+  [s.exercises[ei],s.exercises[j]]=[s.exercises[j],s.exercises[ei]];render()}
 function peList(si,q){const f=state.library.filter(l=>l.name.toLowerCase().includes(q.toLowerCase()));
   return f.map(l=>'<button class="libitem" style="padding:7px 9px;font-size:12px" onclick="peAdd('+si+',\''+l.id+'\')">'+esc(l.name)+' <span class="tiny mono">'+esc(l.reps)+'</span></button>').join("")||'<p class="tiny" style="padding:8px">Nichts gefunden.</p>'}
 function peFilter(si,q){$("pelist").innerHTML=peList(si,q)}
@@ -401,12 +434,17 @@ function peBlank(si){state.plans.find(x=>x.id===editPlanId).sessions[si].exercis
 function peAddSess(){const n=($("nsname").value||"").trim();if(!n)return;
   state.plans.find(x=>x.id===editPlanId).sessions.push({id:uid(),name:n,sub:"",warmup:[],exercises:[]});showNewSess=false;render()}
 function savePlanEdit(){const p=state.plans.find(x=>x.id===editPlanId);p.name=$("pename").value||p.name;
+  const comment=($("pecomment").value||"").trim();
+  if(!comment){toast("Bitte Kommentar zur Version angeben");$("pecomment").focus();return}
+  p.version=(p.version||1)+1;
+  p.versions=[...(p.versions||[]),{v:p.version,date:todayISO(),comment,snapshot:JSON.parse(JSON.stringify(p.sessions))}];
+  if(p.versions.length>25)p.versions.shift();
   saveJ("plans",state.plans);
   // Bibliothek-Upsert
   const map=Object.fromEntries(state.library.map(e=>[e.id,e]));
   p.sessions.flatMap(s=>s.exercises).forEach(ex=>{map[ex.id]={id:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,start:ex.start,note:ex.note||""}});
   state.library=Object.values(map);saveJ("library",state.library);
-  editPlanId=null;render();toast("Plan gespeichert")}
+  editPlanId=null;render();toast("Plan gespeichert als v"+p.version)}
 // ================= Statistik =================
 function vStats(){
   const p=state.plans.find(x=>x.id===(state.statPlan||state.settings.activePlanId))||activePlan();
@@ -425,7 +463,7 @@ function vStats(){
     +'<div id="gchart"></div>'
     +'<details style="margin-top:6px"><summary class="tiny">Je Übung anzeigen ▼</summary><div style="margin-top:6px">'
     +g.perEx.map(e=>'<div class="hline mono"><span style="color:var(--tx)">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(e.pct>0?"+":"")+e.pct.toFixed(1)+'%</b></span></div>').join("")
-    +'</div></details><p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core & Face Pull zählen nicht. Mind. 2 Einheiten je Übung.</p></div>';
+    +'</div></details><p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core & Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
   }
   // Übungs-Chart
   h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Übung</p>'
@@ -437,7 +475,7 @@ function vStats(){
   h+='<p class="lbl">Historie</p>';
   [...pl].reverse().forEach(l=>{
     const ci=l.checkin;
-    h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">'+esc(l.sessionName)+'</span><span class="tiny mono">'+fmtD(l.date)+'</span></summary><div style="padding:0 14px 12px;display:flex;flex-direction:column;gap:4px">';
+    h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">'+esc(l.sessionName)+(l.deload?' <span style="color:var(--amb);font-size:10px;font-weight:800;border:1px solid var(--amb);border-radius:5px;padding:1px 5px">DELOAD</span>':'')+'</span><span class="tiny mono">'+fmtD(l.date)+'</span></summary><div style="padding:0 14px 12px;display:flex;flex-direction:column;gap:4px">';
     if(ci&&(ci.gefuehl||ci.schlaf||ci.essen||ci.befinden!=null))h+='<p class="tiny mono">Check-in: '+(ci.gefuehl?'Gefühl '+ci.gefuehl:'')+(ci.schlaf?' · Schlaf '+ci.schlaf:'')+(ci.essen?' · Essen '+ci.essen:'')+(ci.befinden!=null?' · Befinden '+ci.befinden+'/10':'')+'</p>';
     l.entries.forEach(e=>{h+='<p class="tiny mono" style="color:var(--mut)"><span style="color:var(--tx)">'+esc(e.name)+':</span> '+e.sets.map(s=>s.w+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join(' | ')+(e.exNote?' <span class="note-a">— „'+esc(e.exNote)+'"</span>':'')+'</p>'});
     if(l.note)h+='<p class="note-a" style="font-style:italic">„'+esc(l.note)+'"</p>';
@@ -455,13 +493,15 @@ function vStats(){
   return h;
 }
 function growth(pl,allEx){
+  const nDeload=pl.filter(l=>l.deload).length;
+  pl=pl.filter(l=>!l.deload);
   const perEx=[];
   allEx.forEach(ex=>{const pts=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===ex.id);if(!e)return null;const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?b:null}).filter(Boolean);
     const grp=MUSCLE_GROUPS[ex.id];
     if(pts.length>=2&&grp)perEx.push({name:ex.name,group:grp,first:pts[0],last:pts[pts.length-1],pct:(pts[pts.length-1]-pts[0])/pts[0]*100})});
   const byG={};perEx.forEach(e=>{(byG[e.group]=byG[e.group]||[]).push(e.pct)});
   const groups=Object.entries(byG).map(([g,a])=>({g,v:Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10})).sort((a,b)=>b.v-a.v);
-  return{perEx:perEx.sort((a,b)=>b.pct-a.pct),groups,overall:perEx.length?Math.round(perEx.reduce((a,e)=>a+e.pct,0)/perEx.length*10)/10:null};
+  return{perEx:perEx.sort((a,b)=>b.pct-a.pct),groups,overall:perEx.length?Math.round(perEx.reduce((a,e)=>a+e.pct,0)/perEx.length*10)/10:null,nDeload};
 }
 function delLog(id){if(state.confirmDel!=="h:"+id){state.confirmDel="h:"+id;render();setTimeout(()=>{if(state.confirmDel==="h:"+id){state.confirmDel=null;render()}},3000);return}
   state.logs=state.logs.filter(l=>l.id!==id);saveJ("logs",state.logs);state.confirmDel=null;render();toast("Eintrag gelöscht")}
