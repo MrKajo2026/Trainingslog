@@ -34,7 +34,8 @@ button{font-family:inherit;cursor:pointer}
 .chip.on-g{background:var(--grn2);color:#fff}.chip.on-n{background:var(--s3);color:#fff}.chip.on-r{background:var(--red);color:#fff}.chip.on-a{background:var(--amb);color:#111}
 input[type=text],textarea,select{background:var(--s2);border:1px solid var(--s3);border-radius:9px;color:var(--tx);padding:9px 10px;font-size:14px;width:100%;font-family:inherit;-webkit-appearance:none}
 input:focus,textarea:focus{outline:none;border-color:var(--red2)}
-.win{width:78px;text-align:center;font-size:16px}.winr{width:62px;text-align:center;font-size:16px}
+.win{width:100%;text-align:center;font-size:17px;padding:11px 6px}.winr{width:100%;text-align:center;font-size:17px;padding:11px 6px}
+.setrow{display:flex;flex-direction:column;gap:5px;background:rgba(63,63,70,.22);border-radius:10px;padding:7px 8px}
 .rir{width:33px;height:33px;border-radius:8px;border:none;background:var(--s2);color:var(--dim);font-weight:800;font-size:12px}
 .rir.g{background:var(--grn);color:#052}.rir.y{background:var(--amb);color:#210}.rir.r{background:var(--red);color:#fff}.rir.d{background:var(--s3);color:#fff}
 .exname{font-weight:700;font-size:14px}
@@ -202,7 +203,21 @@ const deloadDue=()=>sessionsSinceCycle()>=DELOAD_AFTER;
 function daysSinceLast(){const l=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));if(!l.length)return 0;
   return Math.floor((Date.now()-new Date(l[l.length-1].date).getTime())/864e5)}
 function lastByEx(){const m={};[...state.logs].filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
-// Regelbasierte Progressions-Empfehlung
+// Stagnations-Erkennung: keine e1RM-Steigerung über die letzten N Einheiten
+function stagnationFor(exId){
+  const pts=state.logs.filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date))
+    .map(l=>{const e=l.entries.find(x=>x.exerciseId===exId);if(!e)return null;
+      const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?{v:b,date:l.date,rir:e.sets.map(s=>s.rir)}:null}).filter(Boolean);
+  if(pts.length<3)return null;
+  const last3=pts.slice(-3);const best=Math.max(...pts.slice(0,-3).map(p=>p.v),last3[0].v);
+  const noGain=last3.every(p=>p.v<=best*1.005);
+  if(!noGain)return null;
+  const n=pts.length-pts.findIndex(p=>p.v>=best*0.995);
+  const allOut=last3.every(p=>p.rir.some(r=>r===0));
+  if(pts.length>=5&&last3.every((p,i)=>i===0||p.v<=last3[i-1].v*1.001)&&allOut)
+    return{lvl:2,txt:"Stagnation über "+last3.length+" Einheiten trotz RIR0 → Übungs-Deload empfohlen: −10% für 1 Einheit, dann neu aufbauen",w:null};
+  return{lvl:1,txt:"Kein Zuwachs über "+last3.length+" Einheiten → Gewicht halten, Wdh im Zielbereich ausreizen (Technik/Tempo sauber)",w:null};
+}
 function recommendFor(entry){
   if(/prehab/i.test(entry.scheme||""))return null;
   const last=lastByEx()[entry.exerciseId];if(!last)return null;
@@ -303,15 +318,19 @@ function vLogger(){
     +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
     if(rec)h+='<button class="rec" style="width:100%;text-align:left;cursor:pointer" onclick="applyRec('+ei+','+rec.w+')">🎯 Empfehlung: <b>'+rec.w+'kg</b> — '+esc(rec.txt)+' · <u>übernehmen</u></button>';
+    if(!rec&&!a.deload){const stg=stagnationFor(e.exerciseId);
+      if(stg){const base=lastSets.length?Math.max(...lastSets.map(x=>+x.w||0)):0;const rw=stg.lvl===2&&base?roundPlate(base*0.9):0;
+        h+='<'+(rw?'button onclick="applyRec('+ei+','+rw+')"':'div')+' style="width:100%;text-align:left;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0'+(rw?';cursor:pointer':'')+'">📉 '+esc(stg.txt)+(rw?' · <b>'+rw+'kg</b> <u>übernehmen</u>':'')+'</'+(rw?'button':'div')+'>'}}
     if(dlW)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--amb);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+dlW+')">⬇ Deload: <b>'+dlW+'kg</b> (−30% von '+dlBase+'kg) · RIR 3-4 · <u>übernehmen</u></button>';
     h+='<div style="display:flex;flex-direction:column;gap:7px">';
     e.sets.forEach((s,si)=>{
       const lr=lastSets[si]&&lastSets[si].r?lastSets[si].r:"";
-      h+='<div class="row"><button class="tiny mono" style="width:16px;background:none;border:none;color:'+(lr?"var(--sky)":"var(--dim)")+';padding:0" title="Vorwert übernehmen" onclick="fillR('+ei+','+si+')">'+(si+1)+'</button>'
-      +'<input type="text" inputmode="decimal" class="win mono" id="w-'+ei+'-'+si+'" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo()">'
-      +'<span class="tiny">kg ×</span>'
-      +'<input type="text" inputmode="numeric" class="winr mono" id="r-'+ei+'-'+si+'" value="'+esc(s.r)+'" placeholder="'+esc(lr)+'" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo()">'
-      +'<span class="row" style="gap:4px" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</span></div>';
+      h+='<div class="setrow"><div class="row" style="gap:6px">'
+      +'<button class="tiny mono" style="width:18px;background:none;border:none;color:'+(lr?"var(--sky)":"var(--dim)")+';padding:0;font-size:13px" title="Vorwert übernehmen" onclick="fillR('+ei+','+si+')">'+(si+1)+'</button>'
+      +'<span style="flex:1.3"><input type="text" inputmode="decimal" class="win mono" id="w-'+ei+'-'+si+'" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo();this.select()"></span>'
+      +'<span class="tiny" style="width:14px;text-align:center">×</span>'
+      +'<span style="flex:1"><input type="text" inputmode="numeric" class="winr mono" id="r-'+ei+'-'+si+'" value="'+esc(s.r)+'" placeholder="'+esc(lr)+'" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo();this.select()"></span></div>'
+      +'<div class="row" style="gap:4px;justify-content:flex-end" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</div></div>';
     });
     h+='</div><div class="row" style="margin-top:8px"><button class="chip" onclick="addSet('+ei+')">+ Satz</button>'
     +'<input type="text" style="flex:1;font-size:12px;padding:7px 9px" placeholder="Notiz zur Übung…" value="'+esc(e.exNote||"")+'" oninput="setExNote('+ei+',this.value)" onfocus="pushUndo()"></div>';
