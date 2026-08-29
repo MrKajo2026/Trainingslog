@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0c0c0e">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Trainingslog</title>
+<style>
+:root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:74px;min-height:100vh}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:16px 16px 10px;z-index:10}
+header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
+#hinfo{float:right;font-size:11px;color:var(--mut)}
+main{padding:16px;display:flex;flex-direction:column;gap:12px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:20;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:13px 0;background:none;border:none;color:var(--mut);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
+.card{background:var(--s1);border:1px solid var(--s2);border-radius:14px;padding:14px}
+.card.hl{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.45)}
+.card.warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.4)}
+.card.ok{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35)}
+button{font-family:inherit;cursor:pointer}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;font-weight:800;font-size:14px}
+.btn.red{background:var(--red);color:#fff}.btn.dim{background:var(--s2);color:var(--mut)}.btn.grn{background:var(--grn2);color:#fff}.btn.amb{background:var(--amb);color:#111}
+.btn:disabled{opacity:.35}
+.row{display:flex;gap:8px;align-items:center}
+.small{font-size:12px;color:var(--mut)}.tiny{font-size:11px;color:var(--dim)}
+.lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.chip{padding:6px 10px;border-radius:8px;border:none;background:var(--s2);color:var(--mut);font-size:12px;font-weight:700}
+.chip.on-g{background:var(--grn2);color:#fff}.chip.on-n{background:var(--s3);color:#fff}.chip.on-r{background:var(--red);color:#fff}.chip.on-a{background:var(--amb);color:#111}
+input[type=text],textarea,select{background:var(--s2);border:1px solid var(--s3);border-radius:9px;color:var(--tx);padding:9px 10px;font-size:14px;width:100%;font-family:inherit;-webkit-appearance:none}
+input:focus,textarea:focus{outline:none;border-color:var(--red2)}
+.win{width:100%;text-align:center;font-size:17px;padding:11px 6px}.winr{width:100%;text-align:center;font-size:17px;padding:11px 6px}
+.setrow{display:flex;flex-direction:column;gap:5px;background:rgba(63,63,70,.22);border-radius:10px;padding:7px 8px}
+.rir{width:33px;height:33px;border-radius:8px;border:none;background:var(--s2);color:var(--dim);font-weight:800;font-size:12px}
+.rir.g{background:var(--grn);color:#052}.rir.y{background:var(--amb);color:#210}.rir.r{background:var(--red);color:#fff}.rir.d{background:var(--s3);color:#fff}
+.exname{font-weight:700;font-size:14px}
+.rec{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--grn);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0}
+.note-a{color:rgba(245,158,11,.85);font-size:12px}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+.hrow{display:flex;justify-content:space-between;padding:10px 0 4px}
+.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat3 .card{text-align:center;padding:12px 6px}
+.stat3 b{font-size:18px}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;display:flex;align-items:flex-end}
+.sheet{width:100%;background:var(--s1);border-top:1px solid var(--s3);border-radius:18px 18px 0 0;padding:16px;max-height:70vh;overflow-y:auto}
+.libitem{display:block;width:100%;text-align:left;background:var(--s2);border:1px solid var(--s3);border-radius:9px;padding:10px;margin-top:6px;color:var(--tx);font-size:13px}
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--grn2);color:#fff;padding:9px 16px;border-radius:99px;font-size:13px;font-weight:700;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.swap{color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:7px;padding:3px 9px;font-size:13px;font-weight:800}
+svg text{font-family:ui-monospace,Menlo,monospace}
+input[type=range]{width:100%;accent-color:var(--red2)}
+.hline{border-bottom:1px solid var(--s2);padding:5px 0;display:flex;justify-content:space-between;font-size:12px}
+.hline:last-child{border:none}
+h2{font-size:20px;font-weight:900;letter-spacing:-.02em}
+.del{color:var(--red2);background:var(--s2);border:none;border-radius:7px;padding:5px 9px;font-size:11px;font-weight:700}
+.del.sure{background:var(--red);color:#fff}
+
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+main,.card,.setrow{width:100%;max-width:100%;min-width:0}
+.row{flex-wrap:wrap;min-width:0}
+.row>*{min-width:0}
+header h1{font-size:clamp(15px,4.5vw,18px)}
+#hinfo{float:none;display:block;font-size:clamp(9px,2.6vw,11px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h2{font-size:clamp(16px,5vw,20px)}
+.chip{white-space:nowrap}
+.exname{word-break:break-word}
+@media (max-width:340px){
+ body{font-size:14px}
+ .rir{width:30px;height:30px}
+ .win,.winr{font-size:15px;padding:9px 4px}
+ nav button{font-size:10px;padding:11px 0}
+}
+</style>
+</head>
+<body>
+<header><h1>Trainingslog</h1><span id="hinfo" class="mono"></span><div id="hbanner"></div></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+<div id="overlay"></div>
+<div id="toastbox"></div>
+<script>
+"use strict";
+// ================= Daten =================
+const DEFAULT_PLAN={"id":"aufbau-08-26","name":"AUFBAU 08/26","createdAt":"2026-08-01","rules":["Rhythmus: jeden 2. Tag | UK A → OK A → UK B → OK B","Kalorien: +200-300kcal | Protein ~160g | Waage <2kg/Monat","RIR: schwere Hauptübung 2/2/0 | Isos ans Limit (RIR0)","Ausnahme: Face Pull leicht (Prehab) | Seitheben Antest RIR2-3","Progression: Wdh im Zielbereich hoch, dann +2,5kg","Straps bei ALLEN Zügen + Deadlift","Kein direkter Bizeps bis Arm-Abklärung","Keine volle Endstreckung unter Last"],"sessions":[{"id":"uk-a","name":"UK A","sub":"Quad","warmup":["5min Rad locker","Hüftmobilität"],"exercises":[{"id":"hack-squat","name":"Hack Squat","sets":3,"reps":"6-9","scheme":"2/2/0","start":70},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","sets":2,"reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","sets":2,"reps":"8-12","scheme":"ans Limit","start":27.5},{"id":"seawzsex","name":"Calf Press","sets":2,"reps":"10-15","scheme":"Ans Limit","start":95},{"id":"dead-bug","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen","name":"Handgelenks-Extension","sets":3,"reps":"15","scheme":"3s ablassen","start":6},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","sets":2,"reps":"15","scheme":"3s aufwärts","start":9,"note":""}]},{"id":"ok-a","name":"OK A","sub":"Push","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"exercises":[{"id":"schraegbank","name":"Schrägbankdrücken KH","sets":3,"reps":"8-12","scheme":"2/2/0","start":24},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","sets":3,"reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","sets":3,"reps":"8-12","scheme":"2/2/0","start":65},{"id":"seitheben","name":"Seitheben Kabel","sets":2,"reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","sets":2,"reps":"12-15","scheme":"ans Limit","start":18.75},{"id":"pallof","name":"Pallof Press","sets":2,"reps":"10/Seite","scheme":"Core","start":10}]},{"id":"uk-b","name":"UK B","sub":"Hinge","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"exercises":[{"id":"deadlift","name":"Deadlift (Straps)","sets":3,"reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","sets":3,"reps":"8-12","scheme":"2/2/0","start":150},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","sets":2,"reps":"8-12","scheme":"ans Limit","start":57.5},{"id":"beinstrecker","name":"Beinstrecker slow","sets":2,"reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","sets":2,"reps":"15-20","scheme":"ans Limit","start":50},{"id":"dead-bug-b","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen-b","name":"Handgelenks-Extension","sets":3,"reps":"15","scheme":"3s ablassen","start":6},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","sets":3,"reps":"15","scheme":"3s aufwärts","start":9}]},{"id":"ok-b","name":"OK B","sub":"Pull + Drück-Aufbau","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"exercises":[{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","sets":3,"reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","sets":3,"reps":"8-12","scheme":"S1 RIR2","start":75},{"id":"bankdruecken","name":"Bankdrücken KH flach","sets":3,"reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20},{"id":"ueberzug","name":"Überzug","sets":2,"reps":"10-15","scheme":"ans Limit","start":33.75},{"id":"reverse-fly","name":"Reverse Cable Fly","sets":2,"reps":"12-15","scheme":"ans Limit","start":6.25},{"id":"face-pull","name":"Face Pull Seil","sets":2,"reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"}]}],"version":5,"versions":[{"v":2,"date":"2026-08-19","comment":"Calf Press hinzu","snapshot":[{"id":"uk-a","name":"UK A","sub":"Quad","warmup":["5min Rad locker","Hüftmobilität"],"exercises":[{"id":"hack-squat","name":"Hack Squat","sets":3,"reps":"6-9","scheme":"2/2/0","start":70},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","sets":2,"reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","sets":2,"reps":"8-12","scheme":"ans Limit","start":27.5},{"id":"seawzsex","name":"Calf Press","sets":2,"reps":"8-12","scheme":"Ans Limit","start":95},{"id":"dead-bug","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","sets":3,"reps":"15","scheme":"3s ablassen","start":2}]},{"id":"ok-a","name":"OK A","sub":"Push","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"exercises":[{"id":"schraegbank","name":"Schrägbankdrücken KH","sets":3,"reps":"8-12","scheme":"2/2/0","start":24},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","sets":3,"reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","sets":3,"reps":"8-12","scheme":"2/2/0","start":65},{"id":"seitheben","name":"Seitheben Kabel","sets":2,"reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","sets":2,"reps":"12-15","scheme":"ans Limit","start":18.75},{"id":"pallof","name":"Pallof Press","sets":2,"reps":"10/Seite","scheme":"Core","start":10}]},{"id":"uk-b","name":"UK B","sub":"Hinge","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"exercises":[{"id":"deadlift","name":"Deadlift (Straps)","sets":3,"reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","sets":3,"reps":"8-12","scheme":"2/2/0","start":150},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","sets":2,"reps":"8-12","scheme":"ans Limit","start":57.5},{"id":"beinstrecker","name":"Beinstrecker slow","sets":2,"reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","sets":2,"reps":"10-12","scheme":"ans Limit","start":50},{"id":"dead-bug-b","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","sets":3,"reps":"15","scheme":"3s ablassen","start":2}]},{"id":"ok-b","name":"OK B","sub":"Pull + Drück-Aufbau","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"exercises":[{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","sets":3,"reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","sets":3,"reps":"8-12","scheme":"S1 RIR2","start":75},{"id":"bankdruecken","name":"Bankdrücken KH flach","sets":3,"reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20},{"id":"ueberzug","name":"Überzug","sets":2,"reps":"10-15","scheme":"ans Limit","start":33.75},{"id":"reverse-fly","name":"Reverse Cable Fly","sets":2,"reps":"12-15","scheme":"ans Limit","start":6.25},{"id":"face-pull","name":"Face Pull Seil","sets":2,"reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"}]}]},{"v":3,"date":"2026-08-29","comment":"Limits angepasst 29.08.2026","snapshot":[{"id":"uk-a","name":"UK A","sub":"Quad","warmup":["5min Rad locker","Hüftmobilität"],"exercises":[{"id":"hack-squat","name":"Hack Squat","sets":3,"reps":"6-9","scheme":"2/2/0","start":70},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","sets":2,"reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","sets":2,"reps":"8-12","scheme":"ans Limit","start":27.5},{"id":"seawzsex","name":"Calf Press","sets":2,"reps":"10-15","scheme":"Ans Limit","start":95},{"id":"dead-bug","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","sets":3,"reps":"15","scheme":"3s ablassen","start":2}]},{"id":"ok-a","name":"OK A","sub":"Push","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"exercises":[{"id":"schraegbank","name":"Schrägbankdrücken KH","sets":3,"reps":"8-12","scheme":"2/2/0","start":24},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","sets":3,"reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","sets":3,"reps":"8-12","scheme":"2/2/0","start":65},{"id":"seitheben","name":"Seitheben Kabel","sets":2,"reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","sets":2,"reps":"12-15","scheme":"ans Limit","start":18.75},{"id":"pallof","name":"Pallof Press","sets":2,"reps":"10/Seite","scheme":"Core","start":10}]},{"id":"uk-b","name":"UK B","sub":"Hinge","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"exercises":[{"id":"deadlift","name":"Deadlift (Straps)","sets":3,"reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","sets":3,"reps":"8-12","scheme":"2/2/0","start":150},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","sets":2,"reps":"8-12","scheme":"ans Limit","start":57.5},{"id":"beinstrecker","name":"Beinstrecker slow","sets":2,"reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","sets":2,"reps":"15-20","scheme":"ans Limit","start":50},{"id":"dead-bug-b","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","sets":3,"reps":"15","scheme":"3s ablassen","start":2}]},{"id":"ok-b","name":"OK B","sub":"Pull + Drück-Aufbau","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"exercises":[{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","sets":3,"reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","sets":3,"reps":"8-12","scheme":"S1 RIR2","start":75},{"id":"bankdruecken","name":"Bankdrücken KH flach","sets":3,"reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20},{"id":"ueberzug","name":"Überzug","sets":2,"reps":"10-15","scheme":"ans Limit","start":33.75},{"id":"reverse-fly","name":"Reverse Cable Fly","sets":2,"reps":"12-15","scheme":"ans Limit","start":6.25},{"id":"face-pull","name":"Face Pull Seil","sets":2,"reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"}]}]},{"v":4,"date":"2026-08-29","comment":"Handgelenks Übung aufgeteilt","snapshot":[{"id":"uk-a","name":"UK A","sub":"Quad","warmup":["5min Rad locker","Hüftmobilität"],"exercises":[{"id":"hack-squat","name":"Hack Squat","sets":3,"reps":"6-9","scheme":"2/2/0","start":70},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","sets":2,"reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","sets":2,"reps":"8-12","scheme":"ans Limit","start":27.5},{"id":"seawzsex","name":"Calf Press","sets":2,"reps":"10-15","scheme":"Ans Limit","start":95},{"id":"dead-bug","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","sets":3,"reps":"15","scheme":"3s ablassen","start":2}]},{"id":"ok-a","name":"OK A","sub":"Push","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"exercises":[{"id":"schraegbank","name":"Schrägbankdrücken KH","sets":3,"reps":"8-12","scheme":"2/2/0","start":24},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","sets":3,"reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","sets":3,"reps":"8-12","scheme":"2/2/0","start":65},{"id":"seitheben","name":"Seitheben Kabel","sets":2,"reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","sets":2,"reps":"12-15","scheme":"ans Limit","start":18.75},{"id":"pallof","name":"Pallof Press","sets":2,"reps":"10/Seite","scheme":"Core","start":10}]},{"id":"uk-b","name":"UK B","sub":"Hinge","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"exercises":[{"id":"deadlift","name":"Deadlift (Straps)","sets":3,"reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","sets":3,"reps":"8-12","scheme":"2/2/0","start":150},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","sets":2,"reps":"8-12","scheme":"ans Limit","start":57.5},{"id":"beinstrecker","name":"Beinstrecker slow","sets":2,"reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","sets":2,"reps":"15-20","scheme":"ans Limit","start":50},{"id":"dead-bug-b","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen-b","name":"Handgelenks-Extension","sets":3,"reps":"15","scheme":"3s ablassen","start":6},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","sets":3,"reps":"15","scheme":"3s aufwärts","start":9}]},{"id":"ok-b","name":"OK B","sub":"Pull + Drück-Aufbau","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"exercises":[{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","sets":3,"reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","sets":3,"reps":"8-12","scheme":"S1 RIR2","start":75},{"id":"bankdruecken","name":"Bankdrücken KH flach","sets":3,"reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20},{"id":"ueberzug","name":"Überzug","sets":2,"reps":"10-15","scheme":"ans Limit","start":33.75},{"id":"reverse-fly","name":"Reverse Cable Fly","sets":2,"reps":"12-15","scheme":"ans Limit","start":6.25},{"id":"face-pull","name":"Face Pull Seil","sets":2,"reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"}]}]},{"v":5,"date":"2026-08-29","comment":"UK A Handgelenks übung angepasst","snapshot":[{"id":"uk-a","name":"UK A","sub":"Quad","warmup":["5min Rad locker","Hüftmobilität"],"exercises":[{"id":"hack-squat","name":"Hack Squat","sets":3,"reps":"6-9","scheme":"2/2/0","start":70},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","sets":2,"reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","sets":2,"reps":"8-12","scheme":"ans Limit","start":27.5},{"id":"seawzsex","name":"Calf Press","sets":2,"reps":"10-15","scheme":"Ans Limit","start":95},{"id":"dead-bug","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen","name":"Handgelenks-Extension","sets":3,"reps":"15","scheme":"3s ablassen","start":6},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","sets":2,"reps":"15","scheme":"3s aufwärts","start":9,"note":""}]},{"id":"ok-a","name":"OK A","sub":"Push","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"exercises":[{"id":"schraegbank","name":"Schrägbankdrücken KH","sets":3,"reps":"8-12","scheme":"2/2/0","start":24},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","sets":3,"reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","sets":3,"reps":"8-12","scheme":"2/2/0","start":65},{"id":"seitheben","name":"Seitheben Kabel","sets":2,"reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","sets":2,"reps":"12-15","scheme":"ans Limit","start":18.75},{"id":"pallof","name":"Pallof Press","sets":2,"reps":"10/Seite","scheme":"Core","start":10}]},{"id":"uk-b","name":"UK B","sub":"Hinge","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"exercises":[{"id":"deadlift","name":"Deadlift (Straps)","sets":3,"reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","sets":3,"reps":"8-12","scheme":"2/2/0","start":150},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","sets":2,"reps":"8-12","scheme":"ans Limit","start":57.5},{"id":"beinstrecker","name":"Beinstrecker slow","sets":2,"reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","sets":2,"reps":"15-20","scheme":"ans Limit","start":50},{"id":"dead-bug-b","name":"Dead Bug","sets":2,"reps":"20","scheme":"BW","start":0},{"id":"ellenbogen-b","name":"Handgelenks-Extension","sets":3,"reps":"15","scheme":"3s ablassen","start":6},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","sets":3,"reps":"15","scheme":"3s aufwärts","start":9}]},{"id":"ok-b","name":"OK B","sub":"Pull + Drück-Aufbau","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"exercises":[{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","sets":3,"reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","sets":3,"reps":"8-12","scheme":"S1 RIR2","start":75},{"id":"bankdruecken","name":"Bankdrücken KH flach","sets":3,"reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20},{"id":"ueberzug","name":"Überzug","sets":2,"reps":"10-15","scheme":"ans Limit","start":33.75},{"id":"reverse-fly","name":"Reverse Cable Fly","sets":2,"reps":"12-15","scheme":"ans Limit","start":6.25},{"id":"face-pull","name":"Face Pull Seil","sets":2,"reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"}]}]}]};
+const SEED_LIB=[{"id":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","start":70,"note":""},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","start":27.5,"note":""},{"id":"wadenpresse-oben","name":"Calf Extension","reps":"8-12","scheme":"ans Limit","start":95,"note":"L/R, volle Dehnung"},{"id":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","start":0,"note":""},{"id":"ellenbogen","name":"Handgelenks-Extension","reps":"15","scheme":"3s ablassen","start":6,"note":""},{"id":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","start":24,"note":""},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","start":65,"note":""},{"id":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","start":18.75,"note":""},{"id":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","start":10,"note":""},{"id":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","start":150,"note":""},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","start":57.5,"note":""},{"id":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","reps":"15-20","scheme":"ans Limit","start":50,"note":""},{"id":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","start":0,"note":""},{"id":"ellenbogen-b","name":"Handgelenks-Extension","reps":"15","scheme":"3s ablassen","start":6,"note":""},{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","start":75,"note":""},{"id":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20,"note":""},{"id":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","start":33.75,"note":""},{"id":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","start":6.25,"note":""},{"id":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"},{"id":"ac3ncx1g","name":"Waden Extension","reps":"8-12","scheme":"RIR1-2","start":95,"note":""},{"id":"seawzsex","name":"Calf Press","reps":"10-15","scheme":"Ans Limit","start":95,"note":""},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","reps":"15","scheme":"3s aufwärts","start":9,"note":""}];
+const S=(w,r,rir=null)=>({w,r,rir});
+const SEED_LOGS=[{"id":"seed-1","date":"2026-07-27","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","note":"","entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","sets":[{"w":140,"r":7,"rir":0},{"w":140,"r":8,"rir":0},{"w":140,"r":7,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","sets":[{"w":150,"r":10,"rir":0},{"w":150,"r":9,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","sets":[{"w":57.5,"r":12,"rir":2},{"w":57.5,"r":11,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","sets":[{"w":50,"r":9,"rir":0},{"w":50,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","sets":[{"w":50,"r":11,"rir":1},{"w":50,"r":11,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":26,"rir":null}]}]},{"id":"seed-2","date":"2026-07-29","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","note":"Rudern: Bizeps spürbar (nach Übung, 24h ok). Latzug: Bizeps/Unterarm 3/10.","entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","sets":[{"w":90,"r":9,"rir":1},{"w":90,"r":9,"rir":0},{"w":90,"r":8,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","sets":[{"w":82,"r":10,"rir":0},{"w":82,"r":7,"rir":0},{"w":82,"r":7,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","sets":[{"w":20,"r":15,"rir":2},{"w":20,"r":15,"rir":0},{"w":20,"r":14,"rir":0}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","sets":[{"w":13.75,"r":20,"rir":null},{"w":13.75,"r":16,"rir":null}]}]},{"id":"seed-3","date":"2026-07-31","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","note":"Wadenpresse runter auf 42,5kg — besser gespürt.","entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","sets":[{"w":70,"r":7,"rir":3},{"w":70,"r":7,"rir":2},{"w":70,"r":9,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","sets":[{"w":70,"r":8,"rir":2},{"w":70,"r":9,"rir":1},{"w":70,"r":8,"rir":0}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","sets":[{"w":27.5,"r":10,"rir":0},{"w":27.5,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","sets":[{"w":65,"r":9,"rir":0},{"w":42.5,"r":10,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":28,"rir":null}]}]},{"id":"seed-4","date":"2026-08-02","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","note":"Seitheben + Pallof erstmalig.","entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","sets":[{"w":24,"r":14,"rir":2},{"w":24,"r":13,"rir":2},{"w":28,"r":12,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","sets":[{"w":14,"r":14,"rir":2},{"w":14,"r":14,"rir":2},{"w":16,"r":12,"rir":0}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","sets":[{"w":65,"r":10,"rir":2},{"w":65,"r":9,"rir":2},{"w":65,"r":9,"rir":null}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","sets":[{"w":3.75,"r":20,"rir":null},{"w":6.25,"r":15,"rir":null}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","sets":[{"w":18.75,"r":16,"rir":null}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","sets":[{"w":6.25,"r":10,"rir":null},{"w":6.25,"r":10,"rir":null}]}]},{"id":"seed-5","date":"2026-08-04","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","note":"","entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","sets":[{"w":140,"r":7,"rir":1},{"w":140,"r":6,"rir":1},{"w":140,"r":8,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","sets":[{"w":150,"r":10,"rir":2},{"w":150,"r":9,"rir":2},{"w":150,"r":10,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","sets":[{"w":50,"r":10,"rir":1},{"w":50,"r":10,"rir":null}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","sets":[{"w":57.5,"r":11,"rir":null},{"w":57.5,"r":12,"rir":null}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","sets":[{"w":50,"r":12,"rir":0},{"w":50,"r":11,"rir":null}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":38,"rir":null},{"w":0,"r":30,"rir":null}]}]},{"id":"seed-6","date":"2026-08-06","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","note":"","entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","sets":[{"w":80,"r":10,"rir":2},{"w":80,"r":9,"rir":2},{"w":80,"r":9,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","sets":[{"w":75,"r":11,"rir":2},{"w":75,"r":11,"rir":2},{"w":75,"r":8,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","sets":[{"w":22,"r":15,"rir":2},{"w":22,"r":15,"rir":2},{"w":22,"r":11,"rir":0}]},{"exerciseId":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","sets":[{"w":35,"r":10,"rir":0},{"w":35,"r":10,"rir":0}]},{"exerciseId":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","sets":[{"w":6.25,"r":15,"rir":null},{"w":6.25,"r":15,"rir":null}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","sets":[{"w":13.75,"r":11,"rir":null},{"w":13.75,"r":12,"rir":null}]}]},{"id":"seed-7","date":"2026-08-08","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","note":"Beinpresse neu leicht/slow: 50kg RIR1-2.","entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","sets":[{"w":70,"r":8,"rir":2},{"w":70,"r":8,"rir":2},{"w":70,"r":9,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","sets":[{"w":50,"r":12,"rir":2},{"w":50,"r":14,"rir":1}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","sets":[{"w":27.5,"r":12,"rir":0},{"w":27.5,"r":11,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","sets":[{"w":50,"r":9,"rir":0},{"w":42.5,"r":10,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":28,"rir":null}]}]},{"id":"seed-8","date":"2026-08-11","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","note":"Seitheben RIR1 statt Antest RIR2-3. Pushdown-Gewicht korrigiert (18,75kg).","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"wenig","befinden":7},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","sets":[{"w":28,"r":13,"rir":2},{"w":28,"r":12,"rir":2},{"w":28,"r":10,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","sets":[{"w":16,"r":15,"rir":2},{"w":16,"r":13,"rir":1},{"w":16,"r":11,"rir":1}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","sets":[{"w":65,"r":11,"rir":2},{"w":65,"r":10,"rir":2},{"w":65,"r":9,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","sets":[{"w":5,"r":15,"rir":1},{"w":5,"r":13,"rir":1}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","sets":[{"w":18.75,"r":13,"rir":0},{"w":18.75,"r":11,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","sets":[{"w":5,"r":11,"rir":0},{"w":5,"r":9,"rir":0}]}]},{"id":"sbmyqrjz","date":"2026-08-17","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","warmup":["5min Rad locker","Hüftmobilität"],"note":"","checkin":{"gefuehl":"normal","schlaf":"schlecht","essen":"normal","befinden":4},"entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":80,"r":7,"rir":2},{"w":80,"r":7,"rir":2},{"w":80,"r":7,"rir":1}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","note":"L/R, leichter, kontrolliert","exNote":"","sets":[{"w":75,"r":7,"rir":1},{"w":50,"r":12,"rir":1}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":27.5,"r":12,"rir":0},{"w":27.5,"r":11,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","note":"L/R, volle Dehnung","exNote":"Übung auf Calf Extension getauscht ","sets":[{"w":0,"r":17,"rir":2},{"w":95,"r":13,"rir":2}]},{"exerciseId":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":5,"r":17,"rir":null},{"w":5,"r":15,"rir":null},{"w":5,"r":15,"rir":null}]}]},{"id":"m429hnww","date":"2026-08-19","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"note":"","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"normal","befinden":7},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","note":"","exNote":"Bissl instabil nach der Erhöhung aber sonst gut","sets":[{"w":30,"r":9,"rir":2},{"w":30,"r":8,"rir":2},{"w":30,"r":9,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","note":"sitzend, Lehne 80-85°","exNote":"","sets":[{"w":18,"r":12,"rir":1},{"w":18,"r":10,"rir":1},{"w":18,"r":9,"rir":1}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","note":"","exNote":"Leichtes bizeps ziehen 2/10","sets":[{"w":65,"r":12,"rir":2},{"w":65,"r":11,"rir":2},{"w":65,"r":9,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","note":"Handschlaufe, bis Schulterhöhe","exNote":"","sets":[{"w":0,"r":15,"rir":2},{"w":0,"r":14,"rir":2}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":18.75,"r":16,"rir":0},{"w":18.75,"r":13,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","note":"","exNote":"Loch 12 rein auf Nippelhöhe, warum keine Rotorenbewegung","sets":[{"w":0,"r":20,"rir":4},{"w":0,"r":14,"rir":2}]}]},{"id":"wdptaz7u","date":"2026-08-21","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"note":"","checkin":{"gefuehl":"stark","schlaf":"normal","essen":"normal","befinden":7},"entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","note":"Kopf neutral","exNote":"","sets":[{"w":140,"r":7,"rir":2},{"w":140,"r":7,"rir":2},{"w":140,"r":8,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":150,"r":11,"rir":2},{"w":150,"r":11,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":57.5,"r":14,"rir":1},{"w":57.5,"r":11,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","note":"slow nicht opfern","exNote":"","sets":[{"w":52.5,"r":10,"rir":0},{"w":52.5,"r":9,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Calf Extension","reps":"8-12","scheme":"ans Limit","note":"L/R, volle Dehnung","exNote":"","swapped":true,"sets":[{"w":95,"r":17,"rir":0},{"w":95,"r":14,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":44,"rir":0},{"w":0,"r":36,"rir":0}]},{"exerciseId":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":6,"r":17,"rir":0},{"w":6,"r":15,"rir":null},{"w":6,"r":12,"rir":null}]}],"deload":false},{"id":"sr3gtimu","date":"2026-08-23","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"note":"Fühl mich fit und energievoll direkt nach der Einheit","checkin":{"gefuehl":"stark","schlaf":"normal","essen":"normal","befinden":8},"entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","note":"Rücken spüren, nicht Griff","exNote":"","sets":[{"w":90,"r":8,"rir":2},{"w":90,"r":7,"rir":2},{"w":90,"r":7,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","note":"","exNote":"","sets":[{"w":75,"r":11,"rir":1},{"w":75,"r":10,"rir":2},{"w":75,"r":8,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","note":"","exNote":"Zwischen satz 2 und 3 lange pause","sets":[{"w":26,"r":12,"rir":2},{"w":26,"r":10,"rir":1},{"w":23,"r":14,"rir":3}]},{"exerciseId":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":35,"r":12,"rir":0},{"w":35,"r":11,"rir":0}]},{"exerciseId":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":6.25,"r":14,"rir":0},{"w":6.25,"r":12,"rir":0}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","note":"Daumen nach hinten, max 15kg","exNote":"","sets":[{"w":13.75,"r":13,"rir":1},{"w":13.75,"r":13,"rir":0}]}]},{"id":"6skdjqa2","date":"2026-08-25","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","warmup":["5min Rad locker","Hüftmobilität"],"note":"","checkin":{"gefuehl":"schwach","schlaf":"normal","essen":"normal","befinden":4},"entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":90,"r":7,"rir":1},{"w":90,"r":6,"rir":1},{"w":90,"r":6,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","note":"L/R, leichter, kontrolliert","exNote":"","sets":[{"w":50,"r":12,"rir":2}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"Hier hab ich das gefühl ich bleib stehen kein progress","sets":[{"w":27.5,"r":9,"rir":0}]},{"exerciseId":"seawzsex","name":"Calf Press","reps":"8-12","scheme":"Ans Limit","note":"","exNote":"","sets":[{"w":95,"r":13,"rir":1},{"w":95,"r":14,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":54,"rir":0},{"w":0,"r":34,"rir":0}]},{"exerciseId":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"Rechte Handgelenke bei Extension ","sets":[{"w":6,"r":20,"rir":0},{"w":6,"r":12,"rir":0},{"w":6,"r":12,"rir":0}]}]},{"id":"pe5llmvv","date":"2026-08-27","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"note":"","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"wenig","befinden":3},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":30,"r":9,"rir":2},{"w":30,"r":9,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","note":"sitzend, Lehne 80-85°","exNote":"","sets":[{"w":20,"r":8,"rir":1},{"w":20,"r":8,"rir":1},{"w":20,"r":8,"rir":0}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":70,"r":9,"rir":2},{"w":70,"r":8,"rir":1},{"w":70,"r":8,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","note":"Handschlaufe, bis Schulterhöhe","exNote":"","sets":[{"w":5,"r":17,"rir":1},{"w":5,"r":15,"rir":2}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":0,"r":13,"rir":1},{"w":0,"r":12,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","note":"","exNote":"","sets":[{"w":0,"r":16,"rir":null},{"w":0,"r":13,"rir":null}]}]},{"id":"zav10h39","date":"2026-08-29","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"note":"Fühl mich gut","checkin":{"gefuehl":"normal","schlaf":"gut","essen":"normal","befinden":8},"entries":[{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":150,"r":12,"rir":2},{"w":150,"r":12,"rir":2},{"w":150,"r":12,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":0,"r":12,"rir":0},{"w":0,"r":9,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","note":"slow nicht opfern","exNote":"","sets":[{"w":52.5,"r":9,"rir":0},{"w":52.5,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":40,"r":14,"rir":0},{"w":40,"r":14,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":44,"rir":0},{"w":0,"r":34,"rir":0}]},{"exerciseId":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":6,"r":15,"rir":0},{"w":6,"r":15,"rir":0},{"w":6,"r":15,"rir":null}]}],"deload":false}];
+const MUSCLE_GROUPS={"hack-squat":"Quads","beinpresse-einbeinig":"Quads","beinstrecker":"Quads","beinbeuger-liegend":"Hamstrings","beinbeuger-sitzend":"Hamstrings","deadlift":"Glutes/Hinge","hip-thrust":"Glutes/Hinge","wadenpresse-oben":"Waden","wadenpresse-unten":"Waden","schraegbank":"Brust","bankdruecken":"Brust","schulterdruecken":"Schulter","seitheben":"Schulter","rudermaschine":"Rücken","rudern-kabel":"Rücken","latzug":"Rücken","ueberzug":"Rücken","reverse-fly":"Hint. Schulter","pushdown":"Trizeps"};
+// ================= Helpers =================
+const APP_VERSION="v14";
+const uid=()=>Math.random().toString(36).slice(2,10);
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
+const e1rm=(w,r)=>(w>0&&r>0?Math.round(w*(1+r/30)*10)/10:0);
+const roundPlate=w=>Math.round(w/2.5)*2.5;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function rirRange(scheme,si,n){if(!scheme)return null;if(/2\/2\/0/.test(scheme))return si===n-1?[0,1]:[2,2];if(/limit/i.test(scheme))return[0,0];const m=scheme.match(/RIR\s?(\d)(?:\s?-\s?(\d))?/i);if(m)return[+m[1],+(m[2]??m[1])];return null}
+function rirStatus(range,rir){if(!range||rir===null||rir===undefined)return null;const[lo,hi]=range;if(rir>=lo&&rir<=hi)return"g";if(rir===lo-1||rir===hi+1)return"y";if(rir<lo-1)return"r";return"y"}
+// ================= Storage (localStorage mit Fallback) =================
+let MEM={},useMem=false;
+try{localStorage.setItem("__t","1");localStorage.removeItem("__t")}catch(e){useMem=true}
+const st={get:k=>{try{return useMem?(MEM[k]??null):localStorage.getItem("tl_"+k)}catch(e){return MEM[k]??null}},
+set:(k,v)=>{MEM[k]=v;try{if(!useMem)localStorage.setItem("tl_"+k,v)}catch(e){}},
+del:k=>{delete MEM[k];try{if(!useMem)localStorage.removeItem("tl_"+k)}catch(e){}}};
+const loadJ=(k,fb)=>{const v=st.get(k);if(v===null)return fb;try{return JSON.parse(v)}catch(e){return fb}};
+const saveJ=(k,v)=>st.set(k,JSON.stringify(v));
+// ================= State =================
+let state={plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",statMode:"gruppen",absTmp:null,tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
+function boot(){
+  state.plans=loadJ("plans",null)||[DEFAULT_PLAN];
+  let logs=loadJ("logs",[]);
+  const ids=new Set(logs.map(l=>l.id));
+  const miss=SEED_LOGS.filter(s=>!ids.has(s.id));
+  if(miss.length){logs=[...miss,...logs].sort((a,b)=>a.date.localeCompare(b.date))}
+  state.logs=logs;
+  state.settings=loadJ("settings",null)||{cycleStart:"2026-07-27",activePlanId:DEFAULT_PLAN.id};
+  if(!loadJ("plans",null))saveJ("plans",state.plans);
+  saveJ("logs",state.logs);saveJ("settings",state.settings);
+  let lib=loadJ("library",null);
+  if(!lib||!lib.length){lib=JSON.parse(JSON.stringify(SEED_LIB));saveJ("library",lib)}
+  else{const have=new Set(lib.map(e=>e.id));SEED_LIB.forEach(e=>{if(!have.has(e.id))lib.push(JSON.parse(JSON.stringify(e)))});saveJ("library",lib)}
+  state.library=lib;
+  state.analyses=loadJ("analyses",[]);
+  const cleaned=migrateDupes();
+  const draft=loadJ("draft",null);
+  if(draft&&draft.entries&&draft.entries.length)state.active=draft;
+  render();
+  if(cleaned)setTimeout(()=>toast("Doppelte Übungen zusammengeführt ✓"),600);
+  if(useMem)banner("⚠ Kein dauerhafter Speicher verfügbar (Vorschau-Modus?). Datei herunterladen und in Safari öffnen — sonst gehen Daten beim Schließen verloren.");
+}
+// ================= Kern-Logik =================
+const activePlan=()=>state.plans.find(p=>p.id===state.settings.activePlanId)||state.plans[0];
+const weeks=()=>Math.floor((Date.now()-new Date(state.settings.cycleStart).getTime())/6048e5);
+const DELOAD_AFTER=21; // Einheiten pro Zyklus (~6 Wochen bei jedem 2. Tag)
+const sessionsSinceCycle=()=>state.logs.filter(l=>!l.deload&&l.date>=state.settings.cycleStart).length;
+const deloadDue=()=>sessionsSinceCycle()>=DELOAD_AFTER;
+function daysSinceLast(){const l=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));if(!l.length)return 0;
+  return Math.floor((Date.now()-new Date(l[l.length-1].date).getTime())/864e5)}
+function lastByEx(){const m={};[...state.logs].filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
+// Rückschritt erkennen: letzte Einheit schwächer als die davor (Tagesform)
+function prevBetter(exId){
+  const ws=state.logs.filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date))
+    .map(l=>{const e=l.entries.find(x=>x.exerciseId===exId);if(!e)return null;
+      const w=Math.max(...e.sets.map(s=>+s.w||0));return w>0?w:null}).filter(Boolean);
+  if(ws.length<2)return null;
+  const last=ws[ws.length-1],prev=ws[ws.length-2];
+  return last<prev?{last,prev}:null;
+}
+function performanceDrop(){
+  const ls=state.logs.filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date)).slice(-4);
+  if(ls.length<3)return 0;
+  const byEx={};
+  ls.forEach((l,i)=>l.entries.forEach(e=>{if(!MUSCLE_GROUPS[e.exerciseId])return;
+    const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);if(b>0)(byEx[e.exerciseId]=byEx[e.exerciseId]||[]).push(b)}));
+  let drop=0,tot=0;
+  Object.values(byEx).forEach(v=>{if(v.length<2)return;tot++;if(v[v.length-1]<Math.max(...v.slice(0,-1))*0.97)drop++});
+  return tot>=4&&drop/tot>=0.5?drop:0;
+}
+// Abwesenheiten
+const absSoon=()=>{const a=(state.settings.absences||[]).map(x=>x).sort((p,q)=>p.from.localeCompare(q.from));
+  const t=todayISO();return a.find(x=>x.to>=t&&(new Date(x.from)-new Date(t))/864e5<=10)||null};
+const inAbsence=()=>{const t=todayISO();return (state.settings.absences||[]).find(x=>x.from<=t&&x.to>=t)||null};
+function stagnationFor(exId){
+  const pts=state.logs.filter(l=>!l.deload).sort((a,b)=>a.date.localeCompare(b.date))
+    .map(l=>{const e=l.entries.find(x=>x.exerciseId===exId);if(!e)return null;
+      const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?{v:b,date:l.date,rir:e.sets.map(s=>s.rir)}:null}).filter(Boolean);
+  if(pts.length<3)return null;
+  const last3=pts.slice(-3);const best=Math.max(...pts.slice(0,-3).map(p=>p.v),last3[0].v);
+  const noGain=last3.every(p=>p.v<=best*1.005);
+  if(!noGain)return null;
+  const n=pts.length-pts.findIndex(p=>p.v>=best*0.995);
+  const allOut=last3.every(p=>p.rir.some(r=>r===0));
+  if(pts.length>=5&&last3.every((p,i)=>i===0||p.v<=last3[i-1].v*1.001)&&allOut)
+    return{lvl:2,txt:"Stagnation über "+last3.length+" Einheiten trotz RIR0 → Übungs-Deload empfohlen: −10% für 1 Einheit, dann neu aufbauen",w:null};
+  return{lvl:1,txt:"Kein Zuwachs über "+last3.length+" Einheiten → Gewicht halten, Wdh im Zielbereich ausreizen (Technik/Tempo sauber)",w:null};
+}
+function recommendFor(entry){
+  if(/prehab/i.test(entry.scheme||""))return null;
+  const last=lastByEx()[entry.exerciseId];if(!last)return null;
+  const ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
+  const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
+  const lo=+m[1],hi=+m[2];const s1=ls[0];const w=+s1.w||0;if(!w)return null;
+  if(s1.r>=hi&&(s1.rir==null||s1.rir>=1))return{w:roundPlate(w+2.5),txt:"+2,5kg — Zielbereich oben erreicht ("+w+"×"+s1.r+")"};
+  if(ls.every(s=>s.r<lo&&s.rir===0))return{w:roundPlate(Math.max(w-2.5,0)),txt:"−2,5kg — unter Zielbereich trotz RIR0"};
+  return null;
+}
+function pushUndo(){state.undo.push(JSON.stringify(state.active));if(state.undo.length>100)state.undo.shift();updUndoBtn()}
+function doUndo(){const p=state.undo.pop();if(p){state.active=JSON.parse(p);draftSave();render()}}
+let draftT=null;function draftSave(){clearTimeout(draftT);draftT=setTimeout(()=>{if(state.active)saveJ("draft",state.active)},400)}
+function startSession(sid){
+  const s=activePlan().sessions.find(x=>x.id===sid);const last=lastByEx();
+  state.undo=[];
+  state.active={id:uid(),date:todayISO(),planId:activePlan().id,sessionId:s.id,sessionName:s.name,warmup:s.warmup||[],note:"",
+    checkin:{gefuehl:null,schlaf:null,essen:null,befinden:null},
+    entries:s.exercises.map(ex=>{const lv=last[ex.id];return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,note:ex.note||"",exNote:"",
+      sets:Array.from({length:ex.sets},(_,i)=>({w:lv&&lv.sets[i]?lv.sets[i].w:ex.start,r:"",rir:null}))}})};
+  saveJ("draft",state.active);render();
+}
+function finishSession(){
+  const c={...state.active,entries:state.active.entries.map(e=>({...e,sets:e.sets.filter(s=>s.r!==""&&+s.r>0).map(s=>({w:+s.w||0,r:+s.r,rir:s.rir}))})).filter(e=>e.sets.length)};
+  if(!c.entries.length){toast("Keine Sätze eingetragen");return}
+  state.logs=[...state.logs,c].sort((a,b)=>a.date.localeCompare(b.date));
+  saveJ("logs",state.logs);st.del("draft");state.active=null;state.undo=[];state.tab="statistik";render();toast("Einheit gespeichert ✓");
+}
+function cancelSession(){st.del("draft");state.active=null;state.undo=[];render()}
+// ================= UI-Basis =================
+const $=id=>document.getElementById(id);
+function toast(msg){$("toastbox").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>$("toastbox").innerHTML="",2500)}
+function banner(msg){$("hbanner").innerHTML='<div class="card warn" style="margin-top:8px;padding:9px 12px;font-size:12px;color:var(--amb)">'+esc(msg)+'</div>'}
+function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===0}}
+function render(){
+  $("hinfo").textContent=APP_VERSION+" · "+activePlan().name+" · "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh.";
+  const dl=deloadDue();
+  let bn="";
+  const AMB='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(245,158,11,.14);color:var(--amb);font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
+  const SKY='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(56,189,248,.1);color:var(--sky);font-weight:700;border:1px solid rgba(56,189,248,.35);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
+  const abs=absSoon(),inAbs=inAbsence(),pdrop=performanceDrop();
+  if(state.tab==="training"&&!state.active){
+    if(inAbs)bn='<div '+SKY+'>🏖 Abwesenheit bis '+fmtD(inAbs.to)+' — kein Deload nötig</div>';
+    else if(abs)bn='<div '+SKY+'>🏖 Pause ab '+fmtD(abs.from)+' — Deload nicht nötig</div>';
+    else if(dl)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Deload fällig ('+sessionsSinceCycle()+' Einh.) ›</button>';
+    else{
+      const rec3=[...state.logs].filter(l=>!l.deload).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+      const bad=rec3.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
+      if(pdrop)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Leistungsabfall bei '+pdrop+' Übungen — Deload ›</button>';
+      else if(rec3.length>=3&&bad>=2)bn='<div '+SKY+'>ℹ️ Erholungssignale ('+bad+'/3) — Deload erwägen</div>';
+      else if(daysSinceLast()>=8&&sessionsSinceCycle()>=8)bn='<button '+SKY+' onclick="pauseAsDeload()">ℹ️ '+daysSinceLast()+' Tage Pause — als Deload werten ›</button>';
+    }
+  }
+  $("hbanner").innerHTML=bn;
+  $("nav").innerHTML=[["training","Training"],["kalender","Kalender"],["plaene","Pläne"],["statistik","Statistik"],["ki","KI"]].map(([id,l])=>'<button class="'+(state.tab===id?"on":"")+'" onclick="go(\''+id+'\')">'+l+'</button>').join("");
+  const m=$("main");
+  if(state.tab==="training")m.innerHTML=state.active?vLogger():vHome();
+  else if(state.tab==="kalender")m.innerHTML=vCal();
+  else if(state.tab==="ki")m.innerHTML=vAI();
+  else if(state.tab==="plaene")m.innerHTML=vPlans();
+  else if(state.tab==="statistik")m.innerHTML=vStats();
+  else if(state.tab==="deload")m.innerHTML=vDeload();
+  if(state.tab==="statistik")drawCharts();
+  updUndoBtn();
+}
+function go(t){state.tab=t;state.confirmDel=null;render();window.scrollTo(0,0)}
+// ================= Training Home =================
+function vHome(){
+  const p=activePlan();const ll=[...state.logs].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const order=p.sessions.map(s=>s.id);let next=order[0];
+  if(ll&&order.includes(ll.sessionId))next=order[(order.indexOf(ll.sessionId)+1)%order.length];
+  let h=ll?'<p class="tiny mono">Zuletzt: '+esc(ll.sessionName)+' am '+fmtD(ll.date)+'</p>':"";
+  p.sessions.forEach(s=>{const isN=s.id===next;
+    h+='<button class="card'+(isN?" hl":"")+'" style="text-align:left;width:100%" onclick="startSession(\''+s.id+'\')">'
+    +'<div class="row" style="justify-content:space-between"><span><b style="font-size:17px">'+esc(s.name)+'</b> <span class="small">'+esc(s.sub||"")+'</span></span>'
+    +(isN?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Dran →</span>':"")+'</div>'
+    +'<p class="tiny" style="margin-top:4px">'+s.exercises.length+' Übungen · '+s.exercises.slice(0,3).map(e=>esc(e.name.split(" ")[0])).join(", ")+'…</p></button>'});
+  h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Regeln</p>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</div>';
+  return h;
+}
+// ================= Logger =================
+function vLogger(){
+  const a=state.active;
+  let h='<div class="row" style="justify-content:space-between"><h2>'+esc(a.sessionName)+'</h2><div class="row">'
+  +'<button id="undobtn" class="chip" onclick="doUndo()">↩ Rückgängig</button><span class="tiny mono">'+fmtD(a.date)+'</span></div></div>';
+  if(a.warmup&&a.warmup.length)h+='<div class="card" style="padding:10px 12px"><p class="lbl" style="margin-bottom:4px">Warmup</p>'+a.warmup.map(w=>'<p class="tiny">· '+esc(w)+'</p>').join("")+'</div>';
+  // Check-in
+  const ci=a.checkin||{};
+  const ciRow=(lbl,key,opts,cls)=>'<div class="row"><span class="tiny" style="width:56px">'+lbl+'</span>'+opts.map((o,i)=>'<button class="chip'+(ci[key]===o?" "+cls[i]:"")+'" style="flex:1" onclick="setCI(\''+key+'\',\''+o+'\')">'+o+'</button>').join("")+'</div>';
+  const bf=ci.befinden;
+  h+='<div class="card" style="display:flex;flex-direction:column;gap:8px"><p class="lbl">Check-in</p>'
+  +ciRow("Gefühl","gefuehl",["stark","normal","schwach"],["on-g","on-n","on-r"])
+  +ciRow("Schlaf","schlaf",["gut","normal","schlecht"],["on-g","on-n","on-r"])
+  +ciRow("Essen","essen",["viel","normal","wenig"],["on-g","on-n","on-a"])
+  +'<div class="row"><span class="tiny" style="width:56px">Befinden</span><input type="range" min="0" max="10" value="'+(bf??5)+'" oninput="setBef(this.value)"><b id="befval" class="mono" style="width:26px;text-align:center;color:'+(bf==null?"var(--dim)":bf>=7?"var(--grn)":bf>=4?"var(--amb)":"var(--red2)")+'">'+(bf??"—")+'</b></div></div>';
+  // Deload-Schalter
+  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="pushUndo();state.active.deload=this.checked;draftSave();render()"> Deload aktivieren (-30%, 3-4 RIR)</label></div>';
+  // Übungen
+  const lbe=lastByEx();
+  a.entries.forEach((e,ei)=>{
+    const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
+    const rec=a.deload?null:recommendFor(e);
+    const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>+x.w||0)):0;
+    const dlW=dlBase?roundPlate(dlBase*0.7):0;
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="exname">'+esc(e.name)+(e.swapped?' <span style="color:var(--sky);font-size:11px;font-weight:400">⇄ getauscht</span>':"")+'</span>'
+    +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
+    if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
+    if(rec)h+='<button class="rec" style="width:100%;text-align:left;cursor:pointer" onclick="applyRec('+ei+','+rec.w+')">🎯 Empfehlung: <b>'+rec.w+'kg</b> — '+esc(rec.txt)+' · <u>übernehmen</u></button>';
+    if(!a.deload){const la=(state.analyses||[]).slice(-1)[0];const ar=la&&(la.empfehlungen||[]).find(r=>r.exerciseId===e.exerciseId);
+      if(ar)h+='<'+(ar.gewicht?'button onclick="applyRec('+ei+','+ar.gewicht+')"':'div')+' style="width:100%;text-align:left;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--grn);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0'+(ar.gewicht?';cursor:pointer':'')+'">🤖 KI: '+esc(ar.ziel)+(ar.grund?' — '+esc(ar.grund):'')+(ar.gewicht?' · <u>übernehmen</u>':'')+'</'+(ar.gewicht?'button':'div')+'>'}
+    if(!rec&&!a.deload){const stg=stagnationFor(e.exerciseId);
+      if(stg){const base=lastSets.length?Math.max(...lastSets.map(x=>+x.w||0)):0;const rw=stg.lvl===2&&base?roundPlate(base*0.9):0;
+        h+='<'+(rw?'button onclick="applyRec('+ei+','+rw+')"':'div')+' style="width:100%;text-align:left;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0'+(rw?';cursor:pointer':'')+'">📉 '+esc(stg.txt)+(rw?' · <b>'+rw+'kg</b> <u>übernehmen</u>':'')+'</'+(rw?'button':'div')+'>'}
+      else{const pb=prevBetter(e.exerciseId);
+        if(pb)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+pb.prev+')">↩ Letzte Einheit nur '+pb.last+'kg (davor '+pb.prev+'kg) — bei Tagesform-Einbruch: <b>'+pb.prev+'kg</b> <u>zurücksetzen</u></button>'}}
+    if(dlW)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--amb);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+dlW+')">⬇ Deload: <b>'+dlW+'kg</b> (−30% von '+dlBase+'kg) · RIR 3-4 · <u>übernehmen</u></button>';
+    h+='<div style="display:flex;flex-direction:column;gap:7px">';
+    e.sets.forEach((s,si)=>{
+      const lr=lastSets[si]&&lastSets[si].r?lastSets[si].r:"";
+      h+='<div class="setrow"><div class="row" style="gap:6px">'
+      +'<button class="tiny mono" style="width:18px;background:none;border:none;color:'+(lr?"var(--sky)":"var(--dim)")+';padding:0;font-size:13px" title="Vorwert übernehmen" onclick="fillR('+ei+','+si+')">'+(si+1)+'</button>'
+      +'<span style="flex:1.3"><input type="text" inputmode="decimal" class="win mono" id="w-'+ei+'-'+si+'" value="'+esc(s.w)+'" oninput="setW('+ei+','+si+',this.value)" onfocus="pushUndo();this.select()"></span>'
+      +'<span class="tiny" style="width:14px;text-align:center">×</span>'
+      +'<span style="flex:1"><input type="text" inputmode="numeric" class="winr mono" id="r-'+ei+'-'+si+'" value="'+esc(s.r)+'" placeholder="'+esc(lr)+'" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo();this.select()"></span></div>'
+      +'<div class="row" style="gap:4px;justify-content:flex-end" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</div></div>';
+    });
+    h+='</div><div class="row" style="margin-top:8px"><button class="chip" onclick="addSet('+ei+')">+ Satz</button>'
+    +'<input type="text" style="flex:1;font-size:12px;padding:7px 9px" placeholder="Notiz zur Übung…" value="'+esc(e.exNote||"")+'" oninput="setExNote('+ei+',this.value)" onfocus="pushUndo()"></div>';
+    h+='</div>';
+  });
+  h+='<textarea rows="3" placeholder="Notiz zur Einheit (Energie, Gelenke, Folgeübungen frisch/platt…)" oninput="setNote(this.value)" onfocus="pushUndo()">'+esc(a.note||"")+'</textarea>';
+  h+='<div class="row"><button class="btn dim" style="flex:1" onclick="cancelSession()">Abbrechen</button><button class="btn red" style="flex:1" onclick="finishSession()">Einheit speichern</button></div>';
+  return h;
+}
+function rirChips(e,ei,si){const s=e.sets[si];const rg=rirRange(e.scheme,si,e.sets.length);const stt=rirStatus(rg,s.rir);
+  return[0,1,2,3,4].map(n=>{let cls="rir";if(s.rir===n)cls+=" "+(stt||"d");return'<button class="'+cls+'" onclick="setRir('+ei+','+si+','+n+')">'+n+'</button>'}).join("")}
+function setCI(k,v){pushUndo();state.active.checkin[k]=state.active.checkin[k]===v?null:v;draftSave();render()}
+function setBef(v){state.active.checkin.befinden=+v;const b=$("befval");if(b){b.textContent=v;b.style.color=v>=7?"var(--grn)":v>=4?"var(--amb)":"var(--red2)"}draftSave()}
+function setW(ei,si,v){state.active.entries[ei].sets[si].w=v;draftSave()}
+function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
+function setRir(ei,si,n){pushUndo();const s=state.active.entries[ei].sets[si];s.rir=s.rir===n?null:n;draftSave();const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(state.active.entries[ei],ei,si)}
+function setExNote(ei,v){state.active.entries[ei].exNote=v;draftSave()}
+function setNote(v){state.active.note=v;draftSave()}
+function fillR(ei,si){const lbe=lastByEx();const ls=lbe[state.active.entries[ei].exerciseId];const lr=ls&&ls.sets[si]?ls.sets[si].r:null;if(!lr)return;
+  pushUndo();state.active.entries[ei].sets[si].r=lr;const inp=$("r-"+ei+"-"+si);if(inp)inp.value=lr;draftSave()}
+function applyRec(ei,w){pushUndo();state.active.entries[ei].sets.forEach((s,si)=>{s.w=w;const inp=$("w-"+ei+"-"+si);if(inp)inp.value=w});draftSave();toast("Gewicht übernommen: "+w+"kg")}
+function addSet(ei){pushUndo();const e=state.active.entries[ei];e.sets.push({w:e.sets[e.sets.length-1]?.w||0,r:"",rir:null});draftSave();render()}
+// Swap
+function openSwap(ei){
+  let h='<div class="sheet-bg" onclick="closeSwap(event)"><div class="sheet" onclick="event.stopPropagation()">'
+  +'<div class="row" style="justify-content:space-between;margin-bottom:6px"><b>Übung tauschen</b><button class="chip" onclick="closeSwap()">✕</button></div>'
+  +'<p class="tiny" style="margin-bottom:8px">Gerät belegt? Ersatz wählen — letztes Gewicht wird vorbefüllt.</p>'
+  +'<input type="text" id="swapsearch" placeholder="Übung suchen…" oninput="filterSwap('+ei+',this.value)" style="margin-bottom:6px">'
+  +'<div id="swaplist">'+swapList(ei,"")+'</div></div></div>';
+  $("overlay").innerHTML=h;setTimeout(()=>{const i=$("swapsearch");if(i)i.focus()},50);
+}
+function swapList(ei,q){const f=state.library.filter(l=>l.name.toLowerCase().includes(q.toLowerCase()));
+  if(!f.length)return'<p class="tiny" style="text-align:center;padding:14px">Keine Übung gefunden. Neue unter Pläne → Bibliothek anlegen.</p>';
+  return f.map(l=>'<button class="libitem" onclick="doSwap('+ei+',\''+l.id+'\')"><b>'+esc(l.name)+'</b> <span class="tiny mono">'+esc(l.reps)+' · '+esc(l.scheme)+(l.start?' · '+l.start+'kg':"")+'</span></button>').join("")}
+function filterSwap(ei,q){$("swaplist").innerHTML=swapList(ei,q)}
+function doSwap(ei,libId){pushUndo();const lib=state.library.find(l=>l.id===libId);const last=lastByEx()[libId];
+  const n=Math.max(state.active.entries[ei].sets.length||2,2);
+  state.active.entries[ei]={exerciseId:lib.id,name:lib.name,reps:lib.reps,scheme:lib.scheme,note:lib.note||"",exNote:"",swapped:true,
+    sets:Array.from({length:n},(_,i)=>({w:last&&last.sets[i]?last.sets[i].w:lib.start,r:"",rir:null}))};
+  draftSave();closeSwap();render()}
+function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
+// ================= Pläne =================
+let editPlanId=null,showLib=false,showNewPlan=false;
+function vPlans(){
+  if(editPlanId)return vPlanEditor();
+  let h="";
+  state.plans.forEach(p=>{const act=p.id===state.settings.activePlanId;
+    h+='<div class="card'+(act?" hl":"")+'"><div class="row" style="justify-content:space-between"><div><b>'+esc(p.name)+'</b> <span class="tiny mono">v'+(p.version||1)+'</span><p class="tiny mono">'+p.sessions.length+' Einheiten · seit '+fmtD(p.createdAt)+'</p></div>'
+    +(act?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Aktiv</span>':"")+'</div>'
+    +(p.versions&&p.versions.length?'<details style="margin-top:6px"><summary class="tiny">Versionshistorie ('+p.versions.length+') ▼</summary><div style="margin-top:5px">'+[...p.versions].reverse().map(v=>'<div class="hline"><span class="tiny mono">v'+v.v+' · '+fmtD(v.date)+'</span><span class="tiny" style="text-align:right;max-width:60%">'+esc(v.comment)+'</span></div>').join("")+'</div></details>':"")
+    +'<div class="row" style="margin-top:10px">'
+    +(!act?'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button>':"")
+    +'<button class="chip" onclick="editPlan(\''+p.id+'\')">Bearbeiten</button>'
+    +(state.plans.length>1?'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Wirklich löschen?":"Löschen")+'</button>':"")
+    +'</div></div>'});
+  h+=showNewPlan
+    ?'<div class="card row"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
+    :'<button class="card" style="width:100%;border-style:dashed;color:var(--mut);font-weight:800;font-size:13px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>';
+  // Bibliothek
+  h+='<div class="card"><button style="width:100%;background:none;border:none;color:var(--tx);display:flex;justify-content:space-between;font-weight:900;font-size:15px" onclick="showLib=!showLib;render()"><span>Übungs-Bibliothek</span><span class="tiny mono">'+state.library.length+' Übungen '+(showLib?"▲":"▼")+'</span></button>';
+  if(showLib){
+    h+='<div style="margin-top:10px;max-height:260px;overflow-y:auto">';
+    if(state.mergeFrom)h+='<p class="tiny" style="color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:8px;padding:6px 9px;margin-bottom:6px">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'" werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;render()">Abbrechen</button></p>';
+    [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
+      const isSrc=state.mergeFrom===e.id;
+      const cnt=state.logs.reduce((a,l)=>a+l.entries.filter(x=>x.exerciseId===e.id).length,0);
+      if(state.renameId===e.id){
+        h+='<div class="row" style="gap:5px;background:rgba(56,189,248,.12);border-radius:8px;padding:7px 9px;margin-bottom:5px"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1;font-size:13px"><button class="chip" style="padding:7px 10px" onclick="doRename(\''+e.id+'\')">OK</button><button class="chip" style="padding:7px 9px" onclick="state.renameId=null;render()">✕</button></div>';
+        return;
+      }
+      h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny mono">'+esc(e.reps)+(cnt?' · '+cnt+'× geloggt':' · keine Daten')+'</span></span><span class="row" style="gap:4px">'
+      +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 7px;font-size:11px" onclick="state.renameId=\''+e.id+'\';render()">✎</button><button class="chip" style="padding:3px 7px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
+      +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></span></div>'});
+    h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="lbl">Neue Übung</p>'
+    +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
+    +'<div class="row"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"></div>'
+    +'<button class="chip" style="padding:10px" onclick="addLib()">+ In Bibliothek aufnehmen</button></div>';
+  }
+  h+='</div>';
+  return h;
+}
+function activatePlan(id){state.settings.activePlanId=id;state.settings.cycleStart=todayISO();saveJ("settings",state.settings);render();toast("Plan aktiviert, Zyklus gestartet")}
+function delPlan(id){if(state.confirmDel!=="p:"+id){state.confirmDel="p:"+id;render();setTimeout(()=>{if(state.confirmDel==="p:"+id){state.confirmDel=null;render()}},3000);return}
+  state.plans=state.plans.filter(p=>p.id!==id);saveJ("plans",state.plans);state.confirmDel=null;render();toast("Plan gelöscht (Logs bleiben)")}
+function addPlan(){const n=($("npname").value||"").trim();if(!n){toast("Bitte Namen eingeben");return}
+  const np={id:uid(),name:n,createdAt:todayISO(),rules:[],sessions:[]};state.plans.push(np);saveJ("plans",state.plans);showNewPlan=false;editPlanId=np.id;render()}
+function delLib(id){if(state.confirmDel!=="l:"+id){state.confirmDel="l:"+id;render();setTimeout(()=>{if(state.confirmDel==="l:"+id){state.confirmDel=null;render()}},3000);return}
+  state.library=state.library.filter(e=>e.id!==id);saveJ("library",state.library);state.confirmDel=null;render()}
+function addLib(){const n=($("lname").value||"").trim();if(!n){toast("Name fehlt");return}
+  const dup=state.library.find(e=>e.name.toLowerCase()===n.toLowerCase());
+  if(dup){toast("Übung existiert bereits — umbenennen statt neu anlegen");return}
+  state.library.push({id:uid(),name:n,reps:$("lreps").value||"8-12",scheme:$("lscheme").value||"RIR1-2",start:+($("lstart").value)||0,note:""});
+  saveJ("library",state.library);render();toast("Übung angelegt")}
+// Automatische Bereinigung: gleiche Namen zusammenführen, Karteileichen entfernen
+function migrateDupes(){
+  let changed=false;
+  const count=id=>state.logs.reduce((a,l)=>a+l.entries.filter(e=>e.exerciseId===id).length,0);
+  const byName={};
+  state.library.forEach(e=>{const k=e.name.trim().toLowerCase();(byName[k]=byName[k]||[]).push(e)});
+  Object.values(byName).forEach(group=>{
+    if(group.length<2)return;
+    const keep=group.slice().sort((a,b)=>count(b.id)-count(a.id))[0];
+    group.filter(e=>e.id!==keep.id).forEach(dup=>{
+      state.logs.forEach(l=>l.entries.forEach(e=>{if(e.exerciseId===dup.id){e.exerciseId=keep.id;e.name=keep.name}}));
+      state.plans.forEach(p=>p.sessions.forEach(s=>{
+        s.exercises.forEach(ex=>{if(ex.id===dup.id){ex.id=keep.id;ex.name=keep.name}});
+        const seen=new Set();s.exercises=s.exercises.filter(ex=>seen.has(ex.id)?false:(seen.add(ex.id),true));}));
+      state.library=state.library.filter(e=>e.id!==dup.id);changed=true;
+    });
+  });
+  // Karteileichen: keine Logs, in keinem Plan
+  const used=new Set(state.plans.flatMap(p=>p.sessions.flatMap(s=>s.exercises.map(e=>e.id))));
+  const before=state.library.length;
+  state.library=state.library.filter(e=>used.has(e.id)||count(e.id)>0);
+  if(state.library.length!==before)changed=true;
+  if(changed){saveJ("logs",state.logs);saveJ("plans",state.plans);saveJ("library",state.library)}
+  return changed;
+}
+function startMerge(id){state.mergeFrom=state.mergeFrom===id?null:id;state.renameId=null;render()}
+function doRename(id){
+  const inp=$("rn-"+id);const n=(inp?inp.value:"").trim();
+  if(!n){toast("Name darf nicht leer sein");return}
+  if(state.library.some(e=>e.id!==id&&e.name.trim().toLowerCase()===n.toLowerCase())){toast("Name existiert bereits — stattdessen zusammenführen (⇄)");return}
+  const lib=state.library.find(e=>e.id===id);if(lib)lib.name=n;
+  state.plans.forEach(p=>p.sessions.forEach(s=>s.exercises.forEach(ex=>{if(ex.id===id)ex.name=n})));
+  state.logs.forEach(l=>l.entries.forEach(e=>{if(e.exerciseId===id)e.name=n}));
+  saveJ("library",state.library);saveJ("plans",state.plans);saveJ("logs",state.logs);
+  state.renameId=null;render();toast("Umbenannt — alle Daten erhalten ✓")}
+function doMerge(toId){
+  const from=state.mergeFrom,fromEx=state.library.find(e=>e.id===from),toEx=state.library.find(e=>e.id===toId);
+  if(!from||from===toId||!toEx){state.mergeFrom=null;render();return}
+  let n=0;
+  state.logs.forEach(l=>l.entries.forEach(e=>{if(e.exerciseId===from){e.exerciseId=toId;e.name=toEx.name;n++}}));
+  state.plans.forEach(p=>p.sessions.forEach(s=>{s.exercises=s.exercises.filter((ex,i,arr)=>
+    !(ex.id===from&&arr.some(o=>o.id===toId)));s.exercises.forEach(ex=>{if(ex.id===from){ex.id=toId;ex.name=toEx.name}})}));
+  state.library=state.library.filter(e=>e.id!==from);
+  saveJ("logs",state.logs);saveJ("plans",state.plans);saveJ("library",state.library);
+  state.mergeFrom=null;render();toast(n+" Einträge übertragen: "+fromEx.name+" → "+toEx.name)}
+// Plan-Editor
+let pickFor=null,showNewSess=false;
+function editPlan(id){editPlanId=id;pickFor=null;showNewSess=false;state.tab="plaene";render()}
+function vPlanEditor(){
+  const p=state.plans.find(x=>x.id===editPlanId);
+  let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="editPlanId=null;render()">← Zurück</button><button class="btn red" style="width:auto;padding:10px 16px" onclick="savePlanEdit()">Speichern</button></div>';
+  h+='<input type="text" id="pename" value="'+esc(p.name)+'" style="font-weight:900;font-size:17px">';
+  h+='<input type="text" id="pecomment" placeholder="Kommentar zur neuen Version (Pflicht) — z.B. \'Seitheben auf 3 Sätze\'">';
+  p.sessions.forEach((s,si)=>{
+    h+='<div class="card" style="display:flex;flex-direction:column;gap:7px"><div class="row">'
+    +'<input type="text" style="width:90px;font-weight:800" value="'+esc(s.name)+'" oninput="peSess('+si+',\'name\',this.value)">'
+    +'<input type="text" style="flex:1;color:var(--mut)" placeholder="Fokus" value="'+esc(s.sub||"")+'" oninput="peSess('+si+',\'sub\',this.value)"></div>';
+    s.exercises.forEach((ex,ei)=>{
+      h+='<div style="border:1px solid var(--s2);border-radius:9px;padding:7px;display:flex;flex-direction:column;gap:5px">'
+      +'<div class="row"><span style="display:flex;flex-direction:column;gap:2px"><button class="chip" style="padding:1px 8px;font-size:11px" '+(ei===0?"disabled":"")+' onclick="peMove('+si+','+ei+',-1)">▲</button><button class="chip" style="padding:1px 8px;font-size:11px" '+(ei===s.exercises.length-1?"disabled":"")+' onclick="peMove('+si+','+ei+',1)">▼</button></span>'
+      +'<input type="text" style="flex:1;font-size:13px" value="'+esc(ex.name)+'" oninput="peEx('+si+','+ei+',\'name\',this.value)"><button class="del" onclick="peRm('+si+','+ei+')">✕</button></div>'
+      +'<div class="row"><input type="text" class="mono" style="width:42px;text-align:center;font-size:12px" title="Sätze" value="'+ex.sets+'" oninput="peEx('+si+','+ei+',\'sets\',this.value)">'
+      +'<input type="text" class="mono" style="width:60px;text-align:center;font-size:12px" title="Wdh" value="'+esc(ex.reps)+'" oninput="peEx('+si+','+ei+',\'reps\',this.value)">'
+      +'<input type="text" style="flex:1;font-size:12px" title="Schema" value="'+esc(ex.scheme)+'" oninput="peEx('+si+','+ei+',\'scheme\',this.value)">'
+      +'<input type="text" class="mono" style="width:56px;text-align:center;font-size:12px" title="Start-kg" value="'+ex.start+'" oninput="peEx('+si+','+ei+',\'start\',this.value)"></div></div>';
+    });
+    if(pickFor===si){
+      h+='<div style="border:1px solid rgba(56,189,248,.4);border-radius:9px;padding:8px;background:rgba(56,189,248,.05)">'
+      +'<div class="row"><input type="text" id="pesearch" placeholder="Bibliothek durchsuchen…" style="font-size:12px" oninput="peFilter('+si+',this.value)"><button class="chip" onclick="pickFor=null;render()">✕</button></div>'
+      +'<div id="pelist" style="max-height:160px;overflow-y:auto;margin-top:5px">'+peList(si,"")+'</div>'
+      +'<button class="chip" style="width:100%;margin-top:6px" onclick="peBlank('+si+')">＋ Ganz neue Übung anlegen</button></div>';
+    }else{
+      h+='<button style="background:none;border:none;color:var(--sky);font-size:12px;font-weight:700;text-align:left" onclick="pickFor='+si+';render();setTimeout(()=>$(\'pesearch\')&&$(\'pesearch\').focus(),50)">+ Übung aus Bibliothek</button>';
+    }
+    h+='</div>';
+  });
+  h+=showNewSess
+    ?'<div class="card row"><input type="text" id="nsname" placeholder="Name der Einheit (z.B. UK C)"><button class="btn red" style="width:auto;padding:10px 14px" onclick="peAddSess()">OK</button><button class="chip" onclick="showNewSess=false;render()">✕</button></div>'
+    :'<button class="card" style="width:100%;border-style:dashed;color:var(--mut);font-weight:800;font-size:13px" onclick="showNewSess=true;render()">+ Einheit hinzufügen</button>';
+  return h;
+}
+function peSess(si,f,v){state.plans.find(x=>x.id===editPlanId).sessions[si][f]=v}
+function peEx(si,ei,f,v){const ex=state.plans.find(x=>x.id===editPlanId).sessions[si].exercises[ei];ex[f]=(f==="sets"||f==="start")?(+v||0):v}
+function peRm(si,ei){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];s.exercises.splice(ei,1);render()}
+function peMove(si,ei,dir){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];const j=ei+dir;if(j<0||j>=s.exercises.length)return;
+  [s.exercises[ei],s.exercises[j]]=[s.exercises[j],s.exercises[ei]];render()}
+function peList(si,q){const f=state.library.filter(l=>l.name.toLowerCase().includes(q.toLowerCase()));
+  return f.map(l=>'<button class="libitem" style="padding:7px 9px;font-size:12px" onclick="peAdd('+si+',\''+l.id+'\')">'+esc(l.name)+' <span class="tiny mono">'+esc(l.reps)+'</span></button>').join("")||'<p class="tiny" style="padding:8px">Nichts gefunden.</p>'}
+function peFilter(si,q){$("pelist").innerHTML=peList(si,q)}
+function peAdd(si,libId){const lib=state.library.find(l=>l.id===libId);
+  state.plans.find(x=>x.id===editPlanId).sessions[si].exercises.push({id:lib.id,name:lib.name,sets:2,reps:lib.reps,scheme:lib.scheme,start:lib.start,note:lib.note||""});pickFor=null;render()}
+function peBlank(si){state.plans.find(x=>x.id===editPlanId).sessions[si].exercises.push({id:uid(),name:"Neue Übung",sets:2,reps:"8-12",scheme:"RIR1-2",start:0});pickFor=null;render()}
+function peAddSess(){const n=($("nsname").value||"").trim();if(!n)return;
+  state.plans.find(x=>x.id===editPlanId).sessions.push({id:uid(),name:n,sub:"",warmup:[],exercises:[]});showNewSess=false;render()}
+function savePlanEdit(){const p=state.plans.find(x=>x.id===editPlanId);p.name=$("pename").value||p.name;
+  const comment=($("pecomment").value||"").trim();
+  if(!comment){toast("Bitte Kommentar zur Version angeben");$("pecomment").focus();return}
+  p.version=(p.version||1)+1;
+  p.versions=[...(p.versions||[]),{v:p.version,date:todayISO(),comment,snapshot:JSON.parse(JSON.stringify(p.sessions))}];
+  if(p.versions.length>25)p.versions.shift();
+  saveJ("plans",state.plans);
+  // Bibliothek-Upsert
+  const map=Object.fromEntries(state.library.map(e=>[e.id,e]));
+  p.sessions.flatMap(s=>s.exercises).forEach(ex=>{map[ex.id]={id:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,start:ex.start,note:ex.note||""}});
+  state.library=Object.values(map);saveJ("library",state.library);
+  editPlanId=null;render();toast("Plan gespeichert als v"+p.version)}
+// ================= Statistik =================
+const RANGES={all:"Gesamt",year:"Jahr",month:"Monat",week:"Woche",last:"Letzte"};
+function rangeFilter(ls,r){
+  if(r==="all"||!r)return ls;
+  if(r==="last")return ls.slice(-1);
+  const days={year:365,month:30,week:7}[r];
+  const cut=new Date(Date.now()-days*864e5).toISOString().slice(0,10);
+  return ls.filter(l=>l.date>=cut);
+}
+function vStats(){
+  const p=state.plans.find(x=>x.id===(state.statPlan||state.settings.activePlanId))||activePlan();
+  state.statPlan=p.id;
+  const rng=state.statRange||"all";
+  const plAll=state.logs.filter(l=>l.planId===p.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const pl=rangeFilter(plAll,rng);
+  const allEx=p.sessions.flatMap(s=>s.exercises);
+  if(!state.statEx||!allEx.some(e=>e.id===state.statEx))state.statEx=allEx[0]?allEx[0].id:null;
+  const tonn=pl.map(l=>({d:fmtD(l.date),v:Math.round(l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.w*s.r,0),0))}));
+  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)).toFixed(1):"0";
+  let h='<select onchange="state.statPlan=this.value;state.statEx=null;render()">'+state.plans.map(x=>'<option value="'+x.id+'"'+(x.id===p.id?" selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select>';
+  h+='<div class="row" style="gap:4px">'+Object.keys(RANGES).map(k=>'<button class="chip'+(rng===k?" on-n":"")+'" style="flex:1;padding:7px 2px;font-size:11px" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
+  h+='<div class="stat3"><div class="card"><b class="mono">'+pl.length+'</b><p class="tiny">Einheiten</p></div><div class="card"><b class="mono">'+wk+'</b><p class="tiny">pro Woche</p></div><div class="card"><b class="mono">'+(tonn.length?Math.round(tonn.reduce((a,t)=>a+t.v,0)/tonn.length).toLocaleString("de-DE"):0)+'</b><p class="tiny">Ø Tonnage</p></div></div>';
+  // Gesamt-Zuwachs
+  const g=growth(pl,allEx);
+  if(g.overall!==null){
+    const mode=state.statMode||"gruppen";
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Zuwachs (e1RM)</span><b class="mono" style="font-size:17px;color:'+(g.overall>0?"var(--grn)":g.overall<0?"var(--red2)":"var(--mut)")+'">'+(g.overall>0?"+":"")+g.overall+'%</b></div>'
+    +'<div class="row" style="gap:4px;margin-bottom:8px"><button class="chip'+(mode==="gruppen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'gruppen\';render()">Muskelgruppen</button><button class="chip'+(mode==="uebungen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'uebungen\';render()">Übungen</button></div>';
+    if(mode==="gruppen")h+='<div id="gchart"></div>';
+    else h+=g.perEx.map(e=>'<div class="hline mono"><span style="color:var(--tx);flex:1">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(e.pct>0?"+":"")+e.pct.toFixed(1)+'%</b></span></div>').join("")||'<p class="tiny">Zu wenige Daten im Zeitraum.</p>';
+    h+='<p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core &amp; Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
+  }
+  // Übungs-Chart
+  h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Übung</p>'
+  +'<select onchange="state.statEx=this.value;render()">'+p.sessions.map(s=>s.exercises.map(ex=>'<option value="'+ex.id+'"'+(ex.id===state.statEx?" selected":"")+'>'+esc(s.name)+' — '+esc(ex.name)+'</option>').join("")).join("")+'</select>'
+  +'<div id="exchart" style="margin-top:8px"></div></div>';
+  // Tonnage
+  if(tonn.length>=2)h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Tonnage je Einheit (kg)</p><div id="tchart"></div></div>';
+  h+='<p class="tiny" style="text-align:center;padding:8px">Einzelne Einheiten findest du im Kalender — Tag antippen.</p>';
+  // Backup
+  h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">Daten-Backup</span><span class="tiny">▼</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
+  +'<div><p class="lbl" style="margin-bottom:4px">Sichern</p><p class="tiny" style="margin-bottom:6px">Backup kopieren und im Claude-Chat oder einer Notiz ablegen. Der Chat-Trainer kann daraus auch die Analyse machen.</p>'
+  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Backup erzeugen</button><button class="chip" style="padding:10px" onclick="dlBackup()">⬇ Datei</button></div>'
+  +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px;margin-top:6px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea><p class="tiny" style="color:var(--grn);margin-top:3px">Antippen = markiert & kopiert.</p>':'')
+  +'</div><div style="border-top:1px solid var(--s2);padding-top:10px"><p class="lbl" style="margin-bottom:4px">Wiederherstellen</p><p class="tiny" style="margin-bottom:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
+  +'<textarea rows="3" id="imptext" class="mono" style="font-size:11px" placeholder=\'{"version":1,...}\'></textarea>'
+  +'<button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></div></div></details>';
+  return h;
+}
+function growth(pl,allEx){
+  const nDeload=pl.filter(l=>l.deload).length;
+  pl=pl.filter(l=>!l.deload);
+  const perEx=[];
+  allEx.forEach(ex=>{const pts=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===ex.id);if(!e)return null;const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?b:null}).filter(Boolean);
+    const grp=MUSCLE_GROUPS[ex.id];
+    if(pts.length>=2&&grp)perEx.push({name:ex.name,group:grp,first:pts[0],last:pts[pts.length-1],pct:(pts[pts.length-1]-pts[0])/pts[0]*100})});
+  const byG={};perEx.forEach(e=>{(byG[e.group]=byG[e.group]||[]).push(e.pct)});
+  const groups=Object.entries(byG).map(([g,a])=>({g,v:Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10})).sort((a,b)=>b.v-a.v);
+  return{perEx:perEx.sort((a,b)=>b.pct-a.pct),groups,overall:perEx.length?Math.round(perEx.reduce((a,e)=>a+e.pct,0)/perEx.length*10)/10:null,nDeload};
+}
+function delLog(id){if(state.confirmDel!=="h:"+id){state.confirmDel="h:"+id;render();setTimeout(()=>{if(state.confirmDel==="h:"+id){state.confirmDel=null;render()}},3000);return}
+  state.logs=state.logs.filter(l=>l.id!==id);saveJ("logs",state.logs);state.confirmDel=null;render();toast("Eintrag gelöscht")}
+// SVG-Charts
+function drawCharts(){
+  const p=state.plans.find(x=>x.id===state.statPlan)||activePlan();
+  const pl=rangeFilter(state.logs.filter(l=>l.planId===p.id).sort((a,b)=>a.date.localeCompare(b.date)),state.statRange||"all");
+  // Gruppen-Balken
+  const g=growth(pl,p.sessions.flatMap(s=>s.exercises));
+  const gc=$("gchart");
+  if(gc&&g.groups.length){
+    const max=Math.max(...g.groups.map(x=>Math.abs(x.v)),1);const W=320,rowH=24,H=g.groups.length*rowH;
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+    g.groups.forEach((x,i)=>{const y=i*rowH;const bw=Math.abs(x.v)/max*(W-150);
+      svg+='<text x="0" y="'+(y+15)+'" fill="#a1a1aa" font-size="10">'+esc(x.g)+'</text>'
+      +'<rect x="95" y="'+(y+4)+'" width="'+Math.max(bw,2)+'" height="14" rx="4" fill="'+(x.v>=0?"#34d399":"#ef4444")+'"/>'
+      +'<text x="'+(100+Math.max(bw,2))+'" y="'+(y+15)+'" fill="#71717a" font-size="10">'+(x.v>0?"+":"")+x.v+'%</text>'});
+    gc.innerHTML=svg+'</svg>';
+  }
+  // Übungs-Linienchart
+  const ec=$("exchart");
+  if(ec){
+    const data=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===state.statEx);if(!e)return null;
+      return{d:fmtD(l.date),e:e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0),w:e.sets.reduce((a,s)=>Math.max(a,s.w),0)}}).filter(Boolean);
+    if(data.length<2){ec.innerHTML='<p class="tiny" style="text-align:center;padding:16px">Mind. 2 Einheiten für den Verlauf nötig.</p>'}
+    else{
+      const W=320,H=170,P=28;
+      const vals=data.flatMap(x=>[x.e,x.w]);const mn=Math.min(...vals)*0.95,mx=Math.max(...vals)*1.05;
+      const X=i=>P+i/(data.length-1)*(W-P-8);const Y=v=>H-18-(v-mn)/(mx-mn||1)*(H-34);
+      const line=(key,col)=>'<polyline fill="none" stroke="'+col+'" stroke-width="2" points="'+data.map((x,i)=>X(i)+','+Y(x[key])).join(" ")+'"/>'
+        +data.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x[key])+'" r="2.5" fill="'+col+'"/>').join("");
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      [0,.5,1].forEach(f=>{const v=mn+(mx-mn)*f;svg+='<line x1="'+P+'" y1="'+Y(v)+'" x2="'+W+'" y2="'+Y(v)+'" stroke="#27272a" stroke-dasharray="3 3"/><text x="0" y="'+(Y(v)+3)+'" fill="#52525b" font-size="9">'+Math.round(v)+'</text>'});
+      svg+=line("w","#38bdf8")+line("e","#ef4444");
+      data.forEach((x,i)=>{if(data.length<=8||i%2===0||i===data.length-1)svg+='<text x="'+X(i)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+x.d+'</text>'});
+      svg+='<text x="'+P+'" y="10" fill="#ef4444" font-size="9">— e1RM</text><text x="'+(P+55)+'" y="10" fill="#38bdf8" font-size="9">— Top-Gewicht</text>';
+      const d=data[data.length-1].e-data[data.length-2].e;
+      ec.innerHTML=svg+'</svg><p class="tiny mono" style="text-align:right;color:'+(d>0?"var(--grn)":d<0?"var(--red2)":"var(--mut)")+'">'+(d>0?"▲ +":d<0?"▼ ":"→ ")+Math.abs(d).toFixed(1)+' e1RM zur Voreinheit</p>';
+    }
+  }
+  // Tonnage-Balken
+  const tc=$("tchart");
+  if(tc){
+    const tonn=pl.map(l=>({d:fmtD(l.date),v:Math.round(l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.w*s.r,0),0))}));
+    if(tonn.length>=2){
+      const W=320,H=130;const mx=Math.max(...tonn.map(t=>t.v),1);const bw=Math.min(30,(W-20)/tonn.length-4);
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      tonn.forEach((t,i)=>{const x=10+i*((W-20)/tonn.length);const bh=t.v/mx*(H-32);
+        svg+='<rect x="'+x+'" y="'+(H-18-bh)+'" width="'+bw+'" height="'+bh+'" rx="3" fill="#ef4444"/>'
+        +(tonn.length<=8?'<text x="'+(x+bw/2)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+t.d+'</text>':'')});
+      tc.innerHTML=svg+'</svg>';
+    }
+  }
+}
+// Backup
+function mkBackup(){state.backupText=JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs});render()}
+function dlBackup(){try{const blob=new Blob([JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs})],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="trainingslog-backup-"+todayISO()+".json";a.click()}catch(e){toast("Download nicht möglich — Text-Weg nutzen")}}
+function impBackup(){const t=($("imptext").value||"").trim();if(!t)return;
+  try{const b=JSON.parse(t);if(!b||!Array.isArray(b.logs))throw 0;
+    const ids=new Set(state.logs.map(l=>l.id));
+    state.logs=[...state.logs,...b.logs.filter(l=>!ids.has(l.id))].sort((a,c)=>a.date.localeCompare(c.date));saveJ("logs",state.logs);
+    if(Array.isArray(b.plans)&&b.plans.length){state.plans=b.plans;saveJ("plans",state.plans)}
+    if(Array.isArray(b.library)&&b.library.length){state.library=b.library;saveJ("library",state.library)}
+    if(b.settings){state.settings=b.settings;saveJ("settings",state.settings)}
+    render();toast("Backup importiert — "+state.logs.length+" Einheiten gesamt ✓")
+  }catch(e){toast("Backup unlesbar — Text prüfen")}}
+// ================= KI-Analyse =================
+const MODELS={"claude-haiku-4-5-20251001":{n:"Haiku 4.5 (günstig)",in:1,out:5},"claude-sonnet-4-6":{n:"Sonnet 4.6 (stärker)",in:3,out:15}};
+function aiLogText(scope){
+  let ls=state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(scope==="last10")ls=ls.slice(-10);
+  return ls.map(l=>{
+    const ci=l.checkin&&(l.checkin.gefuehl||l.checkin.schlaf||l.checkin.essen||l.checkin.befinden!=null)
+      ?"\n  Check-in: Gefühl="+(l.checkin.gefuehl||"?")+", Schlaf="+(l.checkin.schlaf||"?")+", Essen="+(l.checkin.essen||"?")+", Befinden="+(l.checkin.befinden??"?")+"/10":"";
+    return l.date+" "+l.sessionName+(l.deload?" [DELOAD]":"")+":"+ci+"\n"
+      +l.entries.map(e=>"  ["+e.exerciseId+"] "+e.name+" (Ziel "+e.reps+", "+e.scheme+"): "
+        +e.sets.map(s=>s.w+"kg×"+s.r+(s.rir!=null?" RIR"+s.rir:"")).join(", ")+(e.exNote?' — Notiz: "'+e.exNote+'"':"")).join("\n")
+      +(l.note?'\n  Einheits-Notiz: "'+l.note+'"':"")}).join("\n\n");
+}
+function estCost(scope,model){
+  const txt=aiLogText(scope);const inTok=Math.round((txt.length+2200)/4);const outTok=900;const m=MODELS[model];
+  return{inTok,cents:Math.round((inTok/1e6*m.in+outTok/1e6*m.out)*100*100)/100};
+}
+function vAI(){
+  const s=state.settings;const key=s.apiKey||"";const model=s.aiModel||"claude-haiku-4-5-20251001";const scope=s.aiScope||"last10";
+  const est=key?estCost(scope,model):null;
+  const an=(state.analyses||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  let h='<div class="card"><b style="font-size:15px">KI-Trainer-Analyse</b>'
+  +'<p class="tiny" style="margin:4px 0 8px;line-height:1.5">Wertet dein Log samt Check-ins und Notizen aus: Progression, RIR-Disziplin, Warnsignale, konkrete nächste Gewichte. Empfehlungen erscheinen danach im Training.</p>';
+  if(!key){
+    h+='<p class="tiny" style="margin-bottom:5px">API-Schlüssel (console.anthropic.com → API Keys). Bleibt nur lokal auf diesem Gerät.</p>'
+    +'<div class="row"><input type="text" id="aikey" placeholder="sk-ant-..." style="flex:1;font-size:12px"><button class="chip" style="padding:9px 12px" onclick="saveKey()">Speichern</button></div>'
+    +'<p class="tiny" style="margin-top:6px;color:var(--amb)">Tipp: In der Console unter Billing ein Monatslimit (z.B. 2 $) setzen und nur wenig Guthaben laden.</p></div>';
+    return h;
+  }
+  h+='<div class="row" style="margin-bottom:6px"><span class="tiny" style="width:62px">Umfang</span>'
+  +['last10','all'].map(o=>'<button class="chip'+(scope===o?" on-n":"")+'" style="flex:1" onclick="setAI(\'aiScope\',\''+o+'\')">'+(o==="last10"?"Letzte 10":"Vollanalyse")+'</button>').join("")+'</div>'
+  +'<div class="row" style="margin-bottom:8px"><span class="tiny" style="width:62px">Modell</span>'
+  +Object.keys(MODELS).map(k=>'<button class="chip'+(model===k?" on-n":"")+'" style="flex:1;font-size:11px" onclick="setAI(\'aiModel\',\''+k+'\')">'+MODELS[k].n+'</button>').join("")+'</div>'
+  +'<p class="tiny">Umfang: '+(scope==="last10"?Math.min(10,state.logs.length):state.logs.length)+' Einheiten · ca. '+est.inTok.toLocaleString("de-DE")+' Token · geschätzte Kosten <b>'+est.cents.toFixed(2).replace(".",",")+' ct</b></p>'
+  +'<button class="btn red" style="margin-top:8px" id="aibtn" onclick="runAI()">Analyse starten</button>'
+  +'<div class="row" style="margin-top:6px"><button class="chip" style="flex:1" onclick="clearKey()">Schlüssel entfernen</button>'
+  +'<span class="tiny" style="flex:1;text-align:right">'+an.length+' Analysen bisher</span></div></div>'
+  +'<div id="airesult"></div>';
+  an.slice(0,5).forEach(a=>{
+    h+='<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:14px">Analyse</b><span class="tiny mono">'+fmtD(a.date)+' · '+(a.scope==="all"?"Vollanalyse":"letzte 10")+'</span></div>'
+    +'<p style="font-size:13px;line-height:1.5;margin-top:5px">'+esc(a.zusammenfassung||"")+'</p>';
+    (a.empfehlungen||[]).forEach(r=>{h+='<div class="rec" style="cursor:default">🎯 <b>'+esc(r.uebung)+'</b>: '+esc(r.ziel)+(r.grund?' <span style="opacity:.8">— '+esc(r.grund)+'</span>':'')+'</div>'});
+    (a.warnungen||[]).forEach(w=>{h+='<p class="tiny" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amb);border-radius:8px;padding:6px 9px;margin-top:5px">⚠ '+esc(w)+'</p>'});
+    h+='</div>'});
+  return h;
+}
+function saveKey(){const k=($("aikey").value||"").trim();if(!k.startsWith("sk-ant-")){toast("Schlüssel beginnt mit sk-ant-");return}
+  state.settings.apiKey=k;saveJ("settings",state.settings);render();toast("Schlüssel gespeichert (nur lokal)")}
+function clearKey(){delete state.settings.apiKey;saveJ("settings",state.settings);render();toast("Schlüssel entfernt")}
+function setAI(k,v){state.settings[k]=v;saveJ("settings",state.settings);render()}
+async function runAI(){
+  const b=$("aibtn");b.disabled=true;b.textContent="Analysiere…";
+  const s=state.settings;const scope=s.aiScope||"last10";const model=s.aiModel||"claude-haiku-4-5-20251001";
+  const ids=activePlan().sessions.flatMap(x=>x.exercises).map(e=>e.id+" = "+e.name).join(", ");
+  const prev=(state.analyses||[]).slice(-1)[0];
+  const fb=prev?"\n\nDEINE LETZTE ANALYSE ("+prev.date+"): "+(prev.zusammenfassung||"")+"\nEmpfehlungen damals: "+(prev.empfehlungen||[]).map(r=>r.uebung+" → "+r.ziel).join("; ")+"\nKalibriere dich daran: prüfe, ob umgesetzt und ob es gewirkt hat.":"";
+  const prompt=`Du bist mein kritischer, ehrlicher Personal Trainer. Analysiere mein Trainingslog auf Deutsch.
+
+KONTEXT: Männlich, 172cm, ~80kg, 6+ Jahre Training, Aufbauphase (Überschuss ~200-300kcal, Protein ~160g). Training jeden 2. Tag, Split UK A → OK A → UK B → OK B. Arbeitet 65h/Woche, Schlaf knapp (Ziel 7-8h).
+REGELN: schwere Hauptübungen RIR-Staffelung 2/2/0 (Sätze 1-2 RIR2, letzter RIR0-1); Isolationsübungen ans Limit (RIR0); Face Pull nur leicht als Prehab (NIE steigern); Seitheben Antest-Phase RIR2-3; Straps bei allen Zügen; KEIN direkter Bizeps (Arm in ärztlicher Abklärung: Streckdefizit, gereizte Bizepssehne, Unterarm); keine volle Ellenbogen-Endstreckung unter Last; Schulter frisch auskuriert, BWS labil.
+Progression: Wdh im Zielbereich hoch, dann +2,5kg. [DELOAD] markierte Einheiten sind bewusst reduziert (−30%) und zählen NICHT als Leistungsrückgang.
+
+MEIN LOG:
+${aiLogText(scope)}${fb}
+
+Verfügbare exerciseIds: ${ids}
+
+Antworte NUR mit validem JSON, ohne Markdown-Zäune:
+{"zusammenfassung":"3-4 Sätze Gesamturteil","empfehlungen":[{"exerciseId":"schraegbank","uebung":"Schrägbankdrücken KH","ziel":"30kg × 8-12, 2/2/0","gewicht":30,"grund":"max 8 Wörter"}],"warnungen":["konkrete Warnsignale"]}
+
+Regeln: max 6 Empfehlungen, wichtigste zuerst, nur wo Handlungsbedarf besteht. Notizen und Check-ins sind Pflichtlektüre — korreliere sie mit der Leistung (schwache Einheit nach schlechtem Schlaf/wenig Essen = Erholungsthema, nicht Trainingsschwäche). Notizen zu Gelenken/Reizungen haben höchste Priorität und überstimmen jede Progressionsempfehlung. Face Pull nie steigern.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":s.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model,max_tokens:1500,messages:[{role:"user",content:prompt}]})});
+    if(!res.ok){const e=await res.text();throw new Error(res.status+" "+e.slice(0,120))}
+    const data=await res.json();
+    const txt=(data.content||[]).map(c=>c.text||"").join("\n").replace(/```json|```/g,"").trim();
+    const p=JSON.parse(txt);
+    const entry={id:uid(),date:todayISO(),scope,model,zusammenfassung:p.zusammenfassung||"",empfehlungen:Array.isArray(p.empfehlungen)?p.empfehlungen:[],warnungen:Array.isArray(p.warnungen)?p.warnungen:[]};
+    state.analyses=[...(state.analyses||[]),entry];saveJ("analyses",state.analyses);
+    render();toast("Analyse fertig ✓");
+  }catch(e){
+    $("airesult").innerHTML='<div class="card" style="border-color:var(--red2)"><p class="tiny" style="color:var(--red2)">Analyse fehlgeschlagen: '+esc(e.message)+'</p><p class="tiny" style="margin-top:4px">Prüfe Schlüssel, Guthaben (console.anthropic.com → Billing) und Internetverbindung.</p></div>';
+    const bb=$("aibtn");if(bb){bb.disabled=false;bb.textContent="Analyse starten"}
+  }
+}
+// ================= Deload =================
+function vDeload(){
+  const p=activePlan();const last=lastByEx();
+  let h='<div class="card warn"><b style="color:var(--amb)">Deload — '+sessionsSinceCycle()+' Einheiten im Zyklus</b><p class="tiny" style="margin-top:4px;line-height:1.5">1 kompletter Durchlauf (alle 4 Einheiten, je Deload-Schalter an): gleiche Übungen, <b class="mono" style="color:var(--amb)">−30% Gewicht</b>, RIR 3–4. Kein Satz ans Limit. Danach neuen Zyklus starten.<br>Fällig nach ~'+DELOAD_AFTER+' Einheiten. 8+ Tage Trainingspause (Urlaub/Dienstreise) zählen als Erholung und können direkt als Deload gewertet werden.</p></div>';
+  p.sessions.forEach(s=>{
+    h+='<details class="card" style="padding:0"><summary style="padding:11px 13px" class="row"><b style="flex:1;font-size:14px">'+esc(s.name)+' <span class="small" style="font-weight:400">'+esc(s.sub||"")+'</span></b><span class="tiny">▼</span></summary><div style="padding:0 13px 12px">';
+    s.exercises.forEach(ex=>{const base=last[ex.id]?Math.max(...last[ex.id].sets.map(x=>x.w)):ex.start;
+      h+='<div class="hline mono"><span style="color:var(--tx)">'+esc(ex.name)+'</span><span class="tiny">'+base+'kg → <b style="color:var(--amb)">'+roundPlate(base*0.7)+'kg</b></span></div>'});
+    h+='</div></details>'});
+  h+='<button class="btn amb" onclick="resetCycle()">Deload abgeschlossen — neuen Zyklus starten</button>';
+  return h;
+}
+function resetCycle(){state.settings.cycleStart=todayISO();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
+function pauseAsDeload(){state.settings.cycleStart=todayISO();saveJ("settings",state.settings);render();toast("Pause als Deload gewertet — neuer Zyklus ✓")}
+// ================= Kalender =================
+function vCal(){
+  if(!state.calMonth)state.calMonth=todayISO().slice(0,7);
+  const[Y,M]=state.calMonth.split("-").map(Number);
+  const first=new Date(Y,M-1,1);const days=new Date(Y,M,0).getDate();
+  const startDow=(first.getDay()+6)%7; // Mo=0
+  const monthName=first.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+  if(!state.settings.plannedDeload){state.settings.plannedDeload=suggestDeloadDate();saveJ("settings",state.settings)}
+  const pdIso=state.settings.plannedDeload;
+  const byDate={};state.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
+  const badge={"uk-a":"UKA","ok-a":"OKA","uk-b":"UKB","ok-b":"OKB"};
+  let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="calShift(-1)">◀</button><b style="font-size:16px">'+monthName+'</b><button class="chip" onclick="calShift(1)">▶</button></div>';
+  h+='<div class="card" style="padding:10px"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">';
+  ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>h+='<span class="tiny" style="font-weight:800">'+d+'</span>');
+  for(let i=0;i<startDow;i++)h+='<span></span>';
+  const today=todayISO();
+  for(let d=1;d<=days;d++){
+    const iso=Y+"-"+String(M).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+    const sess=byDate[iso]||[];const isToday=iso===today;
+    const isAbs=(state.settings.absences||[]).some(a=>a.from<=iso&&a.to>=iso);
+    const isPD=state.settings.plannedDeload===iso;
+    const sel=state.calSel===iso;
+    let cell='<button style="min-height:46px;border-radius:9px;border:1px solid '+(sel?"var(--red2)":isPD?"var(--amb)":isToday?"var(--s3)":"transparent")+';background:'+(sess.length?(sess.some(l=>l.deload)?"rgba(245,158,11,.15)":"rgba(220,38,38,.14)"):isPD?"rgba(245,158,11,.08)":isAbs?"rgba(56,189,248,.13)":"var(--s1)")+';color:var(--tx);padding:3px 1px;display:flex;flex-direction:column;align-items:center;gap:1px" onclick="calPick(\''+iso+'\')">'
+    +'<span class="tiny" style="'+(isToday?"color:var(--red2);font-weight:800":isPD?"color:var(--amb);font-weight:800":isAbs?"color:var(--sky)":"")+'">'+d+'</span>';
+    if(isPD&&!sess.length)cell+='<span style="font-size:8px;font-weight:800;color:var(--amb)">DL</span>';
+    else if(isAbs&&!sess.length)cell+='<span style="font-size:9px">🏖</span>';
+    sess.forEach(l=>{cell+='<span style="font-size:8px;font-weight:800;color:'+(l.deload?"var(--amb)":"var(--red2)")+'">'+(badge[l.sessionId]||l.sessionName.slice(0,3))+'</span>'});
+    cell+='</button>';h+=cell;
+  }
+  h+='</div></div>';
+  h+='<p class="tiny" style="text-align:center">'+(pdIso?'⚠️ Deload geplant ab <b style="color:var(--amb)">'+fmtD(pdIso)+'</b> · Tag antippen zum Umplanen':'')+'</p>';
+  // Aktionen für ausgewählten Tag
+  if(state.calSel){
+    const iso=state.calSel;const hasSess=(byDate[iso]||[]).length;
+    const absHere=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
+    const isPD=state.settings.plannedDeload===iso;
+    h+='<div class="card" style="padding:10px 12px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:14px">'+fmtD(iso)+'</b><button class="chip" style="padding:3px 9px" onclick="state.calSel=null;state.absTmp=null;render()">✕</button></div>';
+    if(state.absTmp)h+='<button class="chip" style="width:100%;padding:9px;color:var(--sky);margin-bottom:5px" onclick="finishAbs(\''+iso+'\')">🏖 Urlaub '+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:7px" onclick="state.absTmp=null;render()">Abbrechen</button>';
+    else{
+      h+='<div class="row" style="gap:5px;flex-wrap:wrap">';
+      if(absHere)h+='<button class="chip" style="flex:1;padding:8px;color:var(--red2)" onclick="delAbs(\''+absHere.from+'\')">🏖 Urlaub entfernen</button>';
+      else h+='<button class="chip" style="flex:1;padding:8px;color:var(--sky)" onclick="state.absTmp=\''+iso+'\';render()">🏖 Urlaub ab hier</button>';
+      if(isPD)h+='<button class="chip" style="flex:1;padding:8px;color:var(--red2)" onclick="clearPlannedDeload()">Deload-Termin löschen</button>';
+      else h+='<button class="chip" style="flex:1;padding:8px;color:var(--amb)" onclick="planDeloadOn(\''+iso+'\')">⚠️ Deload hierhin planen</button>';
+      h+='</div>';
+      if(!hasSess)h+='<p class="tiny" style="margin-top:5px">Kein Training an diesem Tag.</p>';
+    }
+    h+='</div>';
+  }
+  if(state.calSel&&byDate[state.calSel]){
+    byDate[state.calSel].forEach(l=>{
+      h+='<div class="card" style="border-color:var(--red2)"><div class="row" style="justify-content:space-between"><b>'+esc(l.sessionName)+(l.deload?' <span style="color:var(--amb);font-size:10px;font-weight:800;border:1px solid var(--amb);border-radius:5px;padding:1px 5px">DELOAD</span>':'')+'</b><span class="row" style="gap:6px"><span class="tiny mono">'+fmtD(l.date)+'</span><button class="chip" style="padding:3px 9px" onclick="state.calSel=null;render()">✕ Schließen</button></span></div><div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">';
+      if(l.checkin&&(l.checkin.gefuehl||l.checkin.schlaf||l.checkin.essen||l.checkin.befinden!=null))h+='<p class="tiny mono">Check-in: '+(l.checkin.gefuehl?'Gefühl '+l.checkin.gefuehl:'')+(l.checkin.schlaf?' · Schlaf '+l.checkin.schlaf:'')+(l.checkin.essen?' · Essen '+l.checkin.essen:'')+(l.checkin.befinden!=null?' · Befinden '+l.checkin.befinden+'/10':'')+'</p>';
+      l.entries.forEach(e=>{h+='<p class="tiny mono" style="color:var(--mut)"><span style="color:var(--tx)">'+esc(e.name)+':</span> '+e.sets.map(s=>s.w+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join(' | ')+(e.exNote?' <span class="note-a">— „'+esc(e.exNote)+'"</span>':'')+'</p>'});
+      if(l.note)h+='<p class="note-a" style="font-style:italic">„'+esc(l.note)+'"</p>';
+      h+='<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" style="align-self:flex-start;margin-top:4px" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Eintrag löschen")+'</button>';
+      h+='</div></div>'});
+  }
+  return h;
+}
+function calShift(d){const[Y,M]=state.calMonth.split("-").map(Number);const nd=new Date(Y,M-1+d,1);state.calMonth=nd.getFullYear()+"-"+String(nd.getMonth()+1).padStart(2,"0");state.calSel=null;render()}
+function calPick(iso){state.calSel=state.calSel===iso?null:iso;render()}
+function addAbs(){const f=$("absfrom").value,t=$("absto").value;if(!f||!t){toast("Von- und Bis-Datum wählen");return}
+  if(t<f){toast("Bis-Datum liegt vor Von-Datum");return}
+  state.settings.absences=[...(state.settings.absences||[]),{from:f,to:t,note:($("absnote").value||"").trim()}];
+  saveJ("settings",state.settings);render();toast("Abwesenheit eingetragen")}
+function delAbs(from){state.settings.absences=(state.settings.absences||[]).filter(a=>a.from!==from);saveJ("settings",state.settings);render();toast("Abwesenheit gelöscht")}
+function finishAbs(to){
+  let from=state.absTmp;if(!from)return;
+  if(to<from){const t=from;from=to;to=t}
+  state.settings.absences=[...(state.settings.absences||[]),{from,to,note:"Urlaub"}];
+  saveJ("settings",state.settings);state.absTmp=null;state.calSel=null;render();toast("Urlaub "+fmtD(from)+" – "+fmtD(to)+" eingetragen")}
+function planDeloadOn(iso){state.settings.plannedDeload=iso;saveJ("settings",state.settings);render();toast("Deload geplant ab "+fmtD(iso))}
+function suggestDeloadDate(){
+  const rest=DELOAD_AFTER-sessionsSinceCycle();
+  const ls=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));
+  const base=ls.length?new Date(ls[ls.length-1].date):new Date();
+  return new Date(base.getTime()+Math.max(rest,1)*2*864e5).toISOString().slice(0,10);
+}
+function setPlannedDeload(){const v=$("pdate")?$("pdate").value:"";if(!v){toast("Datum wählen");return}
+  state.settings.plannedDeload=v;saveJ("settings",state.settings);render();toast("Deload geplant ab "+fmtD(v))}
+function clearPlannedDeload(){delete state.settings.plannedDeload;saveJ("settings",state.settings);render();toast("Geplanter Deload entfernt")}
+// Start
+boot();
+</script>
+</body>
+</html>
