@@ -175,7 +175,7 @@ del:k=>{delete MEM[k];try{if(!useMem)localStorage.removeItem("tl_"+k)}catch(e){}
 const loadJ=(k,fb)=>{const v=st.get(k);if(v===null)return fb;try{return JSON.parse(v)}catch(e){return fb}};
 const saveJ=(k,v)=>st.set(k,JSON.stringify(v));
 // ================= State =================
-let state={plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,statRange:"all",tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
+let state={plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
 function boot(){
   state.plans=loadJ("plans",null)||[DEFAULT_PLAN];
   let logs=loadJ("logs",[]);
@@ -190,9 +190,11 @@ function boot(){
   if(!lib){const seen={};lib=DEFAULT_PLAN.sessions.flatMap(s=>s.exercises).filter(e=>seen[e.id]?false:(seen[e.id]=true)).map(({id,name,reps,scheme,start,note})=>({id,name,reps,scheme,start,note:note||""}));saveJ("library",lib)}
   state.library=lib;
   state.analyses=loadJ("analyses",[]);
+  const cleaned=migrateDupes();
   const draft=loadJ("draft",null);
   if(draft&&draft.entries&&draft.entries.length)state.active=draft;
   render();
+  if(cleaned)setTimeout(()=>toast("Doppelte Übungen zusammengeführt ✓"),600);
   if(useMem)banner("⚠ Kein dauerhafter Speicher verfügbar (Vorschau-Modus?). Datei herunterladen und in Safari öffnen — sonst gehen Daten beim Schließen verloren.");
 }
 // ================= Kern-Logik =================
@@ -282,7 +284,7 @@ function render(){
   const AMB='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(245,158,11,.14);color:var(--amb);font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
   const SKY='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(56,189,248,.1);color:var(--sky);font-weight:700;border:1px solid rgba(56,189,248,.35);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
   const abs=absSoon(),inAbs=inAbsence(),pdrop=performanceDrop();
-  if(state.tab!=="deload"){
+  if(state.tab==="training"&&!state.active){
     if(inAbs)bn='<div '+SKY+'>🏖 Abwesenheit bis '+fmtD(inAbs.to)+' — kein Deload nötig</div>';
     else if(abs)bn='<div '+SKY+'>🏖 Pause ab '+fmtD(abs.from)+' — Deload nicht nötig</div>';
     else if(dl)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Deload fällig ('+sessionsSinceCycle()+' Einh.) ›</button>';
@@ -290,7 +292,7 @@ function render(){
       const rec3=[...state.logs].filter(l=>!l.deload).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
       const bad=rec3.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
       if(pdrop)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Leistungsabfall bei '+pdrop+' Übungen — Deload ›</button>';
-      else if(rec3.length>=3&&bad>=2)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Erholungssignale ('+bad+'/3) — Deload empfohlen ›</button>';
+      else if(rec3.length>=3&&bad>=2)bn='<div '+SKY+'>ℹ️ Erholungssignale ('+bad+'/3) — Deload erwägen</div>';
       else if(daysSinceLast()>=8&&sessionsSinceCycle()>=8)bn='<button '+SKY+' onclick="pauseAsDeload()">ℹ️ '+daysSinceLast()+' Tage Pause — als Deload werten ›</button>';
     }
   }
@@ -431,8 +433,13 @@ function vPlans(){
     if(state.mergeFrom)h+='<p class="tiny" style="color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:8px;padding:6px 9px;margin-bottom:6px">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'" werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;render()">Abbrechen</button></p>';
     [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
       const isSrc=state.mergeFrom===e.id;
-      h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny mono">'+esc(e.reps)+'</span></span><span class="row" style="gap:4px">'
-      +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 8px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
+      const cnt=state.logs.reduce((a,l)=>a+l.entries.filter(x=>x.exerciseId===e.id).length,0);
+      if(state.renameId===e.id){
+        h+='<div class="row" style="gap:5px;background:rgba(56,189,248,.12);border-radius:8px;padding:7px 9px;margin-bottom:5px"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1;font-size:13px"><button class="chip" style="padding:7px 10px" onclick="doRename(\''+e.id+'\')">OK</button><button class="chip" style="padding:7px 9px" onclick="state.renameId=null;render()">✕</button></div>';
+        return;
+      }
+      h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny mono">'+esc(e.reps)+(cnt?' · '+cnt+'× geloggt':' · keine Daten')+'</span></span><span class="row" style="gap:4px">'
+      +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 7px;font-size:11px" onclick="state.renameId=\''+e.id+'\';render()">✎</button><button class="chip" style="padding:3px 7px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
       +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></span></div>'});
     h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="lbl">Neue Übung</p>'
     +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
@@ -454,8 +461,41 @@ function addLib(){const n=($("lname").value||"").trim();if(!n){toast("Name fehlt
   if(dup){toast("Übung existiert bereits — umbenennen statt neu anlegen");return}
   state.library.push({id:uid(),name:n,reps:$("lreps").value||"8-12",scheme:$("lscheme").value||"RIR1-2",start:+($("lstart").value)||0,note:""});
   saveJ("library",state.library);render();toast("Übung angelegt")}
-// Übungen zusammenführen: Quelle → Ziel (Logs werden umgeschrieben)
-function startMerge(id){state.mergeFrom=state.mergeFrom===id?null:id;render()}
+// Automatische Bereinigung: gleiche Namen zusammenführen, Karteileichen entfernen
+function migrateDupes(){
+  let changed=false;
+  const count=id=>state.logs.reduce((a,l)=>a+l.entries.filter(e=>e.exerciseId===id).length,0);
+  const byName={};
+  state.library.forEach(e=>{const k=e.name.trim().toLowerCase();(byName[k]=byName[k]||[]).push(e)});
+  Object.values(byName).forEach(group=>{
+    if(group.length<2)return;
+    const keep=group.slice().sort((a,b)=>count(b.id)-count(a.id))[0];
+    group.filter(e=>e.id!==keep.id).forEach(dup=>{
+      state.logs.forEach(l=>l.entries.forEach(e=>{if(e.exerciseId===dup.id){e.exerciseId=keep.id;e.name=keep.name}}));
+      state.plans.forEach(p=>p.sessions.forEach(s=>{
+        s.exercises.forEach(ex=>{if(ex.id===dup.id){ex.id=keep.id;ex.name=keep.name}});
+        const seen=new Set();s.exercises=s.exercises.filter(ex=>seen.has(ex.id)?false:(seen.add(ex.id),true));}));
+      state.library=state.library.filter(e=>e.id!==dup.id);changed=true;
+    });
+  });
+  // Karteileichen: keine Logs, in keinem Plan
+  const used=new Set(state.plans.flatMap(p=>p.sessions.flatMap(s=>s.exercises.map(e=>e.id))));
+  const before=state.library.length;
+  state.library=state.library.filter(e=>used.has(e.id)||count(e.id)>0);
+  if(state.library.length!==before)changed=true;
+  if(changed){saveJ("logs",state.logs);saveJ("plans",state.plans);saveJ("library",state.library)}
+  return changed;
+}
+function startMerge(id){state.mergeFrom=state.mergeFrom===id?null:id;state.renameId=null;render()}
+function doRename(id){
+  const inp=$("rn-"+id);const n=(inp?inp.value:"").trim();
+  if(!n){toast("Name darf nicht leer sein");return}
+  if(state.library.some(e=>e.id!==id&&e.name.trim().toLowerCase()===n.toLowerCase())){toast("Name existiert bereits — stattdessen zusammenführen (⇄)");return}
+  const lib=state.library.find(e=>e.id===id);if(lib)lib.name=n;
+  state.plans.forEach(p=>p.sessions.forEach(s=>s.exercises.forEach(ex=>{if(ex.id===id)ex.name=n})));
+  state.logs.forEach(l=>l.entries.forEach(e=>{if(e.exerciseId===id)e.name=n}));
+  saveJ("library",state.library);saveJ("plans",state.plans);saveJ("logs",state.logs);
+  state.renameId=null;render();toast("Umbenannt — alle Daten erhalten ✓")}
 function doMerge(toId){
   const from=state.mergeFrom,fromEx=state.library.find(e=>e.id===from),toEx=state.library.find(e=>e.id===toId);
   if(!from||from===toId||!toEx){state.mergeFrom=null;render();return}
