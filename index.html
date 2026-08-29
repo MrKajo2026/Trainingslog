@@ -175,7 +175,7 @@ del:k=>{delete MEM[k];try{if(!useMem)localStorage.removeItem("tl_"+k)}catch(e){}
 const loadJ=(k,fb)=>{const v=st.get(k);if(v===null)return fb;try{return JSON.parse(v)}catch(e){return fb}};
 const saveJ=(k,v)=>st.set(k,JSON.stringify(v));
 // ================= State =================
-let state={plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
+let state={plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",statMode:"gruppen",absTmp:null,tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
 function boot(){
   state.plans=loadJ("plans",null)||[DEFAULT_PLAN];
   let logs=loadJ("logs",[]);
@@ -339,7 +339,7 @@ function vLogger(){
   +ciRow("Essen","essen",["viel","normal","wenig"],["on-g","on-n","on-a"])
   +'<div class="row"><span class="tiny" style="width:56px">Befinden</span><input type="range" min="0" max="10" value="'+(bf??5)+'" oninput="setBef(this.value)"><b id="befval" class="mono" style="width:26px;text-align:center;color:'+(bf==null?"var(--dim)":bf>=7?"var(--grn)":bf>=4?"var(--amb)":"var(--red2)")+'">'+(bf??"—")+'</b></div></div>';
   // Deload-Schalter
-  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="pushUndo();state.active.deload=this.checked;draftSave();render()"> Deload-Einheit (−30%, RIR3-4 — zählt nicht in die Zuwachs-Wertung)</label></div>';
+  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="pushUndo();state.active.deload=this.checked;draftSave();render()"> Deload aktivieren (-30%, 3-4 RIR)</label></div>';
   // Übungen
   const lbe=lastByEx();
   a.entries.forEach((e,ei)=>{
@@ -592,11 +592,12 @@ function vStats(){
   // Gesamt-Zuwachs
   const g=growth(pl,allEx);
   if(g.overall!==null){
-    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Gesamt-Zuwachs (e1RM)</span><b class="mono" style="font-size:17px;color:'+(g.overall>0?"var(--grn)":g.overall<0?"var(--red2)":"var(--mut)")+'">'+(g.overall>0?"+":"")+g.overall+'%</b></div>'
-    +'<div id="gchart"></div>'
-    +'<details style="margin-top:6px"><summary class="tiny">Je Übung anzeigen ▼</summary><div style="margin-top:6px">'
-    +g.perEx.map(e=>'<div class="hline mono"><span style="color:var(--tx)">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(e.pct>0?"+":"")+e.pct.toFixed(1)+'%</b></span></div>').join("")
-    +'</div></details><p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core & Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
+    const mode=state.statMode||"gruppen";
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Zuwachs (e1RM)</span><b class="mono" style="font-size:17px;color:'+(g.overall>0?"var(--grn)":g.overall<0?"var(--red2)":"var(--mut)")+'">'+(g.overall>0?"+":"")+g.overall+'%</b></div>'
+    +'<div class="row" style="gap:4px;margin-bottom:8px"><button class="chip'+(mode==="gruppen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'gruppen\';render()">Muskelgruppen</button><button class="chip'+(mode==="uebungen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'uebungen\';render()">Übungen</button></div>';
+    if(mode==="gruppen")h+='<div id="gchart"></div>';
+    else h+=g.perEx.map(e=>'<div class="hline mono"><span style="color:var(--tx);flex:1">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(e.pct>0?"+":"")+e.pct.toFixed(1)+'%</b></span></div>').join("")||'<p class="tiny">Zu wenige Daten im Zeitraum.</p>';
+    h+='<p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core &amp; Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
   }
   // Übungs-Chart
   h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Übung</p>'
@@ -800,6 +801,8 @@ function vCal(){
   const first=new Date(Y,M-1,1);const days=new Date(Y,M,0).getDate();
   const startDow=(first.getDay()+6)%7; // Mo=0
   const monthName=first.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+  if(!state.settings.plannedDeload){state.settings.plannedDeload=suggestDeloadDate();saveJ("settings",state.settings)}
+  const pdIso=state.settings.plannedDeload;
   const byDate={};state.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
   const badge={"uk-a":"UKA","ok-a":"OKA","uk-b":"UKB","ok-b":"OKB"};
   let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="calShift(-1)">◀</button><b style="font-size:16px">'+monthName+'</b><button class="chip" onclick="calShift(1)">▶</button></div>';
@@ -821,28 +824,25 @@ function vCal(){
     cell+='</button>';h+=cell;
   }
   h+='</div></div>';
-  // Abwesenheiten
-  const abs=(state.settings.absences||[]).sort((a,b)=>a.from.localeCompare(b.from));
-  h+='<div class="card"><div class="row" style="justify-content:space-between"><span class="lbl">Abwesenheiten (Urlaub / Dienstreise)</span></div>'
-  +'<p class="tiny" style="margin:4px 0 8px">Geplante Pausen unterdrücken die Deload-Empfehlung — die Pause übernimmt die Erholung.</p>';
-  abs.forEach(a=>{h+='<div class="hline"><span class="tiny mono">'+fmtD(a.from)+' – '+fmtD(a.to)+(a.note?' · '+esc(a.note):'')+'</span><button class="del" onclick="delAbs(\''+a.from+'\')">✕</button></div>'});
-  h+='<div class="row" style="margin-top:8px;gap:5px"><input type="date" id="absfrom" style="flex:1;font-size:12px;padding:8px"><input type="date" id="absto" style="flex:1;font-size:12px;padding:8px"></div>'
-  +'<div class="row" style="margin-top:5px;gap:5px"><input type="text" id="absnote" placeholder="Notiz (z.B. Urlaub)" style="flex:1;font-size:12px"><button class="chip" style="padding:9px 12px" onclick="addAbs()">+ Eintragen</button></div></div>';
-  // Geplanter Deload
-  const pd=state.settings.plannedDeload||"";
-  h+='<div class="card"><span class="lbl">Deload geplant</span>'
-  +'<p class="tiny" style="margin:4px 0 8px">Startdatum des nächsten Deloads — erscheint im Kalender und als Erinnerung. Vorschlag der App: '+(deloadDue()?"jetzt fällig":"nach "+DELOAD_AFTER+" Einheiten (aktuell "+sessionsSinceCycle()+")")+'.</p>'
-  +'<div class="row" style="gap:5px"><input type="date" id="pdate" value="'+pd+'" style="flex:1;font-size:12px;padding:8px"><button class="chip" style="padding:9px 12px" onclick="setPlannedDeload()">Speichern</button>'
-  +(pd?'<button class="del" onclick="clearPlannedDeload()">✕</button>':'')+'</div>'
-  +(pd?'<p class="tiny" style="margin-top:6px;color:var(--amb)">Geplant ab '+fmtD(pd)+' — im Kalender amber umrandet.</p>':'')+'</div>';
-  // Wochen-Zusammenfassung
-  const wkMap={};state.logs.forEach(l=>{const dt=new Date(l.date);const on=new Date(dt);on.setDate(dt.getDate()-((dt.getDay()+6)%7));const k=on.toISOString().slice(0,10);(wkMap[k]=wkMap[k]||[]).push(l)});
-  const wkKeys=Object.keys(wkMap).sort().reverse().slice(0,6);
-  h+='<p class="lbl">Wochen</p>';
-  wkKeys.forEach(k=>{const ls=wkMap[k];const dl=ls.filter(l=>l.deload).length;
-    h+='<div class="card" style="padding:10px 12px"><div class="row" style="justify-content:space-between"><span class="tiny mono">KW ab '+fmtD(k)+'</span><span class="tiny mono">'+ls.length+' Einh.'+(dl?' · <b style="color:var(--amb)">'+dl+'× Deload</b>':'')+'</span></div>'
-    +'<p class="tiny" style="margin-top:3px">'+ls.sort((a,b)=>a.date.localeCompare(b.date)).map(l=>fmtD(l.date)+" "+l.sessionName).join(" · ")+'</p></div>'});
-  // Ausgewählter Tag → Trainingsdetail
+  h+='<p class="tiny" style="text-align:center">'+(pdIso?'⚠️ Deload geplant ab <b style="color:var(--amb)">'+fmtD(pdIso)+'</b> · Tag antippen zum Umplanen':'')+'</p>';
+  // Aktionen für ausgewählten Tag
+  if(state.calSel){
+    const iso=state.calSel;const hasSess=(byDate[iso]||[]).length;
+    const absHere=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
+    const isPD=state.settings.plannedDeload===iso;
+    h+='<div class="card" style="padding:10px 12px"><div class="row" style="justify-content:space-between;margin-bottom:6px"><b style="font-size:14px">'+fmtD(iso)+'</b><button class="chip" style="padding:3px 9px" onclick="state.calSel=null;state.absTmp=null;render()">✕</button></div>';
+    if(state.absTmp)h+='<button class="chip" style="width:100%;padding:9px;color:var(--sky);margin-bottom:5px" onclick="finishAbs(\''+iso+'\')">🏖 Urlaub '+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:7px" onclick="state.absTmp=null;render()">Abbrechen</button>';
+    else{
+      h+='<div class="row" style="gap:5px;flex-wrap:wrap">';
+      if(absHere)h+='<button class="chip" style="flex:1;padding:8px;color:var(--red2)" onclick="delAbs(\''+absHere.from+'\')">🏖 Urlaub entfernen</button>';
+      else h+='<button class="chip" style="flex:1;padding:8px;color:var(--sky)" onclick="state.absTmp=\''+iso+'\';render()">🏖 Urlaub ab hier</button>';
+      if(isPD)h+='<button class="chip" style="flex:1;padding:8px;color:var(--red2)" onclick="clearPlannedDeload()">Deload-Termin löschen</button>';
+      else h+='<button class="chip" style="flex:1;padding:8px;color:var(--amb)" onclick="planDeloadOn(\''+iso+'\')">⚠️ Deload hierhin planen</button>';
+      h+='</div>';
+      if(!hasSess)h+='<p class="tiny" style="margin-top:5px">Kein Training an diesem Tag.</p>';
+    }
+    h+='</div>';
+  }
   if(state.calSel&&byDate[state.calSel]){
     byDate[state.calSel].forEach(l=>{
       h+='<div class="card" style="border-color:var(--red2)"><div class="row" style="justify-content:space-between"><b>'+esc(l.sessionName)+(l.deload?' <span style="color:var(--amb);font-size:10px;font-weight:800;border:1px solid var(--amb);border-radius:5px;padding:1px 5px">DELOAD</span>':'')+'</b><span class="row" style="gap:6px"><span class="tiny mono">'+fmtD(l.date)+'</span><button class="chip" style="padding:3px 9px" onclick="state.calSel=null;render()">✕ Schließen</button></span></div><div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">';
@@ -861,7 +861,19 @@ function addAbs(){const f=$("absfrom").value,t=$("absto").value;if(!f||!t){toast
   state.settings.absences=[...(state.settings.absences||[]),{from:f,to:t,note:($("absnote").value||"").trim()}];
   saveJ("settings",state.settings);render();toast("Abwesenheit eingetragen")}
 function delAbs(from){state.settings.absences=(state.settings.absences||[]).filter(a=>a.from!==from);saveJ("settings",state.settings);render();toast("Abwesenheit gelöscht")}
-function setPlannedDeload(){const v=$("pdate").value;if(!v){toast("Datum wählen");return}
+function finishAbs(to){
+  let from=state.absTmp;if(!from)return;
+  if(to<from){const t=from;from=to;to=t}
+  state.settings.absences=[...(state.settings.absences||[]),{from,to,note:"Urlaub"}];
+  saveJ("settings",state.settings);state.absTmp=null;state.calSel=null;render();toast("Urlaub "+fmtD(from)+" – "+fmtD(to)+" eingetragen")}
+function planDeloadOn(iso){state.settings.plannedDeload=iso;saveJ("settings",state.settings);render();toast("Deload geplant ab "+fmtD(iso))}
+function suggestDeloadDate(){
+  const rest=DELOAD_AFTER-sessionsSinceCycle();
+  const ls=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));
+  const base=ls.length?new Date(ls[ls.length-1].date):new Date();
+  return new Date(base.getTime()+Math.max(rest,1)*2*864e5).toISOString().slice(0,10);
+}
+function setPlannedDeload(){const v=$("pdate")?$("pdate").value:"";if(!v){toast("Datum wählen");return}
   state.settings.plannedDeload=v;saveJ("settings",state.settings);render();toast("Deload geplant ab "+fmtD(v))}
 function clearPlannedDeload(){delete state.settings.plannedDeload;saveJ("settings",state.settings);render();toast("Geplanter Deload entfernt")}
 // Start
