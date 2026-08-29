@@ -62,6 +62,22 @@ input[type=range]{width:100%;accent-color:var(--red2)}
 h2{font-size:20px;font-weight:900;letter-spacing:-.02em}
 .del{color:var(--red2);background:var(--s2);border:none;border-radius:7px;padding:5px 9px;font-size:11px;font-weight:700}
 .del.sure{background:var(--red);color:#fff}
+
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+main,.card,.setrow{width:100%;max-width:100%;min-width:0}
+.row{flex-wrap:wrap;min-width:0}
+.row>*{min-width:0}
+header h1{font-size:clamp(15px,4.5vw,18px)}
+#hinfo{float:none;display:block;font-size:clamp(9px,2.6vw,11px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h2{font-size:clamp(16px,5vw,20px)}
+.chip{white-space:nowrap}
+.exname{word-break:break-word}
+@media (max-width:340px){
+ body{font-size:14px}
+ .rir{width:30px;height:30px}
+ .win,.winr{font-size:15px;padding:9px 4px}
+ nav button{font-size:10px;padding:11px 0}
+}
 </style>
 </head>
 <body>
@@ -161,7 +177,7 @@ const SEED_LOGS=[
 {exerciseId:"pallof",name:"Pallof Press",reps:"10/Seite",scheme:"Core",sets:[S(5,11,0),S(5,9,0)]}]}];
 const MUSCLE_GROUPS={"hack-squat":"Quads","beinpresse-einbeinig":"Quads","beinstrecker":"Quads","beinbeuger-liegend":"Hamstrings","beinbeuger-sitzend":"Hamstrings","deadlift":"Glutes/Hinge","hip-thrust":"Glutes/Hinge","wadenpresse-oben":"Waden","wadenpresse-unten":"Waden","schraegbank":"Brust","bankdruecken":"Brust","schulterdruecken":"Schulter","seitheben":"Schulter","rudermaschine":"Rücken","rudern-kabel":"Rücken","latzug":"Rücken","ueberzug":"Rücken","reverse-fly":"Hint. Schulter","pushdown":"Trizeps"};
 // ================= Helpers =================
-const APP_VERSION="v12 · 29.08.";
+const APP_VERSION="v13";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
