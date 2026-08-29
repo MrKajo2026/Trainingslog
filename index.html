@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0c0c0e">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Trainingslog</title>
 <style>
 :root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
@@ -158,6 +161,7 @@ const SEED_LOGS=[
 {exerciseId:"pallof",name:"Pallof Press",reps:"10/Seite",scheme:"Core",sets:[S(5,11,0),S(5,9,0)]}]}];
 const MUSCLE_GROUPS={"hack-squat":"Quads","beinpresse-einbeinig":"Quads","beinstrecker":"Quads","beinbeuger-liegend":"Hamstrings","beinbeuger-sitzend":"Hamstrings","deadlift":"Glutes/Hinge","hip-thrust":"Glutes/Hinge","wadenpresse-oben":"Waden","wadenpresse-unten":"Waden","schraegbank":"Brust","bankdruecken":"Brust","schulterdruecken":"Schulter","seitheben":"Schulter","rudermaschine":"Rücken","rudern-kabel":"Rücken","latzug":"Rücken","ueberzug":"Rücken","reverse-fly":"Hint. Schulter","pushdown":"Trizeps"};
 // ================= Helpers =================
+const APP_VERSION="v12 · 29.08.";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -278,7 +282,7 @@ function toast(msg){$("toastbox").innerHTML='<div class="toast">'+esc(msg)+'</di
 function banner(msg){$("hbanner").innerHTML='<div class="card warn" style="margin-top:8px;padding:9px 12px;font-size:12px;color:var(--amb)">'+esc(msg)+'</div>'}
 function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===0}}
 function render(){
-  $("hinfo").textContent=activePlan().name+" · Wo "+(weeks()+1)+" · "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh.";
+  $("hinfo").textContent=APP_VERSION+" · "+activePlan().name+" · "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh.";
   const dl=deloadDue();
   let bn="";
   const AMB='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(245,158,11,.14);color:var(--amb);font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
