@@ -146,7 +146,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v36";
+const APP_VERSION="v37";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -206,6 +206,12 @@ function boot(){
   if(useMem)banner("⚠ Kein dauerhafter Speicher verfügbar (Vorschau-Modus?). Datei herunterladen und in Safari öffnen — sonst gehen Daten beim Schließen verloren.");
 }
 // ================= Kern-Logik =================
+// Session des aktiven Plans über ID oder Namen zuordnen (planübergreifend)
+function matchSession(log){
+  if(!log)return null;
+  const ses=activePlan().sessions;
+  return ses.find(x=>x.id===log.sessionId)||ses.find(x=>x.name===log.sessionName)||null;
+}
 const activePlan=()=>state.plans.find(p=>p.id===state.settings.activePlanId)||state.plans[0];
 const weeks=()=>Math.floor((Date.now()-new Date(state.settings.cycleStart).getTime())/6048e5);
 const DELOAD_AFTER=21; // Einheiten pro Zyklus (~6 Wochen bei jedem 2. Tag)
@@ -370,7 +376,8 @@ function go(t){state.tab=t;state.confirmDel=null;render();window.scrollTo(0,0)}
 function vHome(){
   const p=activePlan();const ll=[...state.logs].sort((a,b)=>b.date.localeCompare(a.date))[0];
   const order=p.sessions.map(s=>s.id);let next=order[0];
-  if(ll&&order.includes(ll.sessionId))next=order[(order.indexOf(ll.sessionId)+1)%order.length];
+  const lastSes=matchSession(ll);
+  if(lastSes)next=order[(order.indexOf(lastSes.id)+1)%order.length];
   let h=ll?'<p class="tiny mono">Zuletzt: '+esc(ll.sessionName)+' am '+fmtD(ll.date)+'</p>':"";
   p.sessions.forEach(s=>{const isN=s.id===next;
     h+='<button class="card'+(isN?" hl":"")+'" style="text-align:left;width:100%" onclick="startSession(\''+s.id+'\')">'
@@ -972,9 +979,10 @@ function markCalibrated(){state.settings.lastCalibration=todayISO();saveJ("setti
 const RHYTHM=2; // Tage zwischen Einheiten
 const isAbsent=iso=>(state.settings.absences||[]).some(a=>a.from<=iso&&a.to>=iso);
 const addDays=(iso,n)=>new Date(new Date(iso).getTime()+n*864e5).toISOString().slice(0,10);
-function nextSessionId(prevId){
-  const order=activePlan().sessions.map(x=>x.id);
-  const i=order.indexOf(prevId);
+function nextSessionId(prevId,prevName){
+  const ses=activePlan().sessions,order=ses.map(x=>x.id);
+  let i=order.indexOf(prevId);
+  if(i<0&&prevName)i=ses.findIndex(x=>x.name===prevName);
   return i<0?order[0]:order[(i+1)%order.length];
 }
 // Plan ab dem letzten Training erzeugen (vergangene Einträge fallen weg)
@@ -987,7 +995,7 @@ function buildSchedule(force){
   if(force||!sc.length){
     let d=lastLog?addDays(lastLog.date,RHYTHM):t;
     if(d<t)d=t;
-    let sid=nextSessionId(lastLog?lastLog.sessionId:null);
+    let sid=nextSessionId(lastLog?lastLog.sessionId:null,lastLog?lastLog.sessionName:null);
     sc=[];
     for(let i=0;i<12;i++){
       while(isAbsent(d))d=addDays(d,1);
