@@ -96,13 +96,42 @@ const DEFAULT_PLAN={"id":"aufbau-08-26","name":"AUFBAU 08/26","createdAt":"2026-
 const SEED_LIB=[{"id":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","start":70,"note":""},{"id":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","start":50,"note":"L/R, leichter, kontrolliert"},{"id":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","start":27.5,"note":""},{"id":"wadenpresse-oben","name":"Calf Extension","reps":"8-12","scheme":"ans Limit","start":95,"note":"L/R, volle Dehnung"},{"id":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","start":0,"note":""},{"id":"ellenbogen","name":"Handgelenks-Extension","reps":"15","scheme":"3s ablassen","start":6,"note":""},{"id":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","start":24,"note":""},{"id":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","start":12,"note":"sitzend, Lehne 80-85°"},{"id":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","start":65,"note":""},{"id":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","start":5,"note":"Handschlaufe, bis Schulterhöhe"},{"id":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","start":18.75,"note":""},{"id":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","start":10,"note":""},{"id":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","start":140,"note":"Kopf neutral"},{"id":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","start":150,"note":""},{"id":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","start":57.5,"note":""},{"id":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","start":50,"note":"slow nicht opfern"},{"id":"wadenpresse-unten","name":"Wadenpresse unten","reps":"15-20","scheme":"ans Limit","start":50,"note":""},{"id":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","start":0,"note":""},{"id":"ellenbogen-b","name":"Handgelenks-Extension","reps":"15","scheme":"3s ablassen","start":6,"note":""},{"id":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","start":80,"note":"Rücken spüren, nicht Griff"},{"id":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","start":75,"note":""},{"id":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","start":20,"note":""},{"id":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","start":33.75,"note":""},{"id":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","start":6.25,"note":""},{"id":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","start":13.75,"note":"Daumen nach hinten, max 15kg"},{"id":"ac3ncx1g","name":"Waden Extension","reps":"8-12","scheme":"RIR1-2","start":95,"note":""},{"id":"seawzsex","name":"Calf Press","reps":"10-15","scheme":"Ans Limit","start":95,"note":""},{"id":"g2hmzr1v","name":"Handgelenks-Flexion","reps":"15","scheme":"3s aufwärts","start":9,"note":""}];
 const S=(w,r,rir=null)=>({w,r,rir});
 const SEED_LOGS=[{"id":"seed-1","date":"2026-07-27","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","note":"","entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","sets":[{"w":140,"r":7,"rir":0},{"w":140,"r":8,"rir":0},{"w":140,"r":7,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","sets":[{"w":150,"r":10,"rir":0},{"w":150,"r":9,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","sets":[{"w":57.5,"r":12,"rir":2},{"w":57.5,"r":11,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","sets":[{"w":50,"r":9,"rir":0},{"w":50,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","sets":[{"w":50,"r":11,"rir":1},{"w":50,"r":11,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":26,"rir":null}]}]},{"id":"seed-2","date":"2026-07-29","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","note":"Rudern: Bizeps spürbar (nach Übung, 24h ok). Latzug: Bizeps/Unterarm 3/10.","entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","sets":[{"w":90,"r":9,"rir":1},{"w":90,"r":9,"rir":0},{"w":90,"r":8,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","sets":[{"w":82,"r":10,"rir":0},{"w":82,"r":7,"rir":0},{"w":82,"r":7,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","sets":[{"w":20,"r":15,"rir":2},{"w":20,"r":15,"rir":0},{"w":20,"r":14,"rir":0}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","sets":[{"w":13.75,"r":20,"rir":null},{"w":13.75,"r":16,"rir":null}]}]},{"id":"seed-3","date":"2026-07-31","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","note":"Wadenpresse runter auf 42,5kg — besser gespürt.","entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","sets":[{"w":70,"r":7,"rir":3},{"w":70,"r":7,"rir":2},{"w":70,"r":9,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","sets":[{"w":70,"r":8,"rir":2},{"w":70,"r":9,"rir":1},{"w":70,"r":8,"rir":0}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","sets":[{"w":27.5,"r":10,"rir":0},{"w":27.5,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","sets":[{"w":65,"r":9,"rir":0},{"w":42.5,"r":10,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":28,"rir":null}]}]},{"id":"seed-4","date":"2026-08-02","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","note":"Seitheben + Pallof erstmalig.","entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","sets":[{"w":24,"r":14,"rir":2},{"w":24,"r":13,"rir":2},{"w":28,"r":12,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","sets":[{"w":14,"r":14,"rir":2},{"w":14,"r":14,"rir":2},{"w":16,"r":12,"rir":0}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","sets":[{"w":65,"r":10,"rir":2},{"w":65,"r":9,"rir":2},{"w":65,"r":9,"rir":null}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","sets":[{"w":3.75,"r":20,"rir":null},{"w":6.25,"r":15,"rir":null}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","sets":[{"w":18.75,"r":16,"rir":null}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","sets":[{"w":6.25,"r":10,"rir":null},{"w":6.25,"r":10,"rir":null}]}]},{"id":"seed-5","date":"2026-08-04","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","note":"","entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","sets":[{"w":140,"r":7,"rir":1},{"w":140,"r":6,"rir":1},{"w":140,"r":8,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","sets":[{"w":150,"r":10,"rir":2},{"w":150,"r":9,"rir":2},{"w":150,"r":10,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","sets":[{"w":50,"r":10,"rir":1},{"w":50,"r":10,"rir":null}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","sets":[{"w":57.5,"r":11,"rir":null},{"w":57.5,"r":12,"rir":null}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","sets":[{"w":50,"r":12,"rir":0},{"w":50,"r":11,"rir":null}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":38,"rir":null},{"w":0,"r":30,"rir":null}]}]},{"id":"seed-6","date":"2026-08-06","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","note":"","entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","sets":[{"w":80,"r":10,"rir":2},{"w":80,"r":9,"rir":2},{"w":80,"r":9,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","sets":[{"w":75,"r":11,"rir":2},{"w":75,"r":11,"rir":2},{"w":75,"r":8,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","sets":[{"w":22,"r":15,"rir":2},{"w":22,"r":15,"rir":2},{"w":22,"r":11,"rir":0}]},{"exerciseId":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","sets":[{"w":35,"r":10,"rir":0},{"w":35,"r":10,"rir":0}]},{"exerciseId":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","sets":[{"w":6.25,"r":15,"rir":null},{"w":6.25,"r":15,"rir":null}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","sets":[{"w":13.75,"r":11,"rir":null},{"w":13.75,"r":12,"rir":null}]}]},{"id":"seed-7","date":"2026-08-08","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","note":"Beinpresse neu leicht/slow: 50kg RIR1-2.","entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","sets":[{"w":70,"r":8,"rir":2},{"w":70,"r":8,"rir":2},{"w":70,"r":9,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","sets":[{"w":50,"r":12,"rir":2},{"w":50,"r":14,"rir":1}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","sets":[{"w":27.5,"r":12,"rir":0},{"w":27.5,"r":11,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","sets":[{"w":50,"r":9,"rir":0},{"w":42.5,"r":10,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","sets":[{"w":0,"r":40,"rir":null},{"w":0,"r":28,"rir":null}]}]},{"id":"seed-8","date":"2026-08-11","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","note":"Seitheben RIR1 statt Antest RIR2-3. Pushdown-Gewicht korrigiert (18,75kg).","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"wenig","befinden":7},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","sets":[{"w":28,"r":13,"rir":2},{"w":28,"r":12,"rir":2},{"w":28,"r":10,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","sets":[{"w":16,"r":15,"rir":2},{"w":16,"r":13,"rir":1},{"w":16,"r":11,"rir":1}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","sets":[{"w":65,"r":11,"rir":2},{"w":65,"r":10,"rir":2},{"w":65,"r":9,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","sets":[{"w":5,"r":15,"rir":1},{"w":5,"r":13,"rir":1}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","sets":[{"w":18.75,"r":13,"rir":0},{"w":18.75,"r":11,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","sets":[{"w":5,"r":11,"rir":0},{"w":5,"r":9,"rir":0}]}]},{"id":"sbmyqrjz","date":"2026-08-17","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","warmup":["5min Rad locker","Hüftmobilität"],"note":"","checkin":{"gefuehl":"normal","schlaf":"schlecht","essen":"normal","befinden":4},"entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":80,"r":7,"rir":2},{"w":80,"r":7,"rir":2},{"w":80,"r":7,"rir":1}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","note":"L/R, leichter, kontrolliert","exNote":"","sets":[{"w":75,"r":7,"rir":1},{"w":50,"r":12,"rir":1}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":27.5,"r":12,"rir":0},{"w":27.5,"r":11,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Wadenpresse oben slow","reps":"8-12","scheme":"ans Limit","note":"L/R, volle Dehnung","exNote":"Übung auf Calf Extension getauscht ","sets":[{"w":0,"r":17,"rir":2},{"w":95,"r":13,"rir":2}]},{"exerciseId":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":5,"r":17,"rir":null},{"w":5,"r":15,"rir":null},{"w":5,"r":15,"rir":null}]}]},{"id":"m429hnww","date":"2026-08-19","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"note":"","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"normal","befinden":7},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","note":"","exNote":"Bissl instabil nach der Erhöhung aber sonst gut","sets":[{"w":30,"r":9,"rir":2},{"w":30,"r":8,"rir":2},{"w":30,"r":9,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","note":"sitzend, Lehne 80-85°","exNote":"","sets":[{"w":18,"r":12,"rir":1},{"w":18,"r":10,"rir":1},{"w":18,"r":9,"rir":1}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","note":"","exNote":"Leichtes bizeps ziehen 2/10","sets":[{"w":65,"r":12,"rir":2},{"w":65,"r":11,"rir":2},{"w":65,"r":9,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","note":"Handschlaufe, bis Schulterhöhe","exNote":"","sets":[{"w":0,"r":15,"rir":2},{"w":0,"r":14,"rir":2}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":18.75,"r":16,"rir":0},{"w":18.75,"r":13,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","note":"","exNote":"Loch 12 rein auf Nippelhöhe, warum keine Rotorenbewegung","sets":[{"w":0,"r":20,"rir":4},{"w":0,"r":14,"rir":2}]}]},{"id":"wdptaz7u","date":"2026-08-21","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"note":"","checkin":{"gefuehl":"stark","schlaf":"normal","essen":"normal","befinden":7},"entries":[{"exerciseId":"deadlift","name":"Deadlift (Straps)","reps":"5-8","scheme":"2/2/0","note":"Kopf neutral","exNote":"","sets":[{"w":140,"r":7,"rir":2},{"w":140,"r":7,"rir":2},{"w":140,"r":8,"rir":0}]},{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":150,"r":11,"rir":2},{"w":150,"r":11,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":57.5,"r":14,"rir":1},{"w":57.5,"r":11,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","note":"slow nicht opfern","exNote":"","sets":[{"w":52.5,"r":10,"rir":0},{"w":52.5,"r":9,"rir":0}]},{"exerciseId":"wadenpresse-oben","name":"Calf Extension","reps":"8-12","scheme":"ans Limit","note":"L/R, volle Dehnung","exNote":"","swapped":true,"sets":[{"w":95,"r":17,"rir":0},{"w":95,"r":14,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":44,"rir":0},{"w":0,"r":36,"rir":0}]},{"exerciseId":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":6,"r":17,"rir":0},{"w":6,"r":15,"rir":null},{"w":6,"r":12,"rir":null}]}],"deload":false},{"id":"sr3gtimu","date":"2026-08-23","planId":"aufbau-08-26","sessionId":"ok-b","sessionName":"OK B","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],"note":"Fühl mich fit und energievoll direkt nach der Einheit","checkin":{"gefuehl":"stark","schlaf":"normal","essen":"normal","befinden":8},"entries":[{"exerciseId":"rudern-kabel","name":"Rudern Kabel eng (Straps)","reps":"6-10","scheme":"2/2/0","note":"Rücken spüren, nicht Griff","exNote":"","sets":[{"w":90,"r":8,"rir":2},{"w":90,"r":7,"rir":2},{"w":90,"r":7,"rir":0}]},{"exerciseId":"latzug","name":"Latzug Neutralgriff (Straps)","reps":"8-12","scheme":"S1 RIR2","note":"","exNote":"","sets":[{"w":75,"r":11,"rir":1},{"w":75,"r":10,"rir":2},{"w":75,"r":8,"rir":0}]},{"exerciseId":"bankdruecken","name":"Bankdrücken KH flach","reps":"10-15","scheme":"+2Wdh/+2kg pro Wo","note":"","exNote":"Zwischen satz 2 und 3 lange pause","sets":[{"w":26,"r":12,"rir":2},{"w":26,"r":10,"rir":1},{"w":23,"r":14,"rir":3}]},{"exerciseId":"ueberzug","name":"Überzug","reps":"10-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":35,"r":12,"rir":0},{"w":35,"r":11,"rir":0}]},{"exerciseId":"reverse-fly","name":"Reverse Cable Fly","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":6.25,"r":14,"rir":0},{"w":6.25,"r":12,"rir":0}]},{"exerciseId":"face-pull","name":"Face Pull Seil","reps":"15-20","scheme":"leicht, Prehab","note":"Daumen nach hinten, max 15kg","exNote":"","sets":[{"w":13.75,"r":13,"rir":1},{"w":13.75,"r":13,"rir":0}]}]},{"id":"6skdjqa2","date":"2026-08-25","planId":"aufbau-08-26","sessionId":"uk-a","sessionName":"UK A","warmup":["5min Rad locker","Hüftmobilität"],"note":"","checkin":{"gefuehl":"schwach","schlaf":"normal","essen":"normal","befinden":4},"entries":[{"exerciseId":"hack-squat","name":"Hack Squat","reps":"6-9","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":90,"r":7,"rir":1},{"w":90,"r":6,"rir":1},{"w":90,"r":6,"rir":0}]},{"exerciseId":"beinpresse-einbeinig","name":"Beinpresse einbeinig","reps":"10-15","scheme":"RIR1-2","note":"L/R, leichter, kontrolliert","exNote":"","sets":[{"w":50,"r":12,"rir":2}]},{"exerciseId":"beinbeuger-liegend","name":"Beinbeuger liegend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"Hier hab ich das gefühl ich bleib stehen kein progress","sets":[{"w":27.5,"r":9,"rir":0}]},{"exerciseId":"seawzsex","name":"Calf Press","reps":"8-12","scheme":"Ans Limit","note":"","exNote":"","sets":[{"w":95,"r":13,"rir":1},{"w":95,"r":14,"rir":0}]},{"exerciseId":"dead-bug","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":54,"rir":0},{"w":0,"r":34,"rir":0}]},{"exerciseId":"ellenbogen","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"Rechte Handgelenke bei Extension ","sets":[{"w":6,"r":20,"rir":0},{"w":6,"r":12,"rir":0},{"w":6,"r":12,"rir":0}]}]},{"id":"pe5llmvv","date":"2026-08-27","planId":"aufbau-08-26","sessionId":"ok-a","sessionName":"OK A","warmup":["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],"note":"","checkin":{"gefuehl":"normal","schlaf":"normal","essen":"wenig","befinden":3},"entries":[{"exerciseId":"schraegbank","name":"Schrägbankdrücken KH","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":30,"r":9,"rir":2},{"w":30,"r":9,"rir":0}]},{"exerciseId":"schulterdruecken","name":"Schulterdrücken KH neutral","reps":"8-12","scheme":"RIR1-2","note":"sitzend, Lehne 80-85°","exNote":"","sets":[{"w":20,"r":8,"rir":1},{"w":20,"r":8,"rir":1},{"w":20,"r":8,"rir":0}]},{"exerciseId":"rudermaschine","name":"Rudermaschine (Straps)","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":70,"r":9,"rir":2},{"w":70,"r":8,"rir":1},{"w":70,"r":8,"rir":0}]},{"exerciseId":"seitheben","name":"Seitheben Kabel","reps":"12-20","scheme":"RIR2-3 Antest","note":"Handschlaufe, bis Schulterhöhe","exNote":"","sets":[{"w":5,"r":17,"rir":1},{"w":5,"r":15,"rir":2}]},{"exerciseId":"pushdown","name":"Trizeps Pushdown Seil","reps":"12-15","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":0,"r":13,"rir":1},{"w":0,"r":12,"rir":0}]},{"exerciseId":"pallof","name":"Pallof Press","reps":"10/Seite","scheme":"Core","note":"","exNote":"","sets":[{"w":0,"r":16,"rir":null},{"w":0,"r":13,"rir":null}]}]},{"id":"zav10h39","date":"2026-08-29","planId":"aufbau-08-26","sessionId":"uk-b","sessionName":"UK B","warmup":["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],"note":"Fühl mich gut","checkin":{"gefuehl":"normal","schlaf":"gut","essen":"normal","befinden":8},"entries":[{"exerciseId":"hip-thrust","name":"Hip Thrust","reps":"8-12","scheme":"2/2/0","note":"","exNote":"","sets":[{"w":150,"r":12,"rir":2},{"w":150,"r":12,"rir":2},{"w":150,"r":12,"rir":0}]},{"exerciseId":"beinbeuger-sitzend","name":"Beinbeuger sitzend","reps":"8-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":0,"r":12,"rir":0},{"w":0,"r":9,"rir":0}]},{"exerciseId":"beinstrecker","name":"Beinstrecker slow","reps":"8-10","scheme":"ans Limit","note":"slow nicht opfern","exNote":"","sets":[{"w":52.5,"r":9,"rir":0},{"w":52.5,"r":8,"rir":0}]},{"exerciseId":"wadenpresse-unten","name":"Wadenpresse unten","reps":"10-12","scheme":"ans Limit","note":"","exNote":"","sets":[{"w":40,"r":14,"rir":0},{"w":40,"r":14,"rir":0}]},{"exerciseId":"dead-bug-b","name":"Dead Bug","reps":"20","scheme":"BW","note":"","exNote":"","sets":[{"w":0,"r":44,"rir":0},{"w":0,"r":34,"rir":0}]},{"exerciseId":"ellenbogen-b","name":"Ellenbogen exz. Flex+Ext","reps":"15","scheme":"3s ablassen","note":"","exNote":"","sets":[{"w":6,"r":15,"rir":0},{"w":6,"r":15,"rir":0},{"w":6,"r":15,"rir":null}]}],"deload":false}];
-const MUSCLE_GROUPS={"hack-squat":"Quads","beinpresse-einbeinig":"Quads","beinstrecker":"Quads","beinbeuger-liegend":"Hamstrings","beinbeuger-sitzend":"Hamstrings","deadlift":"Glutes/Hinge","hip-thrust":"Glutes/Hinge","wadenpresse-oben":"Waden","wadenpresse-unten":"Waden","schraegbank":"Brust","bankdruecken":"Brust","schulterdruecken":"Schulter","seitheben":"Schulter","rudermaschine":"Rücken","rudern-kabel":"Rücken","latzug":"Rücken","ueberzug":"Rücken","reverse-fly":"Hint. Schulter","pushdown":"Trizeps"};
+const MUSCLE_MAP={
+"hack-squat":{p:"Quads",s:["Glutes/Hinge"]},"beinpresse-einbeinig":{p:"Quads",s:["Glutes/Hinge"]},"beinstrecker":{p:"Quads",s:[]},
+"beinbeuger-liegend":{p:"Hamstrings",s:[]},"beinbeuger-sitzend":{p:"Hamstrings",s:[]},
+"deadlift":{p:"Glutes/Hinge",s:["Hamstrings","Rücken"]},"hip-thrust":{p:"Glutes/Hinge",s:["Hamstrings"]},
+"wadenpresse-oben":{p:"Waden",s:[]},"wadenpresse-unten":{p:"Waden",s:[]},"seawzsex":{p:"Waden",s:[]},
+"schraegbank":{p:"Brust",s:["Schulter","Trizeps"]},"bankdruecken":{p:"Brust",s:["Schulter","Trizeps"]},
+"schulterdruecken":{p:"Schulter",s:["Trizeps"]},"seitheben":{p:"Schulter",s:[]},
+"rudermaschine":{p:"Rücken",s:["Hint. Schulter"]},"rudern-kabel":{p:"Rücken",s:["Hint. Schulter"]},
+"latzug":{p:"Rücken",s:[]},"ueberzug":{p:"Rücken",s:["Brust"]},
+"reverse-fly":{p:"Hint. Schulter",s:[]},"pushdown":{p:"Trizeps",s:[]}};
+const MUSCLE_GROUPS=Object.fromEntries(Object.entries(MUSCLE_MAP).map(([k,v])=>[k,v.p]));
+const MUSCLE_ORDER=["Brust","Rücken","Schulter","Hint. Schulter","Trizeps","Quads","Hamstrings","Glutes/Hinge","Waden"];
+const SET_TARGET={min:10,max:20};   // harte Sätze je Muskel und Woche
+// Kleinster sinnvoller Gewichtssprung nach Lastniveau
+function stepFor(w,iso){
+  const pct=iso?0.05:0.025;
+  const inc=w<15?1:w<40?2:2.5;
+  return Math.max(inc,Math.round(w*pct/inc)*inc);
+}
 // ================= Helpers =================
-const APP_VERSION="v30";
+const APP_VERSION="v31";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
-const e1rm=(w,r)=>(w>0&&r>0?Math.round(w*(1+r/30)*10)/10:0);
+const e1rm=(w,r,rir)=>{ // Epley mit RIR-Korrektur; nur im validen Bereich
+  const eff=r+(rir==null?0:Math.min(rir,4));
+  if(!(w>0)||!(r>0)||eff<3||eff>12)return 0;
+  return Math.round(w*(1+eff/30)*10)/10;};
+const volLoad=sets=>sets.reduce((a,x)=>a+(+x.w||0)*(+x.r||0),0);
+// Kennzahl je Übung: e1RM wenn im validen Bereich, sonst Last×Wdh
+function exMetric(entry){
+  const e=entry.sets.reduce((a,x)=>Math.max(a,e1rm(x.w,x.r,x.rir)),0);
+  if(e>0)return{v:e,unit:"e1RM"};
+  const vl=volLoad(entry.sets);
+  return vl>0?{v:Math.round(vl),unit:"Last×Wdh"}:null;
+}
 const roundPlate=w=>Math.round(w/2.5)*2.5;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function rirRange(scheme,si,n){if(!scheme)return null;if(/2\/2\/0/.test(scheme))return si===n-1?[0,1]:[2,2];if(/limit/i.test(scheme))return[0,0];const m=scheme.match(/RIR\s?(\d)(?:\s?-\s?(\d))?/i);if(m)return[+m[1],+(m[2]??m[1])];return null}
@@ -192,11 +221,19 @@ function recommendFor(entry){
   const last=lastByEx()[entry.exerciseId];if(!last)return null;
   const ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
   const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
-  const lo=+m[1],hi=+m[2];const s1=ls[0];const w=+s1.w||0;if(!w)return null;
-  if(s1.r>=hi&&(s1.rir==null||s1.rir>=1))return{w:roundPlate(w+2.5),txt:"+2,5kg — Zielbereich oben erreicht ("+w+"×"+s1.r+")"};
-  if(ls.every(s=>s.r<lo&&s.rir===0))return{w:roundPlate(Math.max(w-2.5,0)),txt:"−2,5kg — unter Zielbereich trotz RIR0"};
+  const lo=+m[1],hi=+m[2];
+  const w=+ls[0].w||0;if(!w)return null;
+  const iso=/limit|RIR2|Core/i.test(entry.scheme||"")&&!/2\/2\/0/.test(entry.scheme||"");
+  const step=stepFor(w,iso);
+  const allTop=ls.every(x=>x.r>=hi);                       // doppelte Progression erfüllt
+  const anyBelow=ls.filter(x=>x.r<lo).length;
+  if(allTop)return{w:roundPlate(w+step),txt:"+"+step+"kg — alle Sätze am oberen Zielrand ("+ls.map(x=>x.r).join("/")+")"};
+  if(anyBelow>=Math.ceil(ls.length/2)&&ls.every(x=>x.rir===0))
+    return{w:roundPlate(Math.max(w-step,step)),txt:"−"+step+"kg — mehrheitlich unter Zielbereich trotz RIR0"};
+  if(ls[0].r>=hi)return{w:w,txt:"Gewicht halten — erst alle Sätze auf "+hi+" Wdh bringen (aktuell "+ls.map(x=>x.r).join("/")+")",hold:true};
   return null;
 }
+
 function pushUndo(){state.undo.push(JSON.stringify(state.active));if(state.undo.length>100)state.undo.shift();updUndoBtn()}
 function doUndo(){const p=state.undo.pop();if(p){state.active=JSON.parse(p);draftSave();render()}}
 let draftT=null;function draftSave(){clearTimeout(draftT);draftT=setTimeout(()=>{if(state.active)saveJ("draft",state.active)},400)}
@@ -261,6 +298,7 @@ function render(){
       const bad=rec3.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
       if(pdrop)bn='<button '+AMB+' onclick="go(\'deload\')">⚠️ Leistungsabfall bei '+pdrop+' Übungen — Deload ›</button>';
       else if(rec3.length>=3&&bad>=2)bn='<div '+SKY+'>ℹ️ Erholungssignale ('+bad+'/3) — Deload erwägen</div>';
+      else if(calibrationDue())bn='<button '+SKY+' onclick="markCalibrated()">ℹ️ RIR-Kalibrierung fällig — 1 Iso-Satz bis echtes Versagen · erledigt ›</button>';
       else if(daysSinceLast()>=8&&sessionsSinceCycle()>=8)bn='<button '+SKY+' onclick="pauseAsDeload()">ℹ️ '+daysSinceLast()+' Tage Pause — als Deload werten ›</button>';
     }
   }
@@ -318,7 +356,9 @@ function vLogger(){
     h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="exname">'+esc(e.name)+(e.swapped?' <span style="color:var(--sky);font-size:11px;font-weight:400">⇄ getauscht</span>':"")+'</span>'
     +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
-    if(rec)h+='<button class="rec" style="width:100%;text-align:left;cursor:pointer" onclick="applyRec('+ei+','+rec.w+')">🎯 Empfehlung: <b>'+rec.w+'kg</b> — '+esc(rec.txt)+' · <u>übernehmen</u></button>';
+    if(rec){h+=rec.hold
+      ?'<div class="rec">🎯 '+esc(rec.txt)+'</div>'
+      :'<button class="rec" style="width:100%;text-align:left;cursor:pointer" onclick="applyRec('+ei+','+rec.w+')">🎯 Empfehlung: <b>'+rec.w+'kg</b> — '+esc(rec.txt)+' · <u>übernehmen</u></button>';}
     if(!a.deload){const la=(state.analyses||[]).slice(-1)[0];const ar=la&&(la.empfehlungen||[]).find(r=>r.exerciseId===e.exerciseId);
       if(ar)h+='<'+(ar.gewicht?'button onclick="applyRec('+ei+','+ar.gewicht+')"':'div')+' style="width:100%;text-align:left;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--grn);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0'+(ar.gewicht?';cursor:pointer':'')+'">🤖 KI: '+esc(ar.ziel)+(ar.grund?' — '+esc(ar.grund):'')+(ar.gewicht?' · <u>übernehmen</u>':'')+'</'+(ar.gewicht?'button':'div')+'>'}
     if(!rec&&!a.deload){const stg=stagnationFor(e.exerciseId);
@@ -594,7 +634,7 @@ function vStats(){
       const unit=state.statUnit||"pct";
       h+='<div class="row" style="gap:4px;margin-bottom:6px"><button class="chip'+(unit==="pct"?" on-n":"")+'" style="flex:1;padding:5px;font-size:11px" onclick="state.statUnit=\'pct\';render()">Prozent</button><button class="chip'+(unit==="kg"?" on-n":"")+'" style="flex:1;padding:5px;font-size:11px" onclick="state.statUnit=\'kg\';render()">Gewicht</button></div>';
       h+=g.perEx.map(e=>{const dkg=e.last-e.first;
-        return '<div class="hline mono"><span style="color:var(--tx);flex:1">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+'kg <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(unit==="pct"?((e.pct>0?"+":"")+e.pct.toFixed(1)+"%"):((dkg>0?"+":"")+dkg.toFixed(1)+"kg"))+'</b></span></div>'}).join("")||'<p class="tiny">Zu wenige Daten im Zeitraum.</p>';
+        return '<div class="hline mono"><span style="color:var(--tx);flex:1">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+(e.unit==="e1RM"?"kg":"")+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(unit==="pct"?((e.pct>0?"+":"")+e.pct.toFixed(1)+"%"):((dkg>0?"+":"")+dkg.toFixed(1)+"kg"))+'</b></span></div>'}).join("")||'<p class="tiny">Zu wenige Daten im Zeitraum.</p>';
     }
     h+='<p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core &amp; Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
   }
@@ -611,6 +651,42 @@ function vStats(){
      +'<span class="mono" style="font-size:14px">'+last.kg.toFixed(1).replace(".",",")+' kg <b style="color:'+(diff>0?"var(--grn)":diff<0?"var(--sky)":"var(--mut)")+'">'+(diff>0?"+":"")+diff.toFixed(1).replace(".",",")+'</b></span></div>'
      +'<div id="wchart"></div><p class="tiny" style="margin-top:6px">'+ws.length+' Messungen · '+fmtD(first.date)+' – '+fmtD(last.date)+' · Aufbau-Ziel: max +2 kg/Monat</p></div>';
   } else h+='<div class="card"><span class="lbl">Körpergewicht</span><p class="tiny" style="margin-top:4px">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen. Empfehlung: 2–3× pro Woche, morgens nüchtern.</p></div>';
+  // Wochen-Satzvolumen je Muskelgruppe
+  const wkSets=weeklySets(pl);
+  const wkKeys=Object.keys(wkSets).sort();
+  if(wkKeys.length){
+    const lastN=wkKeys.slice(-4);
+    const avg={};
+    MUSCLE_ORDER.forEach(g=>{const vals=lastN.map(k=>wkSets[k][g]||0);avg[g]=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10});
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Wochensätze je Muskel</span><span class="tiny mono">Ø '+lastN.length+' Wo · Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+'</span></div>';
+    MUSCLE_ORDER.forEach(g=>{const v=avg[g]||0;
+      const col=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
+      const w=Math.min(v/(SET_TARGET.max*1.3)*100,100);
+      h+='<div style="margin:5px 0"><div class="row" style="justify-content:space-between"><span class="tiny" style="color:var(--tx)">'+g+'</span><span class="tiny mono" style="color:'+col+'">'+v.toFixed(1).replace(".",",")+'</span></div>'
+       +'<div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+col+'"></div></div></div>'});
+    h+='<p class="tiny" style="margin-top:6px">Primärmuskel 1,0 · Sekundär 0,5 · nur harte Sätze (RIR ≤3). Amber = unter Zielkorridor, rot = darüber.</p></div>';
+  }
+  // Belastungsindex
+  const li=loadIndex();
+  if(li){
+    const st=li.acwr>1.5?{c:"var(--red2)",t:"stark erhöht — Ermüdungsrisiko"}:li.acwr<0.8?{c:"var(--sky)",t:"reduziert — Erholungswoche"}:{c:"var(--grn)",t:"im stabilen Bereich"};
+    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Belastungsindex</span><span class="mono" style="color:'+st.c+';font-weight:800">'+li.acwr.toFixed(2).replace(".",",")+'</span></div>'
+     +'<p class="tiny">Aktuelle Woche '+li.cur+' vs. Ø letzte 4 Wochen '+li.chronic+' — '+st.t+'.</p>'
+     +'<p class="tiny" style="margin-top:4px">Sätze × Anstrengung (10−RIR). Sprünge über 1,5 gehen Verletzungen und Übermüdung voraus.</p></div>';
+  }
+  // Kraft vs. Körpergewicht
+  const gAll=growth(pl,allEx);
+  const wsAll=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
+  if(gAll.overall!==null&&wsAll.length>=2){
+    const dkg=Math.round((wsAll[wsAll.length-1].kg-wsAll[0].kg)*10)/10;
+    let msg,col;
+    if(dkg>0.8&&gAll.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";col="var(--amb)"}
+    else if(dkg>0.3&&gAll.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";col="var(--grn)"}
+    else if(dkg<-0.3&&gAll.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";col="var(--amb)"}
+    else if(dkg<-0.3&&gAll.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";col="var(--red2)"}
+    else {msg="Gewicht und Kraft weitgehend stabil.";col="var(--mut)"}
+    h+='<div class="card"><span class="lbl">Kraft &amp; Körpergewicht</span><p class="tiny" style="margin-top:4px">Gewicht <b class="mono">'+(dkg>0?"+":"")+dkg.toFixed(1).replace(".",",")+' kg</b> · Kraft <b class="mono">'+(gAll.overall>0?"+":"")+gAll.overall+'%</b></p><p class="tiny" style="color:'+col+';margin-top:4px">'+msg+'</p></div>';
+  }
   // Tonnage: je Einheitstyp oder Wochensumme
   const tmode=state.tonMode||"woche";
   h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Tonnage (kg)</span></div>'
@@ -633,13 +709,27 @@ function growth(pl,allEx){
   const nDeload=pl.filter(l=>l.deload).length;
   pl=pl.filter(l=>!l.deload);
   const perEx=[];
-  allEx.forEach(ex=>{const pts=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===ex.id);if(!e)return null;const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?b:null}).filter(Boolean);
-    const grp=MUSCLE_GROUPS[ex.id];
-    if(pts.length>=2&&grp)perEx.push({name:ex.name,group:grp,first:pts[0],last:pts[pts.length-1],pct:(pts[pts.length-1]-pts[0])/pts[0]*100})});
+  allEx.forEach(ex=>{
+    const ents=pl.map(l=>l.entries.find(x=>x.exerciseId===ex.id)).filter(Boolean);
+    if(!ents.length)return;
+    // Metrik einmal festlegen: e1RM nur wenn in der Mehrheit der Einheiten gültig
+    const validE=ents.filter(e=>e.sets.some(x=>e1rm(x.w,x.r,x.rir)>0)).length;
+    const useE=validE>=Math.ceil(ents.length*0.6);
+    const pts=ents.map(e=>{
+      if(useE){const v=e.sets.reduce((a,x)=>Math.max(a,e1rm(x.w,x.r,x.rir)),0);return v>0?{v,unit:"e1RM"}:null}
+      const vl=volLoad(e.sets);return vl>0?{v:Math.round(vl),unit:"Last×Wdh"}:null;
+    }).filter(Boolean);
+    const grp=(MUSCLE_MAP[ex.id]||{}).p;
+    if(pts.length>=2&&grp){
+      const first=pts[0].v,last=pts[pts.length-1].v;
+      perEx.push({name:ex.name,group:grp,first,last,unit:pts[pts.length-1].unit,pct:(last-first)/first*100});
+    }
+  });
   const byG={};perEx.forEach(e=>{(byG[e.group]=byG[e.group]||[]).push(e.pct)});
   const groups=Object.entries(byG).map(([g,a])=>({g,v:Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10})).sort((a,b)=>b.v-a.v);
   return{perEx:perEx.sort((a,b)=>b.pct-a.pct),groups,overall:perEx.length?Math.round(perEx.reduce((a,e)=>a+e.pct,0)/perEx.length*10)/10:null,nDeload};
 }
+
 function delLog(id){if(state.confirmDel!=="h:"+id){state.confirmDel="h:"+id;render();setTimeout(()=>{if(state.confirmDel==="h:"+id){state.confirmDel=null;render()}},3000);return}
   state.logs=state.logs.filter(l=>l.id!==id);saveJ("logs",state.logs);state.confirmDel=null;render();toast("Eintrag gelöscht")}
 // SVG-Charts
@@ -662,7 +752,9 @@ function drawCharts(){
   const ec=$("exchart");
   if(ec){
     const data=pl.map(l=>{const e=l.entries.find(x=>x.exerciseId===state.statEx);if(!e)return null;
-      return{d:fmtD(l.date),e:e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0),w:e.sets.reduce((a,s)=>Math.max(a,s.w),0)}}).filter(Boolean);
+      const ev=e.sets.reduce((a,x)=>Math.max(a,e1rm(x.w,x.r,x.rir)),0);
+      const val=ev>0?ev:volLoad(e.sets)/10;
+      return val>0?{d:fmtD(l.date),e:Math.round(val*10)/10,w:e.sets.reduce((a,s)=>Math.max(a,s.w),0)}:null}).filter(Boolean);
     if(data.length<2){ec.innerHTML='<p class="tiny" style="text-align:center;padding:16px">Mind. 2 Einheiten für den Verlauf nötig.</p>'}
     else{
       const W=320,H=170,P=28;
@@ -751,6 +843,47 @@ function vDeload(){
 }
 function resetCycle(){state.settings.cycleStart=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
 function pauseAsDeload(){state.settings.cycleStart=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);render();toast("Pause als Deload gewertet — neuer Zyklus ✓")}
+// ================= Belastungssteuerung =================
+// Wochen-Satzvolumen je Muskel (primär 1, sekundär 0,5), nur harte Sätze (RIR<=3)
+function weeklySets(logs){
+  const wk={};
+  logs.filter(l=>!l.deload).forEach(l=>{
+    const dt=new Date(l.date),on=new Date(dt);on.setDate(dt.getDate()-((dt.getDay()+6)%7));
+    const k=on.toISOString().slice(0,10);
+    wk[k]=wk[k]||{};
+    l.entries.forEach(e=>{
+      const mm=MUSCLE_MAP[e.exerciseId];if(!mm)return;
+      const hard=e.sets.filter(x=>x.r>0&&(x.rir==null||x.rir<=3)).length;
+      if(!hard)return;
+      wk[k][mm.p]=(wk[k][mm.p]||0)+hard;
+      (mm.s||[]).forEach(g=>{wk[k][g]=(wk[k][g]||0)+hard*0.5});
+    });
+  });
+  return wk;
+}
+// Belastungsindex: Sätze × Anstrengung (10−RIR); ACWR = aktuelle Woche / Ø 4 Wochen
+function loadIndex(){
+  const wk={};
+  state.logs.filter(l=>!l.deload).forEach(l=>{
+    const dt=new Date(l.date),on=new Date(dt);on.setDate(dt.getDate()-((dt.getDay()+6)%7));
+    const k=on.toISOString().slice(0,10);
+    let v=0;l.entries.forEach(e=>e.sets.forEach(x=>{if(x.r>0)v+=(10-(x.rir==null?1:Math.min(x.rir,5)))}));
+    wk[k]=(wk[k]||0)+Math.round(v);
+  });
+  const keys=Object.keys(wk).sort();
+  if(keys.length<2)return null;
+  const cur=wk[keys[keys.length-1]];
+  const prev=keys.slice(-5,-1).map(k=>wk[k]);
+  const chronic=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:cur;
+  return{cur,chronic:Math.round(chronic),acwr:Math.round(cur/(chronic||1)*100)/100,series:keys.map(k=>({d:k,v:wk[k]}))};
+}
+// RIR-Kalibrierung: alle 6 Wochen ein Satz bis echtes Versagen
+function calibrationDue(){
+  const last=state.settings.lastCalibration;
+  if(!last)return true;
+  return (Date.now()-new Date(last).getTime())/864e5>42;
+}
+function markCalibrated(){state.settings.lastCalibration=todayISO();saveJ("settings",state.settings);render();toast("Kalibrierung vermerkt — nächste in 6 Wochen")}
 // ================= Trainingsplanung =================
 const RHYTHM=2; // Tage zwischen Einheiten
 const isAbsent=iso=>(state.settings.absences||[]).some(a=>a.from<=iso&&a.to>=iso);
