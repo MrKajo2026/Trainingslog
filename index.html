@@ -146,15 +146,15 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v40";
+const APP_VERSION="v42";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
-const e1rm=(w,r,rir)=>{ // Epley mit RIR-Korrektur; nur im validen Bereich
+const e1rm=(w0,r0,rir)=>{const w=num(w0),r=num(r0); // Epley mit RIR-Korrektur; nur im validen Bereich
   const eff=r+(rir==null?0:Math.min(rir,4));
   if(!(w>0)||!(r>0)||eff<3||eff>12)return 0;
   return Math.round(w*(1+eff/30)*10)/10;};
-const volLoad=sets=>sets.reduce((a,x)=>Math.max(a,(+x.w||0)*(+x.r||0)),0); // bester Satz, satzzahl-unabhängig
+const volLoad=sets=>sets.reduce((a,x)=>Math.max(a,num(x.w)*num(x.r)),0); // bester Satz, satzzahl-unabhängig
 // Kennzahl je Übung: e1RM wenn im validen Bereich, sonst Last×Wdh
 function exMetric(entry){
   const e=entry.sets.reduce((a,x)=>Math.max(a,e1rm(x.w,x.r,x.rir)),0);
@@ -162,6 +162,7 @@ function exMetric(entry){
   const vl=volLoad(entry.sets);
   return vl>0?{v:Math.round(vl),unit:"Last×Wdh"}:null;
 }
+const num=v=>{const n=parseFloat(String(v==null?"":v).replace(",","."));return isNaN(n)?0:n};
 const roundPlate=w=>Math.round(w/2.5)*2.5;
 const fmtRest=r=>r<60?r+"s":(r%60===0?(r/60)+"min":Math.floor(r/60)+":"+String(r%60).padStart(2,"0")+"min");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -197,12 +198,14 @@ function boot(){
    if(add.length){state.weights=[...state.weights,...add].sort((a,b)=>a.date.localeCompare(b.date));saveJ("weights",state.weights)}}
   state.acts=loadJ("acts",[]);
   if(!state.plans.some(x=>x.id===PLAN_V2.id)){state.plans.push(JSON.parse(JSON.stringify(PLAN_V2)));saveJ("plans",state.plans)}
+  const zfix=repairZeroWeights();
   const cleaned=migrateDupes();
   absenceReset();autoPlanDeload();
   const draft=loadJ("draft",null);
   if(draft&&draft.entries&&draft.entries.length)state.active=draft;
   render();
   if(cleaned)setTimeout(()=>toast("Doppelte Übungen zusammengeführt ✓"),600);
+  if(zfix)setTimeout(()=>toast(zfix+" fehlende Gewichte ergänzt (Vorwert)"),1200);
   if(useMem)banner("⚠ Kein dauerhafter Speicher verfügbar (Vorschau-Modus?). Datei herunterladen und in Safari öffnen — sonst gehen Daten beim Schließen verloren.");
 }
 // ================= Kern-Logik =================
@@ -263,7 +266,7 @@ function recommendFor(entry){
   const ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
   const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
   const lo=+m[1],hi=+m[2];
-  const w=+ls[0].w||0;if(!w)return null;
+  const w=num(ls[0].w);if(!w)return null;
   const iso=/limit|RIR2|Core/i.test(entry.scheme||"")&&!/2\/2\/0/.test(entry.scheme||"");
   const step=stepFor(w,iso);
   const allTop=ls.every(x=>x.r>=hi);                       // doppelte Progression erfüllt
@@ -291,13 +294,13 @@ function finishSession(force){
   const a=state.active;
   const issues=[];
   a.entries.forEach(e=>{
-    const filled=e.sets.filter(x=>x.r!==""&&+x.r>0);
+    const filled=e.sets.filter(x=>x.r!==""&&num(x.r)>0);
     const planned=e.sets.length;
     if(filled.length===0)issues.push(e.name+": keine Sätze eingetragen");
     else{
       if(filled.length<planned)issues.push(e.name+": nur "+filled.length+" von "+planned+" Sätzen");
       const bw=/BW|Core/i.test(e.scheme||"");
-      if(!bw&&filled.some(x=>!(+x.w>0)))issues.push(e.name+": Gewicht fehlt (0 kg)");
+      if(!bw&&filled.some(x=>!(num(x.w)>0)))issues.push(e.name+": Gewicht fehlt (0 kg)");
       if(filled.some(x=>x.rir===null||x.rir===undefined))issues.push(e.name+": RIR fehlt");
     }
   });
@@ -311,7 +314,7 @@ function finishSession(force){
       +'<button class="btn red" style="flex:1" onclick="closeCheck();finishSession(true)">Trotzdem speichern</button></div></div></div>';
     return;
   }
-  const c={...a,entries:a.entries.map(e=>({...e,sets:e.sets.filter(x=>x.r!==""&&+x.r>0).map(x=>({w:+x.w||0,r:+x.r,rir:x.rir}))})).filter(e=>e.sets.length)};
+  const c={...a,entries:a.entries.map(e=>({...e,sets:e.sets.filter(x=>x.r!==""&&num(x.r)>0).map(x=>({w:num(x.w),r:num(x.r),rir:x.rir}))})).filter(e=>e.sets.length)};
   if(!c.entries.length){toast("Keine Sätze eingetragen");return}
   state.logs=[...state.logs,c].sort((x,y)=>x.date.localeCompare(y.date));
   saveJ("logs",state.logs);st.del("draft");state.active=null;state.undo=[];buildSchedule(true);autoPlanDeload();state.tab="statistik";render();toast("Einheit gespeichert ✓");
@@ -545,9 +548,9 @@ function addTrainerRec(){
   const sel=$("trEx").value||"";const parts=sel.split("|");const id=parts[0],name=parts[1];
   const ziel=($("trZiel").value||"").trim();
   if(!id||!ziel){toast("Übung und Ziel angeben");return}
-  const kg=parseFloat(($("trKg").value||"").replace(",","."));
+  const kg=num($("trKg").value);
   const grund=($("trGrund").value||"").trim();
-  const rec={exerciseId:id,uebung:name,ziel,gewicht:isNaN(kg)?null:kg,grund};
+  const rec={exerciseId:id,uebung:name,ziel,gewicht:kg||null,grund};
   const last=(state.analyses||[]).slice(-1)[0];
   if(last&&last.manual){last.empfehlungen=[...(last.empfehlungen||[]).filter(r=>r.exerciseId!==id),rec]}
   else{state.analyses=[...(state.analyses||[]),{id:uid(),date:todayISO(),manual:true,zusammenfassung:"Trainer-Hinweise",empfehlungen:[rec],warnungen:[]}]}
@@ -555,8 +558,25 @@ function addTrainerRec(){
 function addLib(){const n=($("lname").value||"").trim();if(!n){toast("Name fehlt");return}
   const dup=state.library.find(e=>e.name.toLowerCase()===n.toLowerCase());
   if(dup){toast("Übung existiert bereits — umbenennen statt neu anlegen");return}
-  state.library.push({id:uid(),name:n,reps:$("lreps").value||"8-12",scheme:$("lscheme").value||"RIR1-2",start:+($("lstart").value)||0,note:""});
+  state.library.push({id:uid(),name:n,reps:$("lreps").value||"8-12",scheme:$("lscheme").value||"RIR1-2",start:num($("lstart").value),note:""});
   saveJ("library",state.library);render();toast("Übung angelegt")}
+// Einmalige Reparatur: 0-kg-Sätze mit dem Gewicht der vorigen Einheit füllen
+function repairZeroWeights(){
+  if(state.settings.zeroFixDone)return 0;
+  const byEx={};let fixed=0;
+  state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>{
+    l.entries.forEach(e=>{
+      const bw=/BW|Core/i.test(e.scheme||"");
+      const prev=byEx[e.exerciseId];
+      if(!bw&&prev>0)e.sets.forEach(x=>{if(!(num(x.w)>0)&&num(x.r)>0){x.w=prev;fixed++}});
+      const mx=e.sets.reduce((a,x)=>Math.max(a,num(x.w)),0);
+      if(mx>0)byEx[e.exerciseId]=mx;
+    });
+  });
+  state.settings.zeroFixDone=true;saveJ("settings",state.settings);
+  if(fixed)saveJ("logs",state.logs);
+  return fixed;
+}
 // Automatische Bereinigung: gleiche Namen zusammenführen, Karteileichen entfernen
 function migrateDupes(){
   let changed=false;
@@ -642,7 +662,7 @@ function vPlanEditor(){
   return h;
 }
 function peSess(si,f,v){state.plans.find(x=>x.id===editPlanId).sessions[si][f]=v}
-function peEx(si,ei,f,v){const ex=state.plans.find(x=>x.id===editPlanId).sessions[si].exercises[ei];ex[f]=(f==="sets"||f==="start"||f==="rest")?(+v||0):v}
+function peEx(si,ei,f,v){const ex=state.plans.find(x=>x.id===editPlanId).sessions[si].exercises[ei];ex[f]=(f==="sets"||f==="start"||f==="rest")?num(v):v}
 function peRm(si,ei){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];s.exercises.splice(ei,1);render()}
 function peMove(si,ei,dir){const s=state.plans.find(x=>x.id===editPlanId).sessions[si];const j=ei+dir;if(j<0||j>=s.exercises.length)return;
   [s.exercises[ei],s.exercises[j]]=[s.exercises[j],s.exercises[ei]];render()}
@@ -1141,15 +1161,15 @@ function calSwipe(){
 function calShift(d){const[Y,M]=state.calMonth.split("-").map(Number);const nd=new Date(Y,M-1+d,1);state.calMonth=nd.getFullYear()+"-"+String(nd.getMonth()+1).padStart(2,"0");state.calSel=null;render()}
 function saveAct(iso){
   const type=state.actType||((state.acts||[]).find(a=>a.date===iso)||{}).type||"rad";
-  const min=parseInt($("actMin").value||"0",10);
-  const km=parseFloat(($("actKm").value||"").replace(",","."))||null;
-  const rpe=Math.min(10,Math.max(1,parseInt($("actRpe").value||"5",10)));
+  const min=Math.round(num($("actMin").value));
+  const km=num($("actKm").value)||null;
+  const rpe=Math.min(10,Math.max(1,Math.round(num($("actRpe").value)||5)));
   if(!min){toast("Dauer in Minuten eingeben");return}
   state.acts=[...(state.acts||[]).filter(a=>a.date!==iso),{date:iso,type,min,km,rpe}].sort((a,b)=>a.date.localeCompare(b.date));
   saveJ("acts",state.acts);state.actType=null;render();toast((ACT_TYPES[type]||{}).n+" gespeichert")}
 function delAct(iso){state.acts=(state.acts||[]).filter(a=>a.date!==iso);saveJ("acts",state.acts);render();toast("Eintrag gelöscht")}
 function saveWeight(iso){
-  const v=parseFloat(($("bwin").value||"").replace(",","."));
+  const v=num($("bwin").value);
   if(!v||v<30||v>250){toast("Gewicht zwischen 30 und 250 kg eingeben");return}
   state.weights=[...(state.weights||[]).filter(w=>w.date!==iso),{date:iso,kg:Math.round(v*10)/10}].sort((a,b)=>a.date.localeCompare(b.date));
   saveJ("weights",state.weights);render();toast("Gewicht "+v.toFixed(1).replace(".",",")+" kg gespeichert")}
