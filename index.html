@@ -146,7 +146,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v42";
+const APP_VERSION="v43";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -317,7 +317,10 @@ function finishSession(force){
   const c={...a,entries:a.entries.map(e=>({...e,sets:e.sets.filter(x=>x.r!==""&&num(x.r)>0).map(x=>({w:num(x.w),r:num(x.r),rir:x.rir}))})).filter(e=>e.sets.length)};
   if(!c.entries.length){toast("Keine Sätze eingetragen");return}
   state.logs=[...state.logs,c].sort((x,y)=>x.date.localeCompare(y.date));
-  saveJ("logs",state.logs);st.del("draft");state.active=null;state.undo=[];buildSchedule(true);autoPlanDeload();state.tab="statistik";render();toast("Einheit gespeichert ✓");
+  saveJ("logs",state.logs);st.del("draft");state.active=null;state.undo=[];buildSchedule(true);autoPlanDeload();state.tab="statistik";render();
+  saveJ("lastBackup",{at:new Date().toISOString(),data:backupJSON()});   // Zweitkopie im Speicher
+  if(state.settings.autoBackup!==false)downloadBackup();
+  backupPrompt();
 }
 function closeCheck(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
 function cancelSession(){st.del("draft");state.active=null;state.undo=[];render()}
@@ -797,7 +800,7 @@ function vStats(){
   // Backup
   h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">Daten-Backup</span><span class="tiny">▼</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
   +'<div><p class="lbl" style="margin-bottom:4px">Sichern</p><p class="tiny" style="margin-bottom:6px">Backup kopieren und im Claude-Chat oder einer Notiz ablegen. Der Chat-Trainer kann daraus auch die Analyse machen.</p>'
-  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Backup erzeugen</button><button class="chip" style="padding:10px" onclick="dlBackup()">⬇ Datei</button></div>'
+  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Text anzeigen</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇</button></div>'
   +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px;margin-top:6px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea><p class="tiny" style="color:var(--grn);margin-top:3px">Antippen = markiert & kopiert.</p>':'')
   +'</div><div style="border-top:1px solid var(--s2);padding-top:10px"><p class="lbl" style="margin-bottom:4px">Wiederherstellen</p><p class="tiny" style="margin-bottom:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
   +'<textarea rows="3" id="imptext" class="mono" style="font-size:11px" placeholder=\'{"version":1,...}\'></textarea>'
@@ -918,6 +921,38 @@ function drawCharts(){
   }
 }
 // Backup
+function backupJSON(){return JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs,weights:state.weights||[],acts:state.acts||[],analyses:state.analyses||[]})}
+function downloadBackup(){
+  try{
+    const blob=new Blob([backupJSON()],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="trainingslog-"+todayISO()+".json";
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+    return true;
+  }catch(e){return false}
+}
+function copyBackup(){
+  const t=backupJSON();
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);return true}}catch(e){}
+  try{const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();return true}catch(e){return false}
+}
+// Sicherungs-Dialog nach dem Speichern
+function backupPrompt(){
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="closeBk(event)"><div class="sheet" onclick="event.stopPropagation()">'
+   +'<b style="font-size:15px">Einheit gespeichert ✓</b>'
+   +'<p class="tiny" style="margin:6px 0 10px">Sichere den Stand jetzt — Datei überlebt Cache-Leeren und App-Updates.</p>'
+   +'<button class="btn grn" onclick="doDlBk()">⬇ Backup-Datei sichern</button>'
+   +'<button class="chip" style="width:100%;padding:11px;margin-top:7px" onclick="doCopyBk()">📋 Kopieren (für Chat/Notiz)</button>'
+   +'<button class="chip" style="width:100%;padding:9px;margin-top:7px" onclick="closeBk()">Später</button>'
+   +'<label class="row" style="margin-top:10px;font-size:12px;color:var(--mut)"><input type="checkbox" style="width:auto" '+(state.settings.autoBackup!==false?"checked":"")+' onchange="state.settings.autoBackup=this.checked;saveJ(\'settings\',state.settings)"> Datei künftig automatisch erzeugen</label>'
+   +'</div></div>';
+}
+function doCopyBk(){if(copyBackup())toast("In Zwischenablage kopiert")}
+function doDlBk(){if(downloadBackup())toast("Backup-Datei erstellt")}
+function closeBk(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
 function mkBackup(){state.backupText=JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs,weights:state.weights||[],acts:state.acts||[],analyses:state.analyses||[]});render()}
 function dlBackup(){try{const blob=new Blob([JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs,weights:state.weights||[],acts:state.acts||[],analyses:state.analyses||[]})],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="trainingslog-backup-"+todayISO()+".json";a.click()}catch(e){toast("Download nicht möglich — Text-Weg nutzen")}}
