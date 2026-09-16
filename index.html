@@ -156,7 +156,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v66";
+const APP_VERSION="v67";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -203,7 +203,7 @@ del:k=>{delete MEM[k];try{if(!useMem)localStorage.removeItem("tl_"+k)}catch(e){}
 const loadJ=(k,fb)=>{const v=st.get(k);if(v===null)return fb;try{return JSON.parse(v)}catch(e){return fb}};
 const saveJ=(k,v)=>st.set(k,JSON.stringify(v));
 // ================= State =================
-let state={moveFrom:null,actType:null,shortText:"",plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",statMode:"gruppen",absTmp:null,tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
+let state={moveFrom:null,actType:null,pendingDeload:false,shortText:"",plans:null,logs:null,settings:null,library:null,analyses:null,mergeFrom:null,renameId:null,statRange:"all",statMode:"gruppen",absTmp:null,tab:"training",active:null,undo:[],confirmDel:null,statPlan:null,statEx:null,backupText:"",calMonth:null,calSel:null};
 function boot(){
   state.plans=loadJ("plans",null)||[DEFAULT_PLAN];
   let logs=loadJ("logs",[]);
@@ -321,12 +321,20 @@ function startSession(sid){
   const s=activePlan().sessions.find(x=>x.id===sid);const last=lastByEx();
   state.undo=[];
   const re=reentryInfo();
+  const ms=mesoState();
   state.active={id:uid(),date:todayISO(),startedAt:Date.now(),planId:activePlan().id,sessionId:s.id,sessionName:s.name,warmup:s.warmup||[],note:"",reentry:re||null,
     checkin:{gefuehl:null,schlaf:null,essen:null,befinden:null},
-    entries:s.exercises.map(ex=>{const lv=last[ex.id];return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,note:ex.note||"",rest:ex.rest||0,ss:ex.ss||"",exNote:"",
-      sets:Array.from({length:ex.sets},(_,i)=>{
+    entries:s.exercises.map(ex=>{
+      const lv=last[ex.id];
+      const mm=MUSCLE_MAP[ex.id];
+      const isFocus=mm&&ms.focus.includes(mm.p)&&!/Prehab|BW|Core|3s/i.test(ex.scheme||"");
+      const extra=(isFocus&&!re&&!state.pendingDeload&&ex.sets>=3)?Math.min(ms.add,2):0;
+      const nSets=state.pendingDeload?Math.max(1,Math.round(ex.sets*DELOAD_SETS)):ex.sets+extra;
+      return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,note:ex.note||"",rest:ex.rest||0,ss:ex.ss||"",exNote:"",mesoExtra:extra,
+      sets:Array.from({length:nSets},(_,i)=>{
         let w=lv&&lv.sets[i]?lv.sets[i].w:ex.start;
         if(re&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*re.factor);
+        if(state.pendingDeload&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*DELOAD_LOAD);
         return{w,r:"",rir:null}})}})};
   saveJ("draft",state.active);render();
 }
@@ -458,19 +466,20 @@ function vLogger(){
   const pdIsoL=state.settings.plannedDeload;
   const dlDue=deloadDue()||(sessionsSinceCycle()>=4&&(performanceDrop()>0||recoverySignals()>0))||(pdIsoL&&pdIsoL<=todayISO()&&!state.logs.some(l=>l.deload&&l.date>=pdIsoL));
   if(dlDue||a.deload)
-  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="pushUndo();state.active.deload=this.checked;draftSave();render()"> Deload aktivieren (-30%, 3-4 RIR)</label></div>';
+  h+='<div class="card" style="padding:9px 12px"><label class="row" style="font-size:13px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="toggleDeload(this.checked)"> Deload aktivieren (-30%, 3-4 RIR)</label></div>';
   // Übungen
   const lbe=lastByEx();
   a.entries.forEach((e,ei)=>{
     const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
     const rec=a.deload?null:recommendFor(e);
-    const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>+x.w||0)):0;
-    const dlW=dlBase?roundPlate(dlBase*0.7):0;
+    const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>num(x.w))):0;
+    const dlW=dlBase?roundPlate(dlBase*DELOAD_LOAD):0;
     const ssTag=e.ss?'<span style="background:rgba(56,189,248,.15);border:1px solid rgba(56,189,248,.4);color:var(--sky);border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800;margin-left:5px">SS '+esc(e.ss)+'</span>':'';
     h+='<div class="card"'+(e.ss?' style="border-left:3px solid rgba(56,189,248,.5)"':'')+'><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="exname">'+esc(e.name)+ssTag+(e.swapped?' <span style="color:var(--sky);font-size:11px;font-weight:400">⇄</span>':"")+'</span>'
     +'<span class="row"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+(e.rest?' · ⏱'+fmtRest(e.rest):'')+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.ss&&(ei===0||a.entries[ei-1].ss!==e.ss))h+='<p class="tiny" style="color:var(--sky);margin-bottom:5px">Supersatz '+esc(e.ss)+': im Wechsel mit der nächsten Übung, Pause erst nach dem Durchgang</p>';
     if(e.note)h+='<p class="note-a" style="margin-bottom:6px">'+esc(e.note)+'</p>';
+    if(e.mesoExtra)h+='<p class="tiny" style="color:var(--grn);margin-bottom:5px">+'+e.mesoExtra+' Satz'+(e.mesoExtra>1?'e':'')+' aus dem Mesozyklus (Fokusmuskel)</p>';
     {const wu=warmupSets(num(e.sets[0]&&e.sets[0].w),e.rest);
      if(wu)h+='<p class="tiny" style="margin-bottom:6px;color:var(--mut)">Aufwärmen: '+wu.join(' · ')+'</p>';}
     if(rec){h+=rec.hold
@@ -483,7 +492,7 @@ function vLogger(){
         h+='<'+(rw?'button onclick="applyRec('+ei+','+rw+')"':'div')+' style="width:100%;text-align:left;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0'+(rw?';cursor:pointer':'')+'">📉 '+esc(stg.txt)+(rw?' · <b>'+rw+'kg</b> <u>übernehmen</u>':'')+'</'+(rw?'button':'div')+'>'}
       else{const pb=prevBetter(e.exerciseId);
         if(pb)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+pb.prev+')">↩ Letzte Einheit nur '+pb.last+'kg (davor '+pb.prev+'kg) — bei Tagesform-Einbruch: <b>'+pb.prev+'kg</b> <u>zurücksetzen</u></button>'}}
-    if(dlW)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--amb);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+dlW+')">⬇ Deload: <b>'+dlW+'kg</b> (−30% von '+dlBase+'kg) · RIR 3-4 · <u>übernehmen</u></button>';
+    if(dlW)h+='<button style="width:100%;text-align:left;cursor:pointer;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--amb);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0" onclick="applyRec('+ei+','+dlW+')">⬇ Deload: <b>'+dlW+'kg</b> (−10% von '+dlBase+'kg) · halbe Satzzahl · RIR 3-4 · <u>übernehmen</u></button>';
     h+='<div style="display:flex;flex-direction:column;gap:7px">';
     e.sets.forEach((s,si)=>{
       const lr=lastSets[si]&&lastSets[si].r?lastSets[si].r:"";
@@ -510,6 +519,16 @@ function setW(ei,si,v){state.active.entries[ei].sets[si].w=v;draftSave()}
 function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
 // ===== Pausen-Timer =====
 let restIv=null;
+function toggleDeload(on){
+  pushUndo();
+  const sid=state.active.sessionId;
+  state.pendingDeload=on;
+  const keepDate=state.active.date,keepStart=state.active.startedAt,keepNote=state.active.note,keepCi=state.active.checkin;
+  startSession(sid);
+  state.active.deload=on;state.active.date=keepDate;state.active.startedAt=keepStart;state.active.note=keepNote;state.active.checkin=keepCi;
+  state.pendingDeload=false;draftSave();render();
+  toast(on?"Deload: Satzzahl halbiert, Gewichte −10%":"Deload aus");
+}
 function startRest(sec,label){
   if(!sec)return;
   stopRest();
@@ -1154,11 +1173,11 @@ function impBackup(){const t=($("imptext").value||"").trim();if(!t)return;
 // ================= Deload =================
 function vDeload(){
   const p=activePlan();const last=lastByEx();
-  let h='<div class="card warn"><b style="color:var(--amb)">Deload — '+sessionsSinceCycle()+' Einheiten im Zyklus</b><p class="tiny" style="margin-top:4px;line-height:1.5">1 kompletter Durchlauf (alle 4 Einheiten, je Deload-Schalter an): gleiche Übungen, <b class="mono" style="color:var(--amb)">−30% Gewicht</b>, RIR 3–4. Kein Satz ans Limit. Danach neuen Zyklus starten.<br>Fällig nach ~'+DELOAD_AFTER+' Einheiten. 8+ Tage Trainingspause (Urlaub/Dienstreise) zählen als Erholung und können direkt als Deload gewertet werden.</p></div>';
+  let h='<div class="card warn"><b style="color:var(--amb)">Deload — '+sessionsSinceCycle()+' Einheiten im Zyklus</b><p class="tiny" style="margin-top:4px;line-height:1.5">1 kompletter Durchlauf (alle 4 Einheiten, je Deload-Schalter an): gleiche Übungen, <b class="mono" style="color:var(--amb)">halbe Satzzahl, −10% Gewicht</b>, RIR 3–4. Kein Satz ans Limit. Danach neuen Zyklus starten.<br>Fällig nach ~'+DELOAD_AFTER+' Einheiten. 8+ Tage Trainingspause (Urlaub/Dienstreise) zählen als Erholung und können direkt als Deload gewertet werden.</p></div>';
   p.sessions.forEach(s=>{
     h+='<details class="card" style="padding:0"><summary style="padding:11px 13px" class="row"><b style="flex:1;font-size:14px">'+esc(s.name)+' <span class="small" style="font-weight:400">'+esc(s.sub||"")+'</span></b><span class="tiny">▼</span></summary><div style="padding:0 13px 12px">';
     s.exercises.forEach(ex=>{const base=last[ex.id]?Math.max(...last[ex.id].sets.map(x=>x.w)):ex.start;
-      h+='<div class="hline mono"><span style="color:var(--tx)">'+esc(ex.name)+'</span><span class="tiny">'+base+'kg → <b style="color:var(--amb)">'+roundPlate(base*0.7)+'kg</b></span></div>'});
+      h+='<div class="hline mono"><span style="color:var(--tx)">'+esc(ex.name)+'</span><span class="tiny">'+base+'kg → <b style="color:var(--amb)">'+roundPlate(base*DELOAD_LOAD)+'kg</b></span></div>'});
     h+='</div></details>'});
   h+='<button class="btn amb" onclick="resetCycle()">Deload abgeschlossen — neuen Zyklus starten</button>';
   return h;
@@ -1235,6 +1254,8 @@ function mesoState(){
 }
 // ================= Wiedereinstieg nach Pause =================
 // Kurze Pausen kosten kaum Kraft, aber Technik und Toleranz: erste Einheit reduziert
+// Deload nach Praxis: Volumen halbieren, Last nur ~10% runter, Frequenz gleich
+const DELOAD_LOAD=0.9, DELOAD_SETS=0.5;
 function reentryInfo(){
   const gap=daysSinceLast();
   if(gap<5)return null;
