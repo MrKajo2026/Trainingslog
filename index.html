@@ -156,7 +156,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v65";
+const APP_VERSION="v66";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -866,14 +866,13 @@ function vStats(){
   {const ms=mesoState();
    const cur=(setsPerWeek(8)||{sets:{}}).sets;
    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Mesozyklus · Woche '+ms.week+'</span>'
-    +'<button class="chip" style="padding:3px 9px;font-size:11px" onclick="resetMeso()">Neu starten</button></div>'
+    +'<span class="tiny mono">automatisch</span></div>'
     +'<p class="tiny" style="margin-bottom:7px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b> · +'+ms.add+' Sätze gegenüber Start'+(ms.stop?' <b style="color:var(--amb)">— Progression gestoppt (Ermüdungssignale)</b>':'')+'</p>';
    MUSCLE_ORDER.filter(g=>ms.target[g]).forEach(g=>{
      const t=ms.target[g],c=Math.round((cur[g]||0)*10)/10;
      const col=c>=t?"var(--grn)":c>=t*0.7?"var(--amb)":"var(--mut)";
      h+='<div class="hline"><span class="tiny" style="flex:1;color:'+(ms.focus.includes(g)?"var(--red2)":"var(--tx)")+'">'+g+'</span><span class="tiny mono" style="color:'+col+'">'+c.toFixed(1).replace(".",",")+' / '+t.toFixed(1).replace(".",",")+'</span></div>'});
-   h+='<p class="tiny" style="margin-top:6px">Aktuell (normiert) / Wochenziel. Fokusmuskeln bekommen je Woche +1 Satz bis max. +'+MESO_MAX_ADD+'. Bei Leistungsabfall oder Erholungssignalen stoppt die Progression automatisch.</p>'
-    +'<div class="row" style="gap:4px;margin-top:7px;flex-wrap:wrap">'+MUSCLE_ORDER.map(g=>'<button class="chip'+(ms.focus.includes(g)?" on-n":"")+'" style="padding:5px 8px;font-size:10px" onclick="setMesoFocus(\''+g+'\')">'+g+'</button>').join("")+'</div></div>';
+   h+='<p class="tiny" style="margin-top:6px">Aktuell (normiert) / Wochenziel. Fokus wird automatisch auf die Muskeln mit dem größten Rückstand gesetzt und je Woche um einen Satz erhöht (max. +'+MESO_MAX_ADD+'). Bei Leistungsabfall oder Erholungssignalen stoppt die Steigerung, nach Deload oder längerer Pause startet ein neuer Zyklus.</p></div>';
   }
   // Belastungsindex
   const li=loadIndex();
@@ -1204,32 +1203,35 @@ function newPRs(log){
 }
 // ================= Mesozyklus: Volumenprogression =================
 const MESO_MAX_ADD=4;          // max. zusätzliche Sätze je Fokusmuskel im Zyklus
+const MESO_TRAINABLE=["Brust","Rücken","Schulter","Quads","Hamstrings","Glutes/Hinge"];
+// Fokus automatisch: die zwei Muskeln mit dem größten Rückstand zum Zielkorridor
+function pickFocus(){
+  const sw=(setsPerWeek(8)||{sets:{}}).sets;
+  return MESO_TRAINABLE.map(g=>({g,v:sw[g]||0})).sort((a,b)=>a.v-b.v).slice(0,2).map(x=>x.g);
+}
 function mesoState(){
-  if(!state.settings.meso){state.settings.meso={start:todayISO(),focus:["Brust","Rücken"],base:null};saveJ("settings",state.settings)}
-  const st=state.settings.meso;
+  let st=state.settings.meso;
+  // Zyklusstart automatisch: nach Deload, nach längerer Pause, sonst ab Zyklusbeginn
+  const lastDeload=[...state.logs].filter(l=>l.deload).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const autoStart=[state.settings.cycleStart||todayISO(),lastDeload?lastDeload.date:""].sort().pop();
+  if(!st||st.start!==autoStart){
+    st={start:autoStart,focus:pickFocus(),base:null};
+    state.settings.meso=st;saveJ("settings",state.settings);
+  }
   const wk=Math.max(0,Math.floor((Date.now()-new Date(st.start).getTime())/6048e5));
-  // Basis = Wochensätze der ersten Zykluswoche, sonst aktueller Planwert
   let base=st.base;
   if(!base){
     base={};
     activePlan().sessions.forEach(se=>se.exercises.forEach(ex=>{const m=MUSCLE_MAP[ex.id];if(!m)return;
       base[m.p]=(base[m.p]||0)+ex.sets;(m.s||[]).forEach(g=>base[g]=(base[g]||0)+ex.sets*0.5)}));
-    Object.keys(base).forEach(k=>base[k]=Math.round(base[k]*7/8*10)/10);   // auf Woche umrechnen
+    Object.keys(base).forEach(k=>base[k]=Math.round(base[k]*7/8*10)/10);
+    st.base=base;state.settings.meso=st;saveJ("settings",state.settings);
   }
-  const stop=performanceDrop()>0||recoverySignals()>0;                       // an der Belastungsgrenze
+  const stop=sessionsSinceCycle()>=4&&(performanceDrop()>0||recoverySignals()>0);
   const add=stop?Math.max(0,Math.min(wk,MESO_MAX_ADD)-1):Math.min(wk,MESO_MAX_ADD);
   const target={};
   Object.keys(base).forEach(g=>{target[g]=Math.round((base[g]+(st.focus.includes(g)?add:0))*10)/10});
   return{week:wk+1,focus:st.focus,base,target,add,stop};
-}
-function setMesoFocus(g){
-  const st=state.settings.meso||{start:state.settings.cycleStart,focus:["Brust","Rücken"],base:mesoState().base};
-  st.focus=st.focus.includes(g)?st.focus.filter(x=>x!==g):[...st.focus,g];
-  state.settings.meso=st;saveJ("settings",state.settings);render();
-}
-function resetMeso(){
-  state.settings.meso={start:todayISO(),focus:(state.settings.meso||{}).focus||["Brust","Rücken"],base:mesoState().base};
-  saveJ("settings",state.settings);render();toast("Neuer Mesozyklus gestartet");
 }
 // ================= Wiedereinstieg nach Pause =================
 // Kurze Pausen kosten kaum Kraft, aber Technik und Toleranz: erste Einheit reduziert
