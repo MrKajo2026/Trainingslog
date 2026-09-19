@@ -16,14 +16,15 @@
 <style>
 :root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:86px;min-height:100vh}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:96px;min-height:100vh}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
 header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:16px 16px 10px;z-index:10}
 header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
 #hinfo{float:right;font-size:11px;color:var(--mut)}
 main{padding:16px;display:flex;flex-direction:column;gap:12px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:20;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;min-width:0;padding:17px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav button:active{background:rgba(239,68,68,.15)}
+nav button{flex:1;min-width:0;min-height:60px;padding:19px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
 .card{background:var(--s1);border:1px solid var(--s2);border-radius:14px;padding:14px}
 .card.hl{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.45)}
@@ -80,10 +81,10 @@ h2{font-size:clamp(16px,5vw,20px)}
  body{font-size:14px}
  .rir{width:30px;height:30px}
  .win,.winr{font-size:15px;padding:9px 4px}
- nav button{font-size:10px;padding:15px 1px}
+ nav button{font-size:10px;padding:17px 1px;min-height:56px}
 }
 
-#resttimer{position:fixed;left:0;right:0;bottom:74px;background:var(--s1);border-top:1px solid var(--s3);padding:9px 14px;display:flex;align-items:center;gap:10px;z-index:25}
+#resttimer{position:fixed;left:0;right:0;top:0;padding-top:calc(9px + env(safe-area-inset-top,0px));background:var(--s1);border-bottom:2px solid var(--red2);padding:9px 14px;display:flex;align-items:center;gap:10px;z-index:40;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 #resttimer b{font-size:19px;font-variant-numeric:tabular-nums}
 #restbar{height:4px;background:var(--s2);border-radius:2px;flex:1;overflow:hidden}
 #restbar>div{height:100%;background:var(--red2);transition:width .9s linear}
@@ -160,7 +161,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v77";
+const APP_VERSION="v78";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -533,7 +534,22 @@ function setBef(v){state.active.checkin.befinden=+v;const b=$("befval");if(b){b.
 function setW(ei,si,v){state.active.entries[ei].sets[si].w=v;draftSave()}
 function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
 // ===== Pausen-Timer =====
-let restIv=null;
+let restIv=null,audioCtx=null;
+function beep(times){                       // Signalton ohne Datei (WebAudio)
+  try{
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+    for(let i=0;i<(times||3);i++){
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      const t=audioCtx.currentTime+i*0.32;
+      o.frequency.value=i===2?1175:880;o.type="sine";
+      g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.4,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.24);
+      o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+0.26);
+    }
+  }catch(e){}
+}
+function unlockAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume()}catch(e){}}
 function toggleDeload(on){
   pushUndo();
   const sid=state.active.sessionId;
@@ -546,6 +562,7 @@ function toggleDeload(on){
 }
 function startRest(sec,label){
   if(!sec)return;
+  unlockAudio();
   stopRest();
   const end=Date.now()+sec*1000;
   const box=document.createElement("div");box.id="resttimer";
@@ -556,7 +573,7 @@ function startRest(sec,label){
     const v=$("restval"),bar=document.querySelector("#restbar>div");
     if(v)v.textContent=left>=60?Math.floor(left/60)+":"+String(left%60).padStart(2,"0"):left+"s";
     if(bar)bar.style.width=(left/sec*100)+"%";
-    if(left<=0){stopRest();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}toast("Pause vorbei — "+(label||"nächster Satz"))}
+    if(left<=0){stopRest();beep(3);try{navigator.vibrate&&navigator.vibrate([150,80,150,80,250])}catch(e){}toast("Pause vorbei — "+(label||"nächster Satz"))}
   },500);
 }
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}const b=$("resttimer");if(b)b.remove()}
