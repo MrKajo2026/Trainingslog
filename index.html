@@ -168,7 +168,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v95";
+const APP_VERSION="v96";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -254,6 +254,9 @@ function boot(){
    state.library.forEach(e=>{if(ren[e.id]&&e.name!==ren[e.id]){e.name=ren[e.id];ch=true}});
    state.logs.forEach(l=>l.entries.forEach(e=>{if(ren[e.exerciseId]&&e.name!==ren[e.exerciseId]){e.name=ren[e.exerciseId];ch=true}}));
    if(ch){saveJ("library",state.library);saveJ("logs",state.logs)}}
+  // Einmalig: Einheiten in fremdem Studio nachträglich markieren (vor Einführung des Schalters geloggt)
+  {let ch=false;state.logs.forEach(l=>{if(!l.altGym&&/anderes gym|fremdes gym|fitness turm/i.test(l.note||"")){l.altGym=true;ch=true}});
+   if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
   const zfix=repairZeroWeights();
   const cleaned=migrateDupes();
