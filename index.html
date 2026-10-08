@@ -169,7 +169,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v102";
+const APP_VERSION="v103";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -267,7 +267,9 @@ function boot(){
      setTimeout(()=>toast("Plan automatisch auf "+PLAN_V2.name.split(" ·")[0]+" aktualisiert"),2400);}}
   const zfix=repairZeroWeights();
   const cleaned=migrateDupes();
-  absenceReset();autoPlanDeload();
+  const cyc=repairCycle();
+  absenceReset();buildSchedule();autoPlanDeload();
+  if(cyc)setTimeout(()=>toast("Zykluszähler korrigiert: "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh."),1800);
   const draft=loadJ("draft",null);
   if(draft&&draft.entries&&draft.entries.length)state.active=draft;
   render();
@@ -1331,8 +1333,8 @@ function vDeload(){
   h+='<button class="btn amb" onclick="resetCycle()">Deload abgeschlossen — neuen Zyklus starten</button>';
   return h;
 }
-function resetCycle(){state.settings.cycleStart=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
-function pauseAsDeload(){state.settings.cycleStart=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);render();toast("Pause als Deload gewertet — neuer Zyklus ✓")}
+function resetCycle(){state.settings.cycleStart=todayISO();state.settings.cycleManual=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
+function pauseAsDeload(){state.settings.cycleStart=todayISO();state.settings.cycleManual=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);render();toast("Pause als Deload gewertet — neuer Zyklus ✓")}
 // ================= Andere Sportarten =================
 const ACT_TYPES={rad:{n:"Rad",i:"🚴",f:.6},lauf:{n:"Laufen",i:"🏃",f:1.0},schwimm:{n:"Schwimmen",i:"🏊",f:.7},paddel:{n:"Paddeln",i:"🛶",f:.7},sonst:{n:"Sonstiges",i:"⚡",f:.8}};
 // Belastungspunkte: Minuten × RPE × Sportart-Faktor / 6  (grob vergleichbar mit Satz-Anstrengung)
@@ -1402,7 +1404,7 @@ function mesoState(){
   let st=state.settings.meso;
   // Zyklusstart automatisch: nach Deload, nach längerer Pause, sonst ab Zyklusbeginn
   const lastDeload=[...state.logs].filter(l=>l.deload).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  const autoStart=[state.settings.cycleStart||todayISO(),lastDeload?lastDeload.date:""].sort().pop();
+  const autoStart=[state.settings.cycleStart||todayISO(),lastDeload?lastDeload.date:"",state.settings.mesoFloor||""].sort().pop();
   if(!st||st.start!==autoStart){
     st={start:autoStart,focus:pickFocus(),base:null};
     state.settings.meso=st;saveJ("settings",state.settings);
@@ -1510,9 +1512,14 @@ function nextSessionId(prevId,prevName){
 // Plan ab dem letzten Training erzeugen (vergangene Einträge fallen weg)
 function buildSchedule(force){
   const t=todayISO();
-  let sc=(state.settings.schedule||[]).filter(x=>x.date>=t);
+  const all=state.settings.schedule||[];
+  let sc=all.filter(x=>x.date>=t);
   const ls=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));
   const lastLog=ls[ls.length-1];
+  // Verpasster Termin (vergangen, kein Training danach) oder falsche Reihenfolge → ab letztem Training neu planen
+  const missed=all.some(x=>x.date<t&&(!lastLog||x.date>lastLog.date));
+  const nxt=nextSessionId(lastLog?lastLog.sessionId:null,lastLog?lastLog.sessionName:null);
+  if(missed||(sc.length&&sc[0].sessionId!==nxt))force=true;
   // Startpunkt: nach letztem geplanten Eintrag, sonst nach letztem Training
   if(force||!sc.length){
     let d=lastLog?addDays(lastLog.date,RHYTHM):t;
@@ -1706,6 +1713,19 @@ function recoverySignals(){
   const r=[...state.logs].filter(l=>!l.deload&&l.date>=from).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const bad=r.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
   return r.length>=3&&bad>=2?bad:0;
+}
+// Zyklusstart reparieren: nur Deload, lange Pause oder manueller Neustart dürfen ihn setzen (Planwechsel nicht)
+function repairCycle(){
+  const t=todayISO(),c=[];
+  const ld=[...state.logs].filter(l=>l.deload).sort((a,b)=>b.date.localeCompare(a.date))[0];if(ld)c.push(ld.date);
+  (state.settings.absences||[]).forEach(a=>{if((new Date(a.to)-new Date(a.from))/864e5+1>=ABS_RESET_DAYS&&a.to<t)c.push(a.to)});
+  if(state.settings.cycleManual)c.push(state.settings.cycleManual);
+  if(!c.length)return false;
+  const ok=c.sort().pop(),cs=state.settings.cycleStart||"";
+  if(cs<=ok)return false;
+  // Mesozyklus nicht sprunghaft erhöhen: bisheriger Start bleibt Untergrenze
+  if(!state.settings.mesoFloor)state.settings.mesoFloor=(state.settings.meso&&state.settings.meso.start)||cs;
+  state.settings.cycleStart=ok;saveJ("settings",state.settings);return true;
 }
 // Nach zurückliegender längerer Pause: Zyklus zurücksetzen (Pause = Deload)
 function absenceReset(){
