@@ -169,7 +169,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v109";
+const APP_VERSION="v110";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -243,6 +243,9 @@ function boot(){
    extra.forEach(e=>{if(!have.has(e.id)){lib.push(e);ch=true}});
    if(ch)saveJ("library",lib);}
   state.library=lib;
+  // Geräteeinstellungen aus Notizen übernehmen (nur wenn noch leer)
+  {const set0={"seitheben":"Loch 17","beinbeuger-liegend":"Stufe M"};let ch=false;
+   lib.forEach(e=>{if(set0[e.id]&&!e.setting){e.setting=set0[e.id];ch=true}});if(ch)saveJ("library",lib)}
   state.analyses=loadJ("analyses",[]);
   state.weights=loadJ("weights",[]);
   {const hv=new Set(state.weights.map(w=>w.date));const add=SEED_WEIGHTS.filter(w=>!hv.has(w.date));
