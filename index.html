@@ -169,7 +169,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v107";
+const APP_VERSION="v108";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -265,10 +265,7 @@ function boot(){
    if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
   // Neueste Planversion automatisch aktiv (nur innerhalb der Aufbau-Linie, Zyklus bleibt erhalten)
-  {const cur=state.settings.activePlanId||"";
-   if(cur!==PLAN_V2.id&&/^aufbau-/.test(cur)&&state.plans.some(p=>p.id===PLAN_V2.id)){
-     state.settings.activePlanId=PLAN_V2.id;saveJ("settings",state.settings);
-     setTimeout(()=>toast("Plan automatisch auf "+PLAN_V2.name.split(" ·")[0]+" aktualisiert"),2400);}}
+  if(ensureNewestPlan())setTimeout(()=>toast("Plan automatisch auf "+PLAN_V2.name.split(" ·")[0]+" aktualisiert"),2400);
   const zfix=repairZeroWeights();
   const cleaned=migrateDupes();
   const cyc=repairCycle();
@@ -394,6 +391,16 @@ function startSession(sid){
         if(state.pendingDeload&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*DELOAD_LOAD);
         return{w,r:"",rir:null}})}})};
   saveJ("draft",state.active);render();
+}
+// Neueste mitgelieferte Planversion sicherstellen und aktivieren (Boot + nach Backup-Import)
+// Aktiviert wird, wenn der aktive Plan eine ältere Aufbau-Version ist oder gar nicht mehr existiert; eigene Pläne bleiben unangetastet
+function ensureNewestPlan(){
+  if(!state.plans.some(p=>p.id===PLAN_V2.id)){state.plans.push(JSON.parse(JSON.stringify(PLAN_V2)));saveJ("plans",state.plans)}
+  const cur=state.settings.activePlanId||"";
+  const exists=state.plans.some(p=>p.id===cur);
+  if(cur!==PLAN_V2.id&&(/^aufbau-/.test(cur)||!exists)){
+    state.settings.activePlanId=PLAN_V2.id;saveJ("settings",state.settings);buildSchedule(true);return true}
+  return false;
 }
 // Trainingszeiten aus Satz-Zeitstempeln (t = Satz eingetragen)
 // Vorlauf: Einheit geöffnet → 1. Satz (Anfahrt/Aufwärmen) · Brutto: geöffnet → letzter Satz (+1 min)
@@ -1343,6 +1350,7 @@ function impBackup(){const t=($("imptext").value||"").trim();if(!t)return;
     if(Array.isArray(b.acts)&&b.acts.length){const hv=new Set((state.acts||[]).map(a=>a.date));state.acts=[...(state.acts||[]),...b.acts.filter(a=>!hv.has(a.date))].sort((a,c)=>a.date.localeCompare(c.date));saveJ("acts",state.acts)}
     if(Array.isArray(b.analyses)&&b.analyses.length){const ids=new Set((state.analyses||[]).map(a=>a.id));state.analyses=[...(state.analyses||[]),...b.analyses.filter(a=>!ids.has(a.id))];saveJ("analyses",state.analyses)}
     if(b.settings){state.settings=b.settings;saveJ("settings",state.settings)}
+    renamePlans();ensureNewestPlan();state.settings.lastVersion=APP_VERSION;saveJ("settings",state.settings);
     render();toast("Backup importiert — "+state.logs.length+" Einheiten gesamt ✓")
   }catch(e){toast("Backup unlesbar — Text prüfen")}}
 // ================= Deload =================
