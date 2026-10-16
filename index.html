@@ -169,7 +169,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v111";
+const APP_VERSION="v112";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1334,6 +1334,8 @@ function shortExport(n){
     if(l.note)t+="  Einheits-Notiz: "+l.note+"\n";
   });
   if(ws.length)t+="\nGewicht: "+ws.map(w=>fmtD(w.date)+" "+w.kg+"kg").join(" · ")+"\n";
+  {const from=ls.length?ls[0].date:todayISO();const kr=(state.settings.absences||[]).filter(a=>a.kind==="krank"&&a.to>=from);
+   if(kr.length)t+="Krank: "+kr.map(a=>fmtD(a.from)+(a.to!==a.from?"–"+fmtD(a.to):"")).join(" · ")+"\n";}
   if(ac.length)t+="Sport: "+ac.map(a=>fmtD(a.date)+" "+((ACT_TYPES[a.type]||{}).n||a.type)+" "+a.min+"min"+(a.km?" "+a.km+"km":"")+" RPE"+a.rpe).join(" · ")+"\n";
   return t;
 }
@@ -1545,6 +1547,8 @@ function calibrationDue(){
 function markCalibrated(){state.settings.lastCalibration=todayISO();saveJ("settings",state.settings);render();toast("Kalibrierung vermerkt — nächste in 6 Wochen")}
 // ================= Trainingsplanung =================
 const RHYTHM=2; // Tage zwischen Einheiten
+const absIcon=a=>a&&a.kind==="krank"?"🤒":"🏖";
+const absName=a=>a&&a.kind==="krank"?"Krank":"Urlaub";
 const isAbsent=iso=>(state.settings.absences||[]).some(a=>a.from<=iso&&a.to>=iso);
 const addDays=(iso,n)=>new Date(new Date(iso).getTime()+n*864e5).toISOString().slice(0,10);
 function nextSessionId(prevId,prevName){
@@ -1620,7 +1624,7 @@ function vCal(){
   for(let d=1;d<=days;d++){
     const iso=Y+"-"+String(M).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const sess=byDate[iso]||[];const isToday=iso===today;
-    const isAbs=(state.settings.absences||[]).some(a=>a.from<=iso&&a.to>=iso);
+    const absC=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);const isAbs=!!absC;
     const isPD=state.settings.plannedDeload===iso;
     const hasW=(state.weights||[]).some(w=>w.date===iso);
     const act=(state.acts||[]).find(a=>a.date===iso);
@@ -1631,7 +1635,7 @@ function vCal(){
     if(act)cell+='<span style="font-size:9px">'+((ACT_TYPES[act.type]||{}).i||'⚡')+'</span>';
     if(hasW)cell+='<span style="font-size:7px;color:var(--sky)">⚖</span>';
     if(isPD&&!sess.length)cell+='<span style="font-size:8px;font-weight:800;color:var(--amb)">DL</span>';
-    else if(isAbs&&!sess.length)cell+='<span style="font-size:9px">🏖</span>';
+    else if(isAbs&&!sess.length)cell+='<span style="font-size:9px">'+absIcon(absC)+'</span>';
     sess.forEach(l=>{cell+='<span style="font-size:8px;font-weight:800;color:'+(l.deload?"var(--amb)":"var(--red2)")+'">'+(badge[l.sessionId]||l.sessionName.slice(0,3))+'</span>'});
     if(pln)cell+='<span style="font-size:8px;font-weight:700;color:rgba(239,68,68,.65)">'+(badge[pln.sessionId]||"")+'</span>';
     cell+='</button>';h+=cell;
@@ -1642,8 +1646,8 @@ function vCal(){
   // Eingetragene Abwesenheiten
   const absList=(state.settings.absences||[]).slice().sort((a,b)=>a.from.localeCompare(b.from)).filter(a=>a.to>=todayISO());
   if(absList.length){
-    h+='<div class="card" style="padding:9px 12px"><span class="lbl">Geplante Pausen</span>';
-    absList.forEach(a=>{h+='<div class="hline"><span class="tiny mono" style="color:var(--sky)">🏖 '+fmtD(a.from)+' – '+fmtD(a.to)+'</span><button class="del" onclick="delAbs(\''+a.from+'\')">✕</button></div>'});
+    h+='<div class="card" style="padding:9px 12px"><span class="lbl">Pausen</span>';
+    absList.forEach(a=>{h+='<div class="hline"><span class="tiny mono" style="color:'+(a.kind==="krank"?"var(--amb)":"var(--sky)")+'">'+absIcon(a)+' '+absName(a)+' '+fmtD(a.from)+' – '+fmtD(a.to)+'</span><button class="del" onclick="delAbs(\''+a.from+'\')">✕</button></div>'});
     h+='</div>';
   }
   // Tagesdetail: Planung / Sport / Gewicht getrennt
@@ -1659,16 +1663,18 @@ function vCal(){
        +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
     }
     if(state.absTmp){
-      h+='<button class="chip" style="width:100%;padding:10px;color:var(--sky);margin-top:6px" onclick="finishAbs(\''+iso+'\')">🏖 Urlaub '+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button>'
-       +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.absTmp=null;render()">Abbrechen</button>';
+      h+='<button class="chip" style="width:100%;padding:10px;color:var(--sky);margin-top:6px" onclick="finishAbs(\''+iso+'\')">'+(state.absKind==="krank"?"🤒 Krank ":"🏖 Urlaub ")+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button>'
+       +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.absTmp=null;render()">Abbrechen</button>'
+       +'<p class="tiny" style="margin-top:5px;opacity:.8">Ende antippen (gleicher Tag = nur dieser Tag). Später verlängern: neu eintragen.</p>';
     }else if(state.moveFrom&&state.moveFrom!==iso){
       h+='<button class="chip" style="width:100%;padding:10px;color:var(--red2);margin-top:6px" onclick="moveSession(\''+state.moveFrom+'\',\''+iso+'\')">→ Training vom '+fmtD(state.moveFrom)+' hierhin</button>'
        +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.moveFrom=null;render()">Abbrechen</button>';
     }else{
       if(planByDate[iso]&&!hasSess)h+='<div class="row" style="gap:5px;margin-top:6px"><span class="tiny" style="flex:1">Geplant: <b style="color:var(--red2)">'+esc((activePlan().sessions.find(x=>x.id===planByDate[iso].sessionId)||{}).name||"")+'</b></span><button class="chip" style="padding:8px 11px;color:var(--red2)" onclick="state.moveFrom=\''+iso+'\';render()">Verschieben</button></div>';
       h+=absHere
-        ?'<button class="chip" style="width:100%;padding:9px;color:var(--red2);margin-top:6px" onclick="delAbs(\''+absHere.from+'\')">🏖 Urlaub entfernen</button>'
-        :'<button class="chip" style="width:100%;padding:9px;color:var(--sky);margin-top:6px" onclick="state.absTmp=\''+iso+'\';render()">🏖 Urlaub ab hier</button>';
+        ?'<button class="chip" style="width:100%;padding:9px;color:var(--red2);margin-top:6px" onclick="delAbs(\''+absHere.from+'\')">'+absIcon(absHere)+' '+absName(absHere)+' entfernen</button>'
+        :'<div class="row" style="gap:6px;margin-top:6px"><button class="chip" style="flex:1;padding:9px;color:var(--sky)" onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()">🏖 Urlaub ab hier</button>'
+         +'<button class="chip" style="flex:1;padding:9px;color:var(--amb)" onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()">🤒 Krank ab hier</button></div>';
       (byDate[iso]||[]).forEach(l=>{h+='<button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="startMoveLog(\''+l.id+'\')">📅 '+esc(l.sessionName)+' auf anderen Tag verschieben</button>'});
       if(!hasSess&&!planByDate[iso])h+='<p class="tiny" style="margin-top:5px">Kein Training an diesem Tag.</p>';
     }
@@ -1741,14 +1747,22 @@ function addAbs(){const f=$("absfrom").value,t=$("absto").value;if(!f||!t){toast
   if(t<f){toast("Bis-Datum liegt vor Von-Datum");return}
   state.settings.absences=[...(state.settings.absences||[]),{from:f,to:t,note:($("absnote").value||"").trim()}];
   saveJ("settings",state.settings);render();toast("Abwesenheit eingetragen")}
-function delAbs(from){state.settings.absences=(state.settings.absences||[]).filter(a=>a.from!==from);saveJ("settings",state.settings);render();toast("Abwesenheit gelöscht")}
+function delAbs(from){state.settings.absences=(state.settings.absences||[]).filter(a=>a.from!==from);if(!state.settings.absences.some(x=>x.kind==="krank"))delete state.settings.deloadEarly;buildSchedule(true);autoPlanDeload();saveJ("settings",state.settings);render();toast("Abwesenheit gelöscht")}
 function finishAbs(to){
   let from=state.absTmp;if(!from)return;
   if(to<from){const t=from;from=to;to=t}
-  state.settings.absences=[...(state.settings.absences||[]),{from,to,note:"Urlaub"}];
+  const kind=state.absKind==="krank"?"krank":"urlaub";
+  // überlappende Einträge gleicher Art zusammenführen (Krankheit verlängern)
+  const old=(state.settings.absences||[]).filter(a=>(a.kind||"urlaub")===kind&&a.from<=addDays(to,1)&&a.to>=addDays(from,-1));
+  old.forEach(a=>{if(a.from<from)from=a.from;if(a.to>to)to=a.to});
+  state.settings.absences=[...(state.settings.absences||[]).filter(a=>!old.includes(a)),{from,to,kind,note:kind==="krank"?"Krank":"Urlaub"}];
+  // Krankheit gegen Zyklusende: Deload vorziehen (erste Einheit danach), wenn schon ≥12 Einheiten im Zyklus
+  let early=false;
+  if(kind==="krank"&&sessionsSinceCycle()>=12&&!state.logs.some(l=>l.deload&&l.date>=state.settings.cycleStart)){
+    state.settings.deloadEarly=addDays(to,1);early=true}
   buildSchedule(true);const moved=autoPlanDeload();
-  saveJ("settings",state.settings);state.absTmp=null;state.calSel=null;render();
-  toast("Urlaub "+fmtD(from)+" – "+fmtD(to)+" eingetragen"+(moved?" · Deload neu: "+fmtD(moved):""))}
+  saveJ("settings",state.settings);state.absTmp=null;state.absKind=null;state.calSel=null;render();
+  toast((kind==="krank"?"Krank ":"Urlaub ")+fmtD(from)+" – "+fmtD(to)+" eingetragen"+(early?" · Deload vorgezogen":moved?" · Deload neu: "+fmtD(moved):""))}
 // Deload-Planung nach Trainingslehre: Last-basiert, nicht kalenderbasiert
 const ABS_RESET_DAYS=5;      // ab dieser Pausenlänge zählt sie als vollwertige Entlastung
 function recoverySignals(){
@@ -1812,7 +1826,12 @@ function autoPlanDeload(){
       d=new Date(new Date(a.to).getTime()+DELOAD_AFTER*2*864e5);
     }
   });
-  const iso=d.toISOString().slice(0,10);
+  let iso=d.toISOString().slice(0,10);
+  // Nach Krankheit vorgezogen: erster geplanter Termin ab Gesundung
+  {const de=state.settings.deloadEarly;
+   if(de&&de>state.settings.cycleStart&&!state.logs.some(l=>l.deload&&l.date>=de)){
+     const first=(state.settings.schedule||[]).find(x=>x.date>=de);const e=first?first.date:de;if(e<iso)iso=e}
+   else if(de)delete state.settings.deloadEarly}
   if(state.settings.plannedDeload!==iso){state.settings.plannedDeload=iso;saveJ("settings",state.settings);return iso}
   return null;
 }
