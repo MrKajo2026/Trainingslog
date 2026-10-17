@@ -169,7 +169,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v112";
+const APP_VERSION="v113";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -532,7 +532,7 @@ function vHome(){
   if(lastSes)next=order[(order.indexOf(lastSes.id)+1)%order.length];
   let h=ll?'<p class="tiny mono">Zuletzt: '+esc(ll.sessionName)+' am '+fmtD(ll.date)+'</p>':"";
   const re=reentryInfo();
-  if(re)h+='<div class="card" style="padding:9px 12px;background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.45)"><p class="tiny" style="color:var(--sky)"><b>'+re.gap+' Tage Pause</b> — erste Einheit wird automatisch reduziert: '+esc(re.txt)+'.</p></div>';
+  if(re)h+='<div class="card" style="padding:9px 12px;background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.45)"><p class="tiny" style="color:var(--sky)"><b>'+re.gap+' Tage Pause'+(re.sick?', davon '+re.sick+' krank':'')+'</b> — erste Einheit wird automatisch angepasst: '+esc(re.txt)+'.</p></div>';
   p.sessions.forEach(s=>{const isN=s.id===next;
     h+='<button class="card'+(isN?" hl":"")+'" style="text-align:left;width:100%" onclick="startSession(\''+s.id+'\')">'
     +'<div class="row" style="justify-content:space-between"><span><b style="font-size:17px">'+esc(s.name)+'</b> <span class="small">'+esc(s.sub||"")+'</span></span>'
@@ -1474,12 +1474,27 @@ function mesoState(){
 // Kurze Pausen kosten kaum Kraft, aber Technik und Toleranz: erste Einheit reduziert
 // Deload nach Praxis: Volumen halbieren, Last nur ~10% runter, Frequenz gleich
 const DELOAD_LOAD=0.9, DELOAD_SETS=0.5;
+// Krankheit seit dem letzten Training: Tage krank (eingetragen im Kalender)
+function sickSinceLast(){
+  const l=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date)),last=l.length?l[l.length-1].date:"";
+  const t=todayISO();let days=0;
+  (state.settings.absences||[]).filter(a=>a.kind==="krank"&&a.to>last&&a.from<=t).forEach(a=>{
+    const f=a.from>last?a.from:addDays(last,1),e=a.to<t?a.to:addDays(t,-1);
+    if(e>=f)days+=(new Date(e)-new Date(f))/864e5+1});
+  return days;
+}
+// Stufen nach Pausenlänge; nach Krankheit eine Stufe vorsichtiger (Restermüdung, Infekt), Deload ersetzt den Wiedereinstieg
+const RE_LVL=[{factor:1,txt:"Gewichte normal, aber letzter Satz RIR 2 statt 0 — Körper nach Infekt noch nicht voll belastbar"},
+  {factor:0.9,txt:"Gewichte auf 90 %, letzter Satz RIR 2 statt 0"},
+  {factor:0.85,txt:"Gewichte auf 85 %, alle Sätze RIR 2, ein Satz weniger"},
+  {factor:0.75,txt:"Gewichte auf 75 %, Technik vor Last, 2 Einheiten zum Herantasten"}];
 function reentryInfo(){
-  const gap=daysSinceLast();
-  if(gap<5)return null;
-  if(gap<=14)return{gap,factor:0.9,txt:"Gewichte auf 90 %, letzter Satz RIR 2 statt 0"};
-  if(gap<=28)return{gap,factor:0.85,txt:"Gewichte auf 85 %, alle Sätze RIR 2, ein Satz weniger"};
-  return{gap,factor:0.75,txt:"Gewichte auf 75 %, Technik vor Last, 2 Einheiten zum Herantasten"};
+  if(state.pendingDeload)return null;
+  const gap=daysSinceLast(),sick=sickSinceLast();
+  let lvl=gap<5?-1:gap<=14?1:gap<=28?2:3;
+  if(sick>0){lvl=Math.max(lvl,sick>=3?1:0);if(sick>=7)lvl=Math.min(3,lvl+1)}   // krank: mind. RIR-Puffer, ab 3 Tagen −10 %, ab 7 Tagen eine Stufe vorsichtiger
+  if(lvl<0)return null;
+  return{gap,sick,factor:RE_LVL[lvl].factor,txt:RE_LVL[lvl].txt};
 }
 // ================= Belastungssteuerung =================
 // Wochen-Satzvolumen je Muskel (primär 1, sekundär 0,5), nur harte Sätze (RIR<=3)
@@ -1802,7 +1817,7 @@ function autoPlanDeload(){
    if(pd&&pd<todayISO()&&!deloadDue()&&!(sessionsSinceCycle()>=4&&(performanceDrop()>0||recoverySignals()>0)))delete state.settings.plannedDeload;}
   const t0=todayISO(),pd0=state.settings.plannedDeload;
   // Termin erreicht/überfällig und noch kein Deload geloggt → stehen lassen
-  if(pd0&&pd0<=t0&&!state.logs.some(l=>l.deload&&l.date>=pd0))return null;
+  if(pd0&&pd0<=t0&&!state.logs.some(l=>l.deload&&l.date>=pd0)&&!isAbsent(t0))return null;   // fällig → stehen lassen (außer heute krank/abwesend)
   const rest=Math.max(DELOAD_AFTER-sessionsSinceCycle(),0);
   const sc=state.settings.schedule||[];
   let d;
