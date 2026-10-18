@@ -259,7 +259,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v118";
+const APP_VERSION="v119";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -2025,6 +2025,17 @@ function autoPlanDeload(){
 }
 // Start
 boot();
+// Auto-Update: neue Version auf GitHub erkennen und laden (iOS-Homescreen hält sonst die alte Datei im Cache)
+function checkUpdate(){
+  if(state.active||!navigator.onLine||location.protocol==="file:")return;
+  fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
+    const m=t.match(/APP_VERSION="v(\d+)"/);if(!m)return;
+    const cur=+APP_VERSION.slice(1),neu=+m[1];
+    if(neu>cur){toast("Update auf v"+neu+" wird geladen …");setTimeout(()=>location.replace(location.pathname+"?v="+neu),900)}
+  }).catch(()=>{});
+}
+setTimeout(checkUpdate,1500);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 </script>
 </body>
 </html>
