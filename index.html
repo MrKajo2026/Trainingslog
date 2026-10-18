@@ -185,6 +185,7 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .pe-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 8px;margin-top:9px}.pe-g input,.pe-g2 input,.pe-g2 textarea{font-size:13px;padding:8px 9px;width:100%}
 .pe-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .pe-mv{display:flex;flex-direction:column;gap:2px}.pe-mv button{border:none;background:var(--s2);color:var(--mut);border-radius:6px;padding:1px 8px;font-size:10px}.pe-mv button:disabled{opacity:.3}
+.h-kw{background:none;border:none;padding:2px 6px;text-align:center}
 </style>
 </head>
 <body>
@@ -259,7 +260,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v119";
+const APP_VERSION="v120";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -692,7 +693,7 @@ function vHome(){
   const plan={};(state.settings.schedule||[]).forEach(x=>plan[x.date]=x);
   const pd=state.settings.plannedDeload;
   h+='<div class="h-wk" id="wkstrip"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="state.wkOff=(state.wkOff||0)-1;render()">‹</button>'
-   +'<b style="font-size:14px">KW '+kw+' · '+fmtD(m0)+'–'+fmtD(m6)+'</b><button class="h-a" onclick="state.wkOff=(state.wkOff||0)+1;render()">›</button></div><div class="h-days">';
+   +'<button class="h-kw" onclick="state.wkOff=0;render()"><b style="font-size:14px">KW '+kw+' · '+fmtD(m0)+'–'+fmtD(m6)+'</b>'+(off?'<span class="tiny" style="display:block;color:var(--amb)">↺ zu heute</span>':'')+'</button><button class="h-a" onclick="state.wkOff=(state.wkOff||0)+1;render()">›</button></div><div class="h-days">';
   const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
   for(let i=0;i<7;i++){const d=addDays(m0,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
@@ -701,7 +702,7 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=(dlNow||(pd&&d>=pd))?"plan dl":"plan"}
     if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
     h+='<button class="h-d '+cls+'" onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+WD[i]+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(lab)+'</em></button>'}
-  h+='</div>'+(off?'<button class="h-other" style="margin-top:6px" onclick="state.wkOff=0;render()">zur aktuellen Woche</button>':'')+'</div>';
+  h+='</div>'+'</div>';
   h+='<details class="h-rules"><summary>Regeln ('+p.rules.length+')</summary>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</details>';
   return h;
 }
