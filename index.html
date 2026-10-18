@@ -260,7 +260,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v121";
+const APP_VERSION="v122";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -368,6 +368,7 @@ function boot(){
   if(cyc)setTimeout(()=>toast("Zykluszähler korrigiert: "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh."),1800);
   const draft=loadJ("draft",null);
   if(draft&&draft.entries&&draft.entries.length)state.active=draft;
+  if(state.active&&state.active.deload)state.active.entries.forEach(e=>{if(!/RIR3-4|Prehab|Deload/i.test(e.scheme||"")){e.planScheme=e.scheme;e.scheme="RIR3-4 · Deload"}});
   render();
   if(cleaned)setTimeout(()=>toast("Doppelte Übungen zusammengeführt ✓"),600);
   // Offene Einheit von früher? → direkt zum Abschluss anbieten
@@ -485,7 +486,7 @@ function startSession(sid,dl){
       const extra=(isFocus&&!re&&!state.pendingDeload)?mesoExtraFor(ex.id,ms.add):0;
       const reha=/RIR3-4|Prehab/i.test(ex.scheme||"");     // Reha/Prehab ist schon leicht → im Deload unverändert
       const nSets=state.pendingDeload&&!reha?Math.max(1,Math.round(ex.sets*DELOAD_SETS)):ex.sets+extra;
-      return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:ex.scheme,note:ex.note||"",rest:ex.rest||0,ss:ex.ss||"",exNote:"",mesoExtra:extra,
+      return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:(state.pendingDeload&&!reha)?"RIR3-4 · Deload":ex.scheme,planScheme:ex.scheme,note:ex.note||"",rest:ex.rest||0,ss:ex.ss||"",exNote:"",mesoExtra:extra,
       sets:Array.from({length:nSets},(_,i)=>{
         let w=lv&&lv.sets[i]?lv.sets[i].w:ex.start;
         // Plan-Startgewicht gewinnt, wenn es UNTER dem letzten Wert liegt und die Planversion neuer ist als die letzte Einheit
