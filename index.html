@@ -260,7 +260,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v122";
+const APP_VERSION="v123";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -843,14 +843,16 @@ function repsDone(ei,si){
 function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
 // ===== Pausen-Timer =====
 let restIv=null,audioCtx=null;
-function beep(times){                       // Signalton ohne Datei (WebAudio), laut genug neben Musik
+let beepNodes=[],keepAlive=null;
+// Signalton ohne Datei (WebAudio). delay>0 = im Voraus planen (läuft auch ohne erneute Berührung, iOS-sicher)
+function beep(times,delay){
   try{
     if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    if(audioCtx.state==="suspended")audioCtx.resume();
-    const n=times||4;
+    if(audioCtx.state!=="running")audioCtx.resume();
+    const n=times||4,t0=audioCtx.currentTime+(delay||0)+0.02,nodes=[];
     const master=audioCtx.createGain();master.gain.value=1;master.connect(audioCtx.destination);
     for(let i=0;i<n;i++){
-      const t=audioCtx.currentTime+i*0.38;
+      const t=t0+i*0.38;
       [0,1].forEach(k=>{                       // zwei Oszillatoren übereinander = deutlich lauter
         const o=audioCtx.createOscillator(),g=audioCtx.createGain();
         o.type=k?"square":"sawtooth";
@@ -858,12 +860,16 @@ function beep(times){                       // Signalton ohne Datei (WebAudio), 
         g.gain.setValueAtTime(0.0001,t);
         g.gain.exponentialRampToValueAtTime(k?0.55:0.9,t+0.015);
         g.gain.exponentialRampToValueAtTime(0.0001,t+0.33);
-        o.connect(g);g.connect(master);o.start(t);o.stop(t+0.35);
+        o.connect(g);g.connect(master);o.start(t);o.stop(t+0.35);nodes.push(o);
       });
     }
-  }catch(e){}
+    return nodes;
+  }catch(e){return[]}
 }
-function unlockAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume()}catch(e){}}
+// Lautloser Dauerton während der Pause: verhindert, dass iOS den Audio-Kontext schlafen legt
+function startKeepAlive(){try{stopKeepAlive();const o=audioCtx.createOscillator(),g=audioCtx.createGain();g.gain.value=0.00001;o.connect(g);g.connect(audioCtx.destination);o.start();keepAlive=o}catch(e){}}
+function stopKeepAlive(){try{if(keepAlive)keepAlive.stop()}catch(e){}keepAlive=null}
+function unlockAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state!=="running")audioCtx.resume()}catch(e){}}
 function toggleDeload(on){
   pushUndo();
   const sid=state.active.sessionId;
@@ -879,6 +885,7 @@ function startRest(sec,label){
   unlockAudio();
   stopRest();
   beep(1);
+  beepNodes=beep(4,sec);startKeepAlive();          // End-Signal schon jetzt einplanen (innerhalb der Berührung)
   try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
   const end=Date.now()+sec*1000;
   const box=document.createElement("div");box.id="resttimer";
@@ -890,12 +897,13 @@ function startRest(sec,label){
     if(v)v.textContent=left>=60?Math.floor(left/60)+":"+String(left%60).padStart(2,"0"):left+"s";
     if(bar)bar.style.width=(left/sec*100)+"%";
     if(left<=0){
-      clearInterval(restIv);restIv=null;
-      beep(4);
+      clearInterval(restIv);restIv=null;stopKeepAlive();
+      if(!beepNodes.length||!audioCtx||audioCtx.state!=="running"){beep(4)}   // Fallback, falls Vorplanung nicht lief
+      beepNodes=[];
       try{navigator.vibrate&&navigator.vibrate([300,120,300,120,300,120,500])}catch(e){}
       const b=$("resttimer");
       if(b){b.classList.add("done");const v=$("restval");if(v)v.textContent="FERTIG";
-        setTimeout(()=>{const x=$("resttimer");if(x)x.remove()},4000);}
+        setTimeout(()=>{if(b.isConnected&&b.classList.contains("done"))b.remove()},4000);}
       toast("Pause vorbei — "+(label||"nächster Satz"));
     }
   },500);
@@ -907,7 +915,7 @@ function pinTimer(){
 }
 (function(){const vv=window.visualViewport;if(vv){vv.addEventListener("scroll",pinTimer);vv.addEventListener("resize",pinTimer)}
   window.addEventListener("scroll",pinTimer,{passive:true})})();
-function stopRest(){if(restIv){clearInterval(restIv);restIv=null}const b=$("resttimer");if(b)b.remove()}
+function stopRest(){if(restIv){clearInterval(restIv);restIv=null}beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
   if(s.rir!==null&&num(s.r)>0){                                   // Satz abgeschlossen → Pause starten
