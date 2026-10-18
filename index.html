@@ -141,6 +141,45 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .l-meta span{font-size:12px;color:var(--sky);padding-top:5px}
 .l-meta input,.l-meta textarea{border:none!important;background:none!important;padding:5px 0!important;font-size:12px!important;width:100%;min-height:26px;resize:none;color:var(--tx)}
 .l-info{display:block;width:100%;text-align:left;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);color:var(--sky);border-radius:8px;padding:6px 9px;font-size:12px;margin:6px 0 0}
+
+.s-seg{display:flex;gap:3px;background:var(--s1);border:1px solid var(--s2);border-radius:12px;padding:3px}
+.s-seg button{flex:1;border:none;background:none;border-radius:9px;padding:8px 2px;font-size:12px;color:var(--mut);font-weight:600}.s-seg button.on{background:var(--s3);color:var(--tx)}
+.s-sel{font-size:13px;padding:9px 10px}
+.s-card{background:var(--s1);border:1px solid var(--s2);border-radius:18px;padding:14px;display:block}
+.s-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}.s-h b{font-size:15px}.s-h>span{font-size:12px;color:var(--mut);text-align:right}
+.s-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:4px}.s-leg i{display:inline-block;width:10px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.s-m{display:grid;grid-template-columns:96px 1fr 34px 48px;align-items:center;gap:8px;padding:5px 0;font-size:13px}.s-m .mono{text-align:right;font-size:12px;font-weight:700}
+.s-bar{position:relative;height:8px;border-radius:4px;background:var(--s2);overflow:hidden}.s-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}.s-bar i.band{background:rgba(52,211,153,.18)}
+.s-foot{font-size:11px;color:var(--mut);margin-top:10px;line-height:1.5}
+.s-big{background:var(--bg);border-radius:12px;padding:10px;margin-bottom:6px}
+.s-ex{width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;border-top:1px solid var(--s2);padding:9px 2px;text-align:left}
+.s-ex.on{background:rgba(239,68,68,.08);border-radius:8px}.s-en{flex:1;min-width:0;font-size:13px}.s-ex b{width:62px;text-align:right;font-size:12px}
+.s-tg{border:none;background:var(--s2);color:var(--mut);border-radius:7px;padding:3px 9px;font-size:11px;margin-left:4px}.s-tg.on{background:var(--s3);color:var(--tx)}
+.s-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--s2);font-size:13px}.s-row:first-of-type{border-top:none}
+.c-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;touch-action:pan-y}
+.c-wd{text-align:center;font-size:11px;color:var(--mut);padding-bottom:2px}
+.c-d{min-height:54px;border-radius:11px;background:var(--s1);border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 1px;min-width:0}
+.c-d b{font-size:13px;font-weight:600}.c-d em{font-style:normal;font-size:9px;font-weight:700;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.c-d i{font-style:normal;font-size:8px;line-height:1;min-height:8px}
+.c-d.done{background:rgba(220,38,38,.18)}.c-d.done em{color:#fca5a5}.c-d.dl-done{background:rgba(245,158,11,.18)}.c-d.dl-done em{color:var(--amb)}
+.c-d.sick,.c-d.vac{background:rgba(56,189,248,.14)}.c-d.sick em,.c-d.vac em{color:var(--sky)}
+.c-d.plan{background:none;border:1px dashed rgba(239,68,68,.55)}.c-d.plan em{color:#fca5a5}.c-d.plan.dl{border-color:rgba(245,158,11,.7)}.c-d.plan.dl em{color:var(--amb)}
+.c-d.now{background:var(--amb);border:1px solid var(--amb);color:#111}.c-d.now em,.c-d.now.plan em,.c-d.now.plan.dl em{color:#3b2a10}
+.c-d.sel{box-shadow:0 0 0 2px var(--tx)}
+.c-leg{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mut)}
+.c-sw{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}.c-sw.done{background:rgba(220,38,38,.5)}.c-sw.plan{border:1px dashed #ef4444}.c-sw.dl{border:1px dashed var(--amb)}.c-sw.sick{background:rgba(56,189,248,.5)}
+.c-x{border:none;background:var(--s2);color:var(--mut);border-radius:8px;padding:3px 8px;margin-left:6px}
+.c-acts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+.c-acts button{background:var(--s2);border:none;border-radius:12px;padding:9px 0;font-size:10.5px;color:#c9ccd1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.c-acts button b{font-size:17px;font-weight:400}.c-acts button.on{background:var(--s3);color:var(--tx)}.c-acts button:disabled{opacity:.35}
+.c-flow{margin-top:10px;background:var(--bg);border-radius:12px;padding:10px}
+.c-ex{padding:6px 0;border-top:1px solid var(--s2);font-size:13px}.c-ex:first-of-type{border-top:none}.c-ex span{display:block}.c-ex .mono{font-size:11px;color:var(--mut);margin-top:2px}
+.p-tabs{display:flex;gap:6px}.p-tabs button{flex:1;border:1px solid var(--s2);background:var(--s1);border-radius:12px;padding:10px 0;font-weight:700;font-size:14px;color:var(--mut)}.p-tabs button.on{background:var(--red);border-color:var(--red);color:#fff}
+.p-ex{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-top:1px solid var(--s2)}.p-ex:first-of-type{border-top:none}.p-ex.off{opacity:.45}
+.p-n{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.p-n b{font-size:14px;font-weight:600}.p-n>span{font-size:12px;color:var(--mut)}
+.p-note{font-size:11px;color:var(--amb);opacity:.85;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.p-w small{display:block;font-size:10px;color:var(--mut);font-weight:400;text-align:right}
+.p-w{font-size:14px;font-weight:700;white-space:nowrap}
+.p-det summary{display:flex;justify-content:space-between;cursor:pointer;list-style:none}.p-det summary::-webkit-details-marker{display:none}.p-det summary span{font-size:12px;color:var(--mut)}
+.p-det[open] summary{margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -215,7 +254,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v116";
+const APP_VERSION="v117";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -889,55 +928,56 @@ function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").i
 let editPlanId=null,showLib=false,showNewPlan=false;
 function vPlans(){
   if(editPlanId)return vPlanEditor();
-  let h="";
-  const card=p=>{const act=p.id===state.settings.activePlanId;
-    let c='<div class="card'+(act?" hl":"")+'"><div class="row" style="justify-content:space-between"><div><b>'+esc(p.name)+'</b> <span class="tiny mono">v'+(p.version||1)+'</span><p class="tiny mono">'+p.sessions.length+' Einheiten · seit '+fmtD(p.createdAt)+'</p></div>'
-     +(act?'<span style="color:var(--red2);font-size:11px;font-weight:800;text-transform:uppercase">Aktiv</span>':"")+'</div>'
-     +(p.versions&&p.versions.length?'<details style="margin-top:6px"><summary class="tiny">Versionshistorie ('+p.versions.length+') ▼</summary><div style="margin-top:5px">'+[...p.versions].reverse().map(v=>'<div class="hline"><span class="tiny mono">v'+v.v+' · '+fmtD(v.date)+'</span><span class="tiny" style="text-align:right;max-width:60%">'+esc(v.comment)+'</span></div>').join("")+'</div></details>':"")
-     +'<div class="row" style="margin-top:10px">'
-     +(!act?'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button>':"")
-     +'<button class="chip" onclick="editPlan(\''+p.id+'\')">Bearbeiten</button>'
-     +(state.plans.length>1?'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Wirklich löschen?":"Löschen")+'</button>':"")
-     +'</div></div>';
-    return c};
+  const ap=activePlan();
   const sorted=state.plans.slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
-  const newest=sorted[0],older=sorted.slice(1);
-  if(newest)h+=card(newest);
-  if(older.length)h+='<details class="card" style="padding:0"><summary style="padding:11px 13px" class="row"><span style="flex:1;font-weight:700;font-size:13px;color:var(--mut)">Ältere Pläne ('+older.length+')</span><span class="tiny">▼</span></summary><div style="padding:0 8px 8px">'+older.map(card).join("")+'</div></details>';
-  h+=showNewPlan
-    ?'<div class="card row"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
-    :'<button class="card" style="width:100%;border-style:dashed;color:var(--mut);font-weight:800;font-size:13px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>';
-  // Bibliothek
-  // Trainer-Hinweise
-  h+='<div class="card"><span class="lbl">Trainer-Hinweis eintragen</span>'
-   +'<p class="tiny" style="margin:4px 0 8px">Empfehlungen aus dem Chat — erscheinen als Chip bei der Übung im Training.</p>'
-   +'<select id="trEx" style="margin-bottom:5px">'+activePlan().sessions.map(se=>se.exercises.map(ex=>'<option value="'+ex.id+'|'+esc(ex.name)+'">'+esc(se.name)+' — '+esc(ex.name)+'</option>').join("")).join("")+'</select>'
-   +'<div class="row" style="gap:5px"><input type="text" id="trZiel" placeholder="Ziel, z.B. 85kg × 6-9, 2/2/0" style="flex:1;font-size:12px"><input type="text" id="trKg" inputmode="decimal" placeholder="kg" style="width:58px;text-align:center" class="mono"></div>'
-   +'<input type="text" id="trGrund" placeholder="Begründung (kurz)" style="margin-top:5px;font-size:12px">'
-   +'<button class="chip" style="width:100%;padding:10px;margin-top:6px" onclick="addTrainerRec()">+ Hinweis speichern</button>';
-  const trs=(state.analyses||[]).flatMap(a=>a.empfehlungen||[]);
-  if(trs.length)h+='<div style="margin-top:8px">'+trs.map((r,i)=>'<div class="hline"><span class="tiny" style="flex:1"><b>'+esc(r.uebung)+'</b>: '+esc(r.ziel)+'</span><button class="del" onclick="delTrainerRec('+i+')">✕</button></div>').join("")+'</div>';
-  h+='</div>';
-  h+='<div class="card"><button style="width:100%;background:none;border:none;color:var(--tx);display:flex;justify-content:space-between;font-weight:900;font-size:15px" onclick="showLib=!showLib;render()"><span>Übungs-Bibliothek</span><span class="tiny mono">'+state.library.length+' Übungen '+(showLib?"▲":"▼")+'</span></button>';
-  if(showLib){
-    h+='<div style="margin-top:10px;max-height:260px;overflow-y:auto">';
-    if(state.mergeFrom)h+='<p class="tiny" style="color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:8px;padding:6px 9px;margin-bottom:6px">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'" werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;render()">Abbrechen</button></p>';
-    [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
-      const isSrc=state.mergeFrom===e.id;
-      const cnt=state.logs.reduce((a,l)=>a+l.entries.filter(x=>x.exerciseId===e.id).length,0);
-      if(state.renameId===e.id){
-        h+='<div class="row" style="gap:5px;background:rgba(56,189,248,.12);border-radius:8px;padding:7px 9px;margin-bottom:5px"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1;font-size:13px"><button class="chip" style="padding:7px 10px" onclick="doRename(\''+e.id+'\')">OK</button><button class="chip" style="padding:7px 9px" onclick="state.renameId=null;render()">✕</button></div>';
-        return;
-      }
-      h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny mono">'+esc(e.reps)+(cnt?' · '+cnt+'× geloggt':' · keine Daten')+'</span></span><span class="row" style="gap:4px">'
-      +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 7px;font-size:11px" onclick="state.renameId=\''+e.id+'\';render()">✎</button><button class="chip" style="padding:3px 7px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
-      +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></span></div>'});
-    h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="lbl">Neue Übung</p>'
-    +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
-    +'<div class="row"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"></div>'
-    +'<button class="chip" style="padding:10px" onclick="addLib()">+ In Bibliothek aufnehmen</button></div>';
+  const older=sorted.filter(p=>p.id!==ap.id);
+  if(!state.planSes||!ap.sessions.some(s=>s.id===state.planSes))state.planSes=(ap.sessions[0]||{}).id;
+  const ms=mesoState();
+  let h='<div class="s-card"><div class="s-h"><b style="font-size:18px">'+esc(ap.name.split(" · ")[0])+'</b><span><button class="chip" style="color:var(--red2)" onclick="editPlan(\''+ap.id+'\')">Bearbeiten</button></span></div>'
+   +'<p class="tiny">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv · '+ap.sessions.length+' Einheiten · seit '+fmtD(ap.createdAt)+'</p>'
+   +(ap.versions&&ap.versions.length?'<details style="margin-top:6px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div>';
+  h+='<div class="p-tabs">'+ap.sessions.map(s=>'<button class="'+(s.id===state.planSes?"on":"")+'" onclick="state.planSes=\''+s.id+'\';render()">'+esc(s.name)+'</button>').join("")+'</div>';
+  const se=ap.sessions.find(s=>s.id===state.planSes);
+  if(se){
+    h+='<div class="s-card" style="padding:4px 14px">'+(se.sub?'<p class="tiny" style="padding:8px 0 2px">'+esc(se.sub)+(se.warmup&&se.warmup.length?' · Warmup: '+se.warmup.map(esc).join(", "):'')+'</p>':'');
+    se.exercises.forEach(ex=>{
+      const mm=MUSCLE_MAP[ex.id];const isF=mm&&ms.focus.includes(mm.p)&&!/Prehab|BW|Core|3s/i.test(ex.scheme||"");
+      const xtra=isF?mesoExtraFor(ex.id,ms.add):0;
+      const paused=!(ex.sets>0);
+      h+='<div class="p-ex'+(paused?" off":"")+'"><div class="p-n"><b>'+esc(ex.name)+(ex.ss?' <span class="l-ss">SS '+esc(ex.ss)+'</span>':'')+'</b>'
+       +'<span>'+(paused?'pausiert':ex.sets+' × '+esc(ex.reps)+' · '+esc(ex.scheme)+(ex.rest?' · '+fmtRest(ex.rest):'')+(xtra?' · <b style="color:var(--grn)">+'+xtra+' Meso</b>':''))+'</span>'
+       +(ex.note?'<span class="p-note">'+esc(ex.note)+'</span>':'')+'</div>'
+       +'<div class="p-w">'+(()=>{const lb=lastByEx()[ex.id];const lw=lb?Math.max(...lb.sets.map(x=>num(x.w))):0;
+          return lw>0?String(lw).replace(".",",")+' kg<small>zuletzt</small>':num(ex.start)>0?String(ex.start).replace(".",",")+' kg<small>Start</small>':'<span style="color:var(--amb)">neu</span>'})()+'</div></div>'});
+    h+='</div>';
   }
-  h+='</div>';
+  h+='<details class="s-card p-det"><summary><b>Regeln</b><span>'+ap.rules.length+' ▾</span></summary>'+ap.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</details>';
+  // Bibliothek
+  h+='<details class="s-card p-det"'+(showLib?' open':'')+' ontoggle="showLib=this.open"><summary><b>Übungsbibliothek</b><span>'+state.library.length+' ▾</span></summary><div style="margin-top:10px;max-height:300px;overflow-y:auto">';
+  if(state.mergeFrom)h+='<p class="tiny" style="color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:8px;padding:6px 9px;margin-bottom:6px">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'“ werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;render()">Abbrechen</button></p>';
+  [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
+    const isSrc=state.mergeFrom===e.id;const cnt=state.logs.reduce((a,l)=>a+l.entries.filter(x=>x.exerciseId===e.id).length,0);
+    if(state.renameId===e.id){h+='<div class="row" style="gap:5px;background:rgba(56,189,248,.12);border-radius:8px;padding:7px 9px;margin-bottom:5px"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1;font-size:13px"><button class="chip" style="padding:7px 10px" onclick="doRename(\''+e.id+'\')">OK</button><button class="chip" style="padding:7px 9px" onclick="state.renameId=null;render()">✕</button></div>';return}
+    h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny">'+esc(e.reps)+(cnt?' · '+cnt+'× geloggt':'')+(e.setting?' · ⚙ '+esc(e.setting):'')+'</span></span><span class="row" style="gap:4px">'
+     +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 7px;font-size:11px" onclick="state.renameId=\''+e.id+'\';render()">✎</button><button class="chip" style="padding:3px 7px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
+     +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></span></div>'});
+  h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="tiny">Neue Übung</p>'
+   +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
+   +'<div class="row"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"></div>'
+   +'<button class="chip" style="padding:10px" onclick="addLib()">+ In Bibliothek aufnehmen</button></div></details>';
+  // Ältere Versionen + neuer Plan
+  const card=p=>'<div class="s-row" style="align-items:center"><span style="flex:1"><b style="font-size:13px;color:var(--tx)">'+esc(p.name)+'</b><br><span class="tiny">seit '+fmtD(p.createdAt)+'</span></span><span class="row" style="gap:4px"><button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button><button class="chip" onclick="editPlan(\''+p.id+'\')">✎</button>'
+    +'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Sicher?":"✕")+'</button></span></div>';
+  h+='<details class="s-card p-det"><summary><b>Ältere Planversionen</b><span>'+older.length+' ▾</span></summary><div style="margin-top:6px">'+older.map(card).join("")+'</div>'
+   +(showNewPlan?'<div class="row" style="margin-top:8px"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
+     :'<button class="chip" style="width:100%;padding:10px;margin-top:8px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>')+'</details>';
+  // Trainer-Hinweise (selten genutzt)
+  const trs=(state.analyses||[]).flatMap(a=>a.empfehlungen||[]);
+  h+='<details class="s-card p-det"><summary><b>Trainer-Hinweise</b><span>'+trs.length+' ▾</span></summary><p class="tiny" style="margin:6px 0 8px">Erscheinen als Hinweis bei der Übung im Training.</p>'
+   +'<select id="trEx" style="margin-bottom:5px">'+ap.sessions.map(s=>s.exercises.map(ex=>'<option value="'+ex.id+'|'+esc(ex.name)+'">'+esc(s.name)+' — '+esc(ex.name)+'</option>').join("")).join("")+'</select>'
+   +'<div class="row" style="gap:5px"><input type="text" id="trZiel" placeholder="Ziel, z.B. 85kg × 6-9" style="flex:1;font-size:12px"><input type="text" id="trKg" inputmode="decimal" placeholder="kg" style="width:58px;text-align:center" class="mono"></div>'
+   +'<input type="text" id="trGrund" placeholder="Begründung (kurz)" style="margin-top:5px;font-size:12px"><button class="chip" style="width:100%;padding:10px;margin-top:6px" onclick="addTrainerRec()">+ Hinweis speichern</button>'
+   +(trs.length?'<div style="margin-top:8px">'+trs.map((r,i)=>'<div class="s-row"><span><b>'+esc(r.uebung)+'</b>: '+esc(r.ziel)+'</span><button class="del" onclick="delTrainerRec('+i+')">✕</button></div>').join("")+'</div>':'')+'</details>';
   return h;
 }
 function activatePlan(id){
@@ -1147,108 +1187,91 @@ function vStats(){
   const allEx=(allPlans?state.plans.flatMap(x=>x.sessions.flatMap(se=>se.exercises)):p.sessions.flatMap(se=>se.exercises))
     .filter((e,i,arr)=>arr.findIndex(y=>y.id===e.id)===i);
   if(!state.statEx||!allEx.some(e=>e.id===state.statEx))state.statEx=allEx[0]?allEx[0].id:null;
-  const tonn=pl.map(l=>({d:fmtD(l.date),v:Math.round(l.entries.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s.w*s.r,0),0))}));
-  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)).toFixed(1):"0";
-  let h='<select onchange="state.statPlan=this.value;state.statEx=null;state.tonMode=null;render()">'
+  const fx=(v,d)=>Number(v).toFixed(d==null?1:d).replace(".",",");
+  const sg=v=>(v>0?"+":"")+fx(v,Math.abs(v)>=10?0:1);
+  const col=v=>v>0?"var(--grn)":v<0?"var(--red2)":"var(--mut)";
+  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)):0;
+  const g=growth(pl,allEx);
+  const ws=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
+  const wt=weightTrend();
+  // Filter
+  let h='<div class="s-seg">'+Object.keys(RANGES).map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>'
+   +'<select class="s-sel" onchange="state.statPlan=this.value;state.statEx=null;state.tonMode=null;render()">'
    +'<option value="all"'+(allPlans?" selected":"")+'>Alle Pläne (durchgehend)</option>'
    +state.plans.map(x=>'<option value="'+x.id+'"'+(!allPlans&&x.id===p.id?" selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select>';
-  h+='<div class="row" style="gap:4px">'+Object.keys(RANGES).map(k=>'<button class="chip'+(rng===k?" on-n":"")+'" style="flex:1;padding:7px 2px;font-size:11px" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
-  h+='<div class="stat3"><div class="card"><b class="mono">'+pl.length+'</b><p class="tiny">Einheiten</p></div><div class="card"><b class="mono">'+wk+'</b><p class="tiny">pro Woche</p></div><div class="card"><b class="mono">'+(tonn.length?Math.round(tonn.reduce((a,t)=>a+t.v,0)/tonn.length).toLocaleString("de-DE"):0)+'</b><p class="tiny">Ø Tonnage/Einh.</p></div></div>';
-  // Gesamt-Zuwachs
-  const g=growth(pl,allEx);
-  if(g.overall!==null){
-    const mode=state.statMode||"gruppen";
-    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Zuwachs (e1RM)</span><b class="mono" style="font-size:17px;color:'+(g.overall>0?"var(--grn)":g.overall<0?"var(--red2)":"var(--mut)")+'">'+(g.overall>0?"+":"")+g.overall+'%</b></div>'
-    +'<div class="row" style="gap:4px;margin-bottom:8px"><button class="chip'+(mode==="gruppen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'gruppen\';render()">Muskelgruppen</button><button class="chip'+(mode==="uebungen"?" on-n":"")+'" style="flex:1;padding:6px" onclick="state.statMode=\'uebungen\';render()">Übungen</button></div>';
-    if(mode==="gruppen")h+='<div id="gchart"></div>';
-    else{
-      const unit=state.statUnit||"pct";
-      h+='<div class="row" style="gap:4px;margin-bottom:6px"><button class="chip'+(unit==="pct"?" on-n":"")+'" style="flex:1;padding:5px;font-size:11px" onclick="state.statUnit=\'pct\';render()">Prozent</button><button class="chip'+(unit==="kg"?" on-n":"")+'" style="flex:1;padding:5px;font-size:11px" onclick="state.statUnit=\'kg\';render()">Gewicht</button></div>';
-      h+=g.perEx.map(e=>{const dkg=e.last-e.first;
-        return '<div class="hline mono"><span style="color:var(--tx);flex:1">'+esc(e.name)+'</span><span class="tiny">'+e.first.toFixed(0)+'→'+e.last.toFixed(0)+(e.unit==="e1RM"?"kg":"")+' <b style="color:'+(e.pct>=0?"var(--grn)":"var(--red2)")+'">'+(unit==="pct"?((e.pct>0?"+":"")+e.pct.toFixed(1)+"%"):((dkg>0?"+":"")+dkg.toFixed(1)+"kg"))+'</b></span></div>'}).join("")||'<p class="tiny">Zu wenige Daten im Zeitraum.</p>';
-    }
-    h+='<p class="tiny" style="margin-top:8px">Basis: bester Satz je Einheit als e1RM. Core &amp; Face Pull zählen nicht. Mind. 2 Einheiten je Übung.'+(g.nDeload?' <b style="color:var(--amb)">'+g.nDeload+' Deload-Einheit(en) separat — nicht gewertet.</b>':'')+'</p></div>';
-  }
-  // Übungs-Chart (nur im Gruppen-Modus)
-  if((state.statMode||"gruppen")==="gruppen")
-  h+='<div class="card"><p class="lbl" style="margin-bottom:6px">Übung</p>'
-  +'<select onchange="state.statEx=this.value;render()">'+p.sessions.map(s=>s.exercises.map(ex=>'<option value="'+ex.id+'"'+(ex.id===state.statEx?" selected":"")+'>'+esc(s.name)+' — '+esc(ex.name)+'</option>').join("")).join("")+'</select>'
-  +'<div id="exchart" style="margin-top:8px"></div></div>';
-  // Körpergewicht
-  const ws=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
+  // Kennzahlen
+  const wLast=ws.length?ws[ws.length-1].kg:null;
+  h+='<div class="h-tiles">'
+   +'<div class="h-t"><b style="color:'+(g.overall==null?"var(--tx)":col(g.overall))+'">'+(g.overall==null?"–":sg(g.overall)+" %")+'</b><span>Kraft</span></div>'
+   +'<div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
+   +'<div class="h-t"><b>'+(wt?fx(wt.cur):wLast!=null?fx(wLast):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div></div>';
+  // Körpergewicht (schmal)
   if(ws.length>=2){
-    const first=ws[0],last=ws[ws.length-1],diff=Math.round((last.kg-first.kg)*10)/10;
-    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Körpergewicht</span>'
-     +'<span class="mono" style="font-size:14px">'+last.kg.toFixed(1).replace(".",",")+' kg <b style="color:'+(diff>0?"var(--grn)":diff<0?"var(--sky)":"var(--mut)")+'">'+(diff>0?"+":"")+diff.toFixed(1).replace(".",",")+'</b></span></div>'
-     +'<div id="wchart"></div><p class="tiny" style="margin-top:6px">'+ws.length+' Messungen · '+fmtD(first.date)+' – '+fmtD(last.date)+' · Aufbau-Ziel: max +2 kg/Monat</p></div>';
-  } else h+='<div class="card"><span class="lbl">Körpergewicht</span><p class="tiny" style="margin-top:4px">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen. Empfehlung: 2–3× pro Woche, morgens nüchtern.</p></div>';
-  // Wochensätze je Muskelgruppe (normiert auf die letzten 8 Einheiten)
-  {const sw=setsPerWeek(8);
-   if(sw){
-    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Wochensätze je Muskel</span><span class="tiny mono">'+sw.n+' Einh. / '+sw.weeks.toFixed(1).replace(".",",")+' Wo · Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+'</span></div>';
-    MUSCLE_ORDER.forEach(g=>{const v=sw.sets[g]||0;
-      const col=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
-      const wd=Math.min(v/(SET_TARGET.max*1.3)*100,100);
-      h+='<div style="margin:5px 0"><div class="row" style="justify-content:space-between"><span class="tiny" style="color:var(--tx)">'+g+'</span><span class="tiny mono" style="color:'+col+'">'+v.toFixed(1).replace(".",",")+'</span></div>'
-       +'<div style="height:5px;background:var(--s2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+wd+'%;background:'+col+'"></div></div></div>'});
-    h+='<p class="tiny" style="margin-top:6px">Primär 1,0 · Sekundär 0,5 · nur harte Sätze (RIR ≤3). Normiert auf den tatsächlichen Zeitraum der letzten '+sw.n+' Einheiten — unabhängig davon, wie die 8-Tage-Rotation in Kalenderwochen fällt.</p></div>';
-   }}
-  // Mesozyklus-Fortschritt
-  {const ms=mesoState();
-   const cur=(setsPerWeek(8)||{sets:{}}).sets;
-   h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Mesozyklus · Woche '+ms.week+'</span>'
-    +'<span class="tiny mono">automatisch</span></div>'
-    +'<p class="tiny" style="margin-bottom:7px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b> · +'+ms.add+' Sätze gegenüber Start'+(ms.stop?' <b style="color:var(--amb)">— Progression gestoppt (Ermüdungssignale)</b>':'')+'</p>';
-   ms.focus.forEach(g=>{
-     const exs=activePlan().sessions.flatMap(se=>se.exercises).filter(x=>{const m=MUSCLE_MAP[x.id];return m&&m.p===g&&!/Prehab|BW|Core|3s/i.test(x.scheme||"")});
-     if(exs.length&&exs.every(x=>x.sets>=MAX_SETS_PER_EX))
-       h+='<p class="tiny" style="color:var(--amb);margin-bottom:6px">'+g+': alle Übungen bei '+MAX_SETS_PER_EX+' Sätzen — mehr Volumen nur über eine zusätzliche Übung sinnvoll.</p>';
-   });
-   MUSCLE_ORDER.filter(g=>ms.target[g]).forEach(g=>{
-     const t=ms.target[g],c=Math.round((cur[g]||0)*10)/10;
-     const col=c>=t?"var(--grn)":c>=t*0.7?"var(--amb)":"var(--mut)";
-     h+='<div class="hline"><span class="tiny" style="flex:1;color:'+(ms.focus.includes(g)?"var(--red2)":"var(--tx)")+'">'+g+'</span><span class="tiny mono" style="color:'+col+'">'+c.toFixed(1).replace(".",",")+' / '+t.toFixed(1).replace(".",",")+'</span></div>'});
-   h+='<p class="tiny" style="margin-top:6px">Aktuell (normiert) / Wochenziel. Fokus wird automatisch auf die Muskeln mit dem größten Rückstand gesetzt und je Woche um einen Satz erhöht (max. +'+MESO_MAX_ADD+'). Bei Leistungsabfall oder Erholungssignalen stoppt die Steigerung, nach Deload oder längerer Pause startet ein neuer Zyklus.</p></div>';
+    const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
+    h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b><span>'+(diff>0?"+":"")+fx(diff)+' kg im Zeitraum</span></div><div id="wchart"></div>'
+     +'<div class="s-leg"><span><i style="background:var(--sky)"></i>Messung</span><span><i style="background:var(--tx)"></i>Ø 7 Tage</span><span>Ziel max. +0,5 kg/Woche</span></div></div>';
+  }else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
+  // Muskeln: Wochensätze + Kraftzuwachs
+  {const sw=setsPerWeek(8);const gg={};g.groups.forEach(x=>gg[x.g]=x.v);
+   const ms=mesoState();
+   const scale=SET_TARGET.max*1.5;
+   h+='<div class="s-card"><div class="s-h"><b>Muskeln</b><span>Sätze/Woche · Kraft</span></div>';
+   MUSCLE_ORDER.forEach(m=>{const v=sw?(sw.sets[m]||0):0;const c=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
+     h+='<div class="s-m"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span>'
+      +'<div class="s-bar"><i class="band" style="left:'+(SET_TARGET.min/scale*100)+'%;width:'+((SET_TARGET.max-SET_TARGET.min)/scale*100)+'%"></i><i style="width:'+Math.min(v/scale*100,100)+'%;background:'+c+'"></i></div>'
+      +'<span class="mono" style="color:'+c+'">'+fx(v)+'</span><span class="mono" style="color:'+(gg[m]==null?"var(--dim)":col(gg[m]))+'">'+(gg[m]==null?"–":sg(gg[m])+"%")+'</span></div>'});
+   h+='<p class="s-foot">Grünes Feld = Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+' harte Sätze/Woche'+(sw?' (letzte '+sw.n+' Einheiten)':'')+' · rot = Mesozyklus-Fokus · rechts Kraftzuwachs (e1RM)'+(g.nDeload?' · '+g.nDeload+' Deload-Einheit(en) nicht gewertet':'')+'</p></div>';}
+  // Übungen mit Verlauf
+  {const unit=state.statUnit||"pct";
+   h+='<div class="s-card"><div class="s-h"><b>Übungen</b><span><button class="s-tg'+(unit==="pct"?" on":"")+'" onclick="state.statUnit=\'pct\';render()">%</button><button class="s-tg'+(unit==="kg"?" on":"")+'" onclick="state.statUnit=\'kg\';render()">kg</button></span></div>';
+   const sel=g.perEx.find(e=>e.id===state.statEx);
+   h+='<div class="s-big"><div class="s-h" style="margin:0"><b style="font-size:14px">'+esc(sel?sel.name:(allEx.find(e=>e.id===state.statEx)||{}).name||"")+'</b><span>antippen wechselt</span></div><div id="exchart"></div></div>';
+   g.perEx.forEach(e=>{const s=e.series||[];let sp="";
+     if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
+     const dkg=e.last-e.first;
+     h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span>'+sp
+      +'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
+   h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';}
+  // Mesozyklus
+  {const ms=mesoState();const cur=(setsPerWeek(8)||{sets:{}}).sets;
+   h+='<div class="s-card"><div class="s-h"><b>Mesozyklus · Woche '+ms.week+'</b><span>+'+ms.add+' Sätze · '+(ms.stop?'<b style="color:var(--amb)">gestoppt</b>':'läuft')+'</span></div>'
+    +'<p class="tiny" style="margin-bottom:6px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b>'+(ms.stop?' — Steigerung pausiert wegen Ermüdungssignalen':'')+'</p>';
+   ms.focus.forEach(gm=>{const exs=activePlan().sessions.flatMap(se=>se.exercises).filter(x=>{const m=MUSCLE_MAP[x.id];return m&&m.p===gm&&!/Prehab|BW|Core|3s/i.test(x.scheme||"")});
+     if(exs.length&&exs.every(x=>x.sets>=MAX_SETS_PER_EX))h+='<p class="tiny" style="color:var(--amb);margin-bottom:6px">'+gm+': alle Übungen bei '+MAX_SETS_PER_EX+' Sätzen — mehr nur über eine zusätzliche Übung.</p>'});
+   MUSCLE_ORDER.filter(m=>ms.target[m]).forEach(m=>{const t=ms.target[m],c=Math.round((cur[m]||0)*10)/10;const cc=c>=t?"var(--grn)":c>=t*0.7?"var(--amb)":"var(--mut)";
+     h+='<div class="s-row"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><span class="mono" style="color:'+cc+'">'+fx(c)+' / '+fx(t)+'</span></div>'});
+   h+='<p class="s-foot">Ist / Wochenziel. Fokus = Muskeln mit dem größten Rückstand, +1 Satz pro Woche (max. +'+MESO_MAX_ADD+'), nur auf ermüdungsarme Übungen.</p></div>';}
+  // Wochenlast
+  {const li=loadIndex();
+   if(li){const st=li.acwr>1.2?{c:"var(--amb)",t:"höher als üblich"}:li.acwr<0.8?{c:"var(--sky)",t:"niedriger als üblich"}:{c:"var(--grn)",t:"im üblichen Rahmen"};
+    h+='<div class="s-card"><div class="s-h"><b>Wochenlast</b><span class="mono" style="color:'+st.c+';font-weight:800;font-size:15px">'+fx(li.acwr,2)+'</span></div>'
+     +'<p class="tiny">Letzte volle Woche <b>'+li.cur+'</b> · Ø 4 Wochen davor <b>'+li.chronic+'</b> — '+st.t+'.</p>'
+     +'<p class="s-foot">Sätze × Anstrengung (10−RIR) + Sport. Nur Orientierung, feste Risikogrenzen sind nicht belegt.</p></div>';}}
+  // Kraft & Körpergewicht
+  if(g.overall!==null&&ws.length>=2){
+    const dkg=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;let msg,c;
+    if(dkg>0.8&&g.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";c="var(--amb)"}
+    else if(dkg>0.3&&g.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";c="var(--grn)"}
+    else if(dkg<-0.3&&g.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";c="var(--amb)"}
+    else if(dkg<-0.3&&g.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";c="var(--red2)"}
+    else{msg="Gewicht und Kraft weitgehend stabil.";c="var(--mut)"}
+    h+='<div class="s-card"><div class="s-h"><b>Kraft & Körpergewicht</b><span class="mono">'+(dkg>0?"+":"")+fx(dkg)+' kg · '+sg(g.overall)+' %</span></div><p class="tiny" style="color:'+c+'">'+msg+'</p></div>';
   }
-  // Belastungsindex
-  const li=loadIndex();
-  if(li){
-    const st=li.acwr>1.2?{c:"var(--amb)",t:"höher als üblich"}:li.acwr<0.8?{c:"var(--sky)",t:"niedriger als üblich"}:{c:"var(--grn)",t:"im üblichen Rahmen"};
-    h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><span class="lbl">Wochenlast</span><span class="mono" style="color:'+st.c+';font-weight:800">'+li.acwr.toFixed(2).replace(".",",")+'</span></div>'
-     +'<p class="tiny">Letzte volle Woche '+li.cur+' vs. Ø der 4 Wochen davor '+li.chronic+' — '+st.t+'.</p>'
-     +'<p class="tiny" style="margin-top:4px">Sätze × Anstrengung (10−RIR) + Sport. Nur zur Orientierung: feste Risikogrenzen sind wissenschaftlich nicht belegt.</p></div>';
-  }
-  // Kraft vs. Körpergewicht
-  const gAll=growth(pl,allEx);
-  const wsAll=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
-  if(gAll.overall!==null&&wsAll.length>=2){
-    const dkg=Math.round((wsAll[wsAll.length-1].kg-wsAll[0].kg)*10)/10;
-    let msg,col;
-    if(dkg>0.8&&gAll.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";col="var(--amb)"}
-    else if(dkg>0.3&&gAll.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";col="var(--grn)"}
-    else if(dkg<-0.3&&gAll.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";col="var(--amb)"}
-    else if(dkg<-0.3&&gAll.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";col="var(--red2)"}
-    else {msg="Gewicht und Kraft weitgehend stabil.";col="var(--mut)"}
-    h+='<div class="card"><span class="lbl">Kraft &amp; Körpergewicht</span><p class="tiny" style="margin-top:4px">Gewicht <b class="mono">'+(dkg>0?"+":"")+dkg.toFixed(1).replace(".",",")+' kg</b> · Kraft <b class="mono">'+(gAll.overall>0?"+":"")+gAll.overall+'%</b></p><p class="tiny" style="color:'+col+';margin-top:4px">'+msg+'</p></div>';
-  }
-  // Tonnage: je Einheitstyp oder Wochensumme
+  // Tonnage
   const tmode=state.tonMode||"woche";
-  h+='<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl">Tonnage (kg)</span></div>'
-   +'<div class="row" style="gap:4px;margin-bottom:8px">'
+  h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
    +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;
-       return '<button class="chip'+(tmode===k?" on-n":"")+'" style="flex:1;padding:6px 2px;font-size:11px" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")
-   +'</div><div id="tchart"></div></div>';
-  h+='<p class="tiny" style="text-align:center;padding:8px">Einzelne Einheiten findest du im Kalender — Tag antippen.</p>';
-  // Backup
-  h+='<details class="card" style="padding:0"><summary style="padding:12px 14px" class="row"><span style="flex:1;font-weight:700;font-size:14px">Daten-Backup</span><span class="tiny">▼</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
-  +'<div><p class="lbl" style="margin-bottom:4px">Sichern</p><p class="tiny" style="margin-bottom:6px">Backup kopieren und im Claude-Chat oder einer Notiz ablegen. Der Chat-Trainer kann daraus auch die Analyse machen.</p>'
-  +'<div class="row" style="margin-bottom:6px"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
-  +(state.shortText?'<textarea readonly rows="5" class="mono" style="font-size:11px;margin-bottom:8px" onclick="this.select()">'+esc(state.shortText)+'</textarea>':'')
-  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Voll-Backup</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇</button></div>'
-  +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px;margin-top:6px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea><p class="tiny" style="color:var(--grn);margin-top:3px">Antippen = markiert & kopiert.</p>':'')
-  +'</div><div style="border-top:1px solid var(--s2);padding-top:10px"><p class="lbl" style="margin-bottom:4px">Wiederherstellen</p><p class="tiny" style="margin-bottom:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
+     return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
+  // Daten
+  h+='<details class="s-card" style="padding:0"><summary style="padding:13px 14px" class="row"><b style="flex:1;font-size:15px">Daten: Export & Backup</b><span class="tiny">▾</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
+  +'<div class="row"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
+  +(state.shortText?'<textarea readonly rows="5" class="mono" style="font-size:11px" onclick="this.select()">'+esc(state.shortText)+'</textarea>':'')
+  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Voll-Backup</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇ Datei</button></div>'
+  +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea>':'')
+  +'<div style="border-top:1px solid var(--s2);padding-top:10px"><p class="tiny" style="margin-bottom:6px">Wiederherstellen: Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
   +'<textarea rows="3" id="imptext" class="mono" style="font-size:11px" placeholder=\'{"version":1,...}\'></textarea>'
   +'<button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></div></div></details>';
+  h+='<p class="tiny" style="text-align:center;padding:6px">Einzelne Einheiten findest du im Kalender — Tag antippen.</p>';
   return h;
 }
 function growth(pl,allEx){
@@ -1268,7 +1291,7 @@ function growth(pl,allEx){
     const grp=(MUSCLE_MAP[ex.id]||{}).p;
     if(pts.length>=2&&grp){
       const first=pts[0].v,last=pts[pts.length-1].v;
-      perEx.push({name:ex.name,group:grp,first,last,unit:pts[pts.length-1].unit,pct:(last-first)/first*100});
+      perEx.push({id:ex.id,name:ex.name,group:grp,first,last,unit:pts[pts.length-1].unit,pct:(last-first)/first*100,series:pts.map(x=>x.v)});
     }
   });
   const byG={};perEx.forEach(e=>{(byG[e.group]=byG[e.group]||[]).push(e.pct)});
@@ -1325,14 +1348,16 @@ function drawCharts(){
   if(wc){
     const ws=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),state.statRange||"all");
     if(ws.length>=2){
-      const W=320,H=150,P=30;
-      const vals=ws.map(x=>x.kg);const mn=Math.min(...vals)-.6,mx=Math.max(...vals)+.6;
+      const W=320,H=105,P=30;
+      const vals=ws.map(x=>x.kg);const mn=Math.min(...vals)-.4,mx=Math.max(...vals)+.4;
       const X=i=>P+i/(ws.length-1)*(W-P-8), Y=v=>H-18-(v-mn)/(mx-mn||1)*(H-34);
       let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
       [0,.5,1].forEach(f=>{const v=mn+(mx-mn)*f;svg+='<line x1="'+P+'" y1="'+Y(v)+'" x2="'+W+'" y2="'+Y(v)+'" stroke="#27272a" stroke-dasharray="3 3"/><text x="0" y="'+(Y(v)+3)+'" fill="#52525b" font-size="9">'+v.toFixed(1)+'</text>'});
-      svg+='<polyline fill="none" stroke="#38bdf8" stroke-width="2" points="'+ws.map((x,i)=>X(i)+","+Y(x.kg)).join(" ")+'"/>';
-      svg+=ws.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.kg)+'" r="2.5" fill="#38bdf8"/>').join("");
-      ws.forEach((x,i)=>{if(ws.length<=8||i%Math.ceil(ws.length/6)===0||i===ws.length-1)svg+='<text x="'+X(i)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+fmtD(x.date)+'</text>'});
+      svg+='<polyline fill="none" stroke="#38bdf8" stroke-width="1.4" opacity=".55" points="'+ws.map((x,i)=>X(i)+","+Y(x.kg)).join(" ")+'"/>';
+      svg+=ws.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.kg)+'" r="2.2" fill="#38bdf8"/>').join("");
+      const avg=ws.map(x=>{const f=addDays(x.date,-6);const w7=ws.filter(y=>y.date>=f&&y.date<=x.date);return w7.reduce((a,y)=>a+y.kg,0)/w7.length});
+      svg+='<polyline fill="none" stroke="#f4f4f5" stroke-width="2.4" points="'+avg.map((v,i)=>X(i)+","+Y(v)).join(" ")+'"/>';
+      const st=Math.ceil(ws.length/5);ws.forEach((x,i)=>{if(ws.length<=6||(i%st===0&&ws.length-1-i>=st/2)||i===ws.length-1)svg+='<text x="'+X(i)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+fmtD(x.date)+'</text>'});
       wc.innerHTML=svg+'</svg>';
     }
   }
@@ -1773,103 +1798,92 @@ function vCal(){
   if(!state.calMonth)state.calMonth=todayISO().slice(0,7);
   const[Y,M]=state.calMonth.split("-").map(Number);
   const first=new Date(Y,M-1,1);const days=new Date(Y,M,0).getDate();
-  const startDow=(first.getDay()+6)%7; // Mo=0
+  const startDow=(first.getDay()+6)%7;
   const monthName=first.toLocaleDateString("de-DE",{month:"long",year:"numeric"});
   autoPlanDeload();
-  const pdIso=state.settings.plannedDeload;
+  const pdIso=state.settings.plannedDeload,dp=deloadPhase();
   const byDate={};state.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
-  const badge={"uk-a":"UKA","ok-a":"OKA","uk-b":"UKB","ok-b":"OKB"};
   const sched=buildSchedule();
   const planByDate={};sched.forEach(x=>{planByDate[x.date]=x});
-  let h='<div class="row" style="justify-content:space-between"><button class="chip" onclick="calShift(-1)">◀</button><b style="font-size:16px">'+monthName+'</b><button class="chip" onclick="calShift(1)">▶</button></div>';
-  h+='<div class="card" style="padding:10px"><div id="calgrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;touch-action:pan-y">';
-  ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>h+='<span class="tiny" style="font-weight:800">'+d+'</span>');
-  for(let i=0;i<startDow;i++)h+='<span></span>';
+  const sesName=id=>(activePlan().sessions.find(x=>x.id===id)||{}).name||"";
   const today=todayISO();
+  let h='<div class="row" style="justify-content:space-between"><button class="h-a" onclick="calShift(-1)">‹</button><b style="font-size:17px">'+monthName+'</b><button class="h-a" onclick="calShift(1)">›</button></div>';
+  h+='<div id="calgrid" class="c-grid">';
+  ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>h+='<span class="c-wd">'+d+'</span>');
+  for(let i=0;i<startDow;i++)h+='<span></span>';
   for(let d=1;d<=days;d++){
     const iso=Y+"-"+String(M).padStart(2,"0")+"-"+String(d).padStart(2,"0");
-    const sess=byDate[iso]||[];const isToday=iso===today;
-    const absC=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);const isAbs=!!absC;
-    const isPD=state.settings.plannedDeload===iso;
-    const hasW=(state.weights||[]).some(w=>w.date===iso);
+    const sess=byDate[iso]||[];
+    const ab=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
     const act=(state.acts||[]).find(a=>a.date===iso);
+    const hasW=(state.weights||[]).some(w=>w.date===iso);
     const pln=!sess.length?planByDate[iso]:null;
-    const sel=state.calSel===iso;
-    let cell='<button style="min-height:46px;border-radius:9px;border:1px '+(pln?"dashed rgba(220,38,38,.5)":"solid "+(sel?"var(--red2)":isPD?"var(--amb)":isToday?"var(--s3)":"transparent"))+';background:'+(sess.length?(sess.some(l=>l.deload)?"rgba(245,158,11,.15)":"rgba(220,38,38,.14)"):isPD?"rgba(245,158,11,.08)":isAbs?"rgba(56,189,248,.13)":"var(--s1)")+';color:var(--tx);padding:3px 1px;display:flex;flex-direction:column;align-items:center;gap:1px" onclick="calPick(\''+iso+'\')">'
-    +'<span class="tiny" style="'+(isToday?"color:var(--red2);font-weight:800":isPD?"color:var(--amb);font-weight:800":isAbs?"color:var(--sky)":"")+'">'+d+'</span>';
-    if(act)cell+='<span style="font-size:9px">'+((ACT_TYPES[act.type]||{}).i||'⚡')+'</span>';
-    if(hasW)cell+='<span style="font-size:7px;color:var(--sky)">⚖</span>';
-    if(isPD&&!sess.length)cell+='<span style="font-size:8px;font-weight:800;color:var(--amb)">DL</span>';
-    else if(isAbs&&!sess.length)cell+='<span style="font-size:9px">'+absIcon(absC)+'</span>';
-    sess.forEach(l=>{cell+='<span style="font-size:8px;font-weight:800;color:'+(l.deload?"var(--amb)":"var(--red2)")+'">'+(badge[l.sessionId]||l.sessionName.slice(0,3))+'</span>'});
-    if(pln)cell+='<span style="font-size:8px;font-weight:700;color:rgba(239,68,68,.65)">'+(badge[pln.sessionId]||"")+'</span>';
-    cell+='</button>';h+=cell;
+    let cls="c-d",lab="";
+    if(sess.length){cls+=sess.some(l=>l.deload)?" dl-done":" done";lab=sess.map(l=>l.sessionName).join("+")}
+    else if(ab){cls+=ab.kind==="krank"?" sick":" vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
+    else if(pln){lab=sesName(pln.sessionId);cls+=(dp.active||(pdIso&&iso>=pdIso&&(dp.active||deloadDueNow()||iso<addDays(pdIso,8))))?" plan dl":" plan"}
+    if(iso===today)cls+=" now";
+    if(state.calSel===iso)cls+=" sel";
+    h+='<button class="'+cls+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em>'+esc(lab)+'</em><i>'+(act?((ACT_TYPES[act.type]||{}).i||"⚡"):"")+(hasW?'<span style="color:var(--sky)">•</span>':"")+'</i></button>';
   }
-  h+='</div></div>';
-  h+='<p class="tiny" style="text-align:center;opacity:.75">Gestrichelt = geplant · antippen zum Verschieben</p>';
-  {const dp=deloadPhase();if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">🔄 <b>Deload läuft: '+dp.n+'/'+DELOAD_RUN+'</b> — danach automatisch neuer Zyklus</p>';else
-  h+='<p class="tiny" style="text-align:center">'+(pdIso?(pdIso<=todayISO()?'⚠️ <b style="color:var(--amb)">Deload überfällig seit '+fmtD(pdIso)+'</b> — bleibt stehen, bis er durchgeführt ist':'⚠️ Deload geplant ab <b style="color:var(--amb)">'+fmtD(pdIso)+'</b> · automatisch berechnet'):'')+'</p>';}
-  // Eingetragene Abwesenheiten
+  h+='</div>';
+  h+='<div class="c-leg"><span><i class="c-sw done"></i>trainiert</span><span><i class="c-sw plan"></i>geplant</span><span><i class="c-sw dl"></i>Deload</span><span><i class="c-sw sick"></i>krank/Urlaub</span></div>';
+  if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' erledigt — danach automatisch neuer Zyklus</p>';
+  else if(pdIso)h+='<p class="tiny" style="text-align:center;color:var(--amb)">'+(pdIso<=today?'Deload fällig seit '+fmtD(pdIso):'Deload geplant ab '+fmtD(pdIso))+'</p>';
+  // Tageskarte
+  if(state.calSel){
+    const iso=state.calSel,ls=byDate[iso]||[],hasSess=ls.length;
+    const ab=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
+    const pl=!hasSess?planByDate[iso]:null;
+    const aEntry=(state.acts||[]).find(a=>a.date===iso),wEntry=(state.weights||[]).find(w=>w.date===iso);
+    const dn=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
+    const stat=hasSess?"trainiert":ab?absName(ab):pl?"geplant":"frei";
+    h+='<div class="s-card c-day"><div class="s-h"><b style="font-size:17px">'+dn+'</b><span>'+stat+' <button class="c-x" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></span></div>';
+    if(pl)h+='<p style="font-size:15px">'+esc(sesName(pl.sessionId))+((dp.active||(pdIso&&iso>=pdIso))?' <span style="color:var(--amb);font-size:13px;font-weight:700">Deload</span>':'')+'</p>';
+    if(aEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:4px">'+((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' · '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+'</p>';
+    if(wEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:2px">⚖ '+String(wEntry.kg).replace(".",",")+' kg</p>';
+    // laufende Aktion
+    if(state.absTmp){
+      h+='<div class="c-flow"><p class="tiny">'+(state.absKind==="krank"?"🤒 Krank":"🏖 Urlaub")+' ab '+fmtD(state.absTmp)+' — jetzt den letzten Tag antippen (gleicher Tag = nur dieser Tag)</p>'
+       +'<button class="btn red" style="margin-top:8px" onclick="finishAbs(\''+iso+'\')">'+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.absTmp=null;render()">Abbrechen</button></div>';
+    }else if(state.moveFrom&&state.moveFrom!==iso){
+      h+='<div class="c-flow"><button class="btn red" onclick="moveSession(\''+state.moveFrom+'\',\''+iso+'\')">Training vom '+fmtD(state.moveFrom)+' hierhin</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveFrom=null;render()">Abbrechen</button></div>';
+    }else if(state.moveLog){
+      const ml=state.logs.find(x=>x.id===state.moveLog);
+      h+='<div class="c-flow"><button class="btn red" onclick="moveLogTo(\''+iso+'\')">'+esc(ml?ml.sessionName:"")+' vom '+(ml?fmtD(ml.date):"")+' hierher</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
+    }else{
+      const mv=hasSess?'startMoveLog(\''+ls[0].id+'\');toast(\'Neuen Tag antippen\')':pl?'state.moveFrom=\''+iso+'\';render();toast(\'Neuen Tag antippen\')':'';
+      h+='<div class="c-acts">'
+       +'<button '+(mv?'onclick="'+mv+'"':'disabled')+'><b>↔</b>Verschieben</button>'
+       +(ab?'<button onclick="delAbs(\''+ab.from+'\')"><b>'+absIcon(ab)+'</b>entfernen</button>'
+          :'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()"><b>🤒</b>Krank</button>')
+       +(ab?'<button disabled><b>🏖</b>Urlaub</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()"><b>🏖</b>Urlaub</button>')
+       +'<button class="'+(state.calPanel==="act"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'act\'?null:\'act\';render()"><b>🚴</b>Sport</button>'
+       +'<button class="'+(state.calPanel==="w"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'w\'?null:\'w\';render()"><b>⚖️</b>Gewicht</button></div>';
+      if(state.calPanel==="act"){
+        h+='<div class="c-flow"><div class="row" style="gap:4px;margin-bottom:6px">'+Object.keys(ACT_TYPES).map(k=>'<button class="chip'+((state.actType===k||(aEntry&&aEntry.type===k&&!state.actType))?" on-n":"")+'" style="flex:1;padding:9px 2px;font-size:15px" onclick="state.actType=\''+k+'\';render()">'+ACT_TYPES[k].i+'</button>').join("")+'</div>'
+         +'<div class="row" style="gap:4px"><input type="text" inputmode="numeric" id="actMin" placeholder="Min" value="'+(aEntry?aEntry.min:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="decimal" id="actKm" placeholder="km" value="'+(aEntry&&aEntry.km?aEntry.km:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="numeric" id="actRpe" placeholder="RPE" value="'+(aEntry?aEntry.rpe:"")+'" style="flex:.8;text-align:center" class="mono"></div>'
+         +'<div class="row" style="gap:5px;margin-top:6px"><button class="chip" style="flex:1;padding:10px" onclick="saveAct(\''+iso+'\')">Speichern</button>'+(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div>'
+         +(aEntry?'<p class="tiny" style="margin-top:5px">Belastung: '+actLoad(aEntry)+' Pkt</p>':'')+'</div>';
+      }
+      if(state.calPanel==="w"){
+        h+='<div class="c-flow"><div class="row" style="gap:5px"><input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono"><button class="chip" style="padding:10px 14px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'+(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
+      }
+    }
+    h+='</div>';
+    ls.forEach(l=>{
+      h+='<div class="s-card"><div class="s-h"><b>'+esc(l.sessionName)+(l.deload?' <span class="l-badge">Deload</span>':'')+(l.reentry?' <span class="l-badge" style="color:var(--sky);background:rgba(56,189,248,.14)">Wiedereinstieg</span>':'')+(l.altGym?' <span class="l-badge" style="color:var(--sky);background:rgba(56,189,248,.14)">anderes Studio</span>':'')+'</b><span>'+(l.nettoMin?l.nettoMin+' min netto':'')+'</span></div>';
+      if(l.checkin&&(l.checkin.gefuehl||l.checkin.schlaf||l.checkin.essen||l.checkin.befinden!=null))h+='<p class="tiny" style="margin-bottom:6px">Check-in: '+[l.checkin.gefuehl&&'Gefühl '+l.checkin.gefuehl,l.checkin.schlaf&&'Schlaf '+l.checkin.schlaf,l.checkin.essen&&'Essen '+l.checkin.essen,l.checkin.befinden!=null&&'Befinden '+l.checkin.befinden+'/10'].filter(Boolean).join(' · ')+'</p>';
+      l.entries.forEach(e=>{h+='<div class="c-ex"><span>'+esc(e.name)+'</span><span class="mono">'+e.sets.map(s=>String(s.w).replace(".",",")+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join('  ')+'</span>'+(e.exNote?'<p class="note-a">„'+esc(e.exNote)+'“</p>':'')+'</div>'});
+      if(l.note)h+='<p class="note-a" style="margin-top:6px">„'+esc(l.note)+'“</p>';
+      h+='<div class="row" style="margin-top:8px;gap:6px"><button class="chip" onclick="startMoveLog(\''+l.id+'\');toast(\'Neuen Tag antippen\')">Datum ändern</button><button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Löschen")+'</button></div></div>'});
+  }
+  // Pausen
   const absList=(state.settings.absences||[]).slice().sort((a,b)=>a.from.localeCompare(b.from)).filter(a=>a.to>=todayISO());
   if(absList.length){
-    h+='<div class="card" style="padding:9px 12px"><span class="lbl">Pausen</span>';
-    absList.forEach(a=>{h+='<div class="hline"><span class="tiny mono" style="color:'+(a.kind==="krank"?"var(--amb)":"var(--sky)")+'">'+absIcon(a)+' '+absName(a)+' '+fmtD(a.from)+' – '+fmtD(a.to)+'</span><button class="del" onclick="delAbs(\''+a.from+'\')">✕</button></div>'});
+    h+='<div class="s-card"><div class="s-h"><b>Pausen</b><span>'+absList.length+'</span></div>';
+    absList.forEach(a=>{h+='<div class="s-row"><span style="color:'+(a.kind==="krank"?"var(--sky)":"var(--sky)")+'">'+absIcon(a)+' '+absName(a)+'</span><span class="mono">'+fmtD(a.from)+' – '+fmtD(a.to)+' <button class="del" style="margin-left:6px" onclick="delAbs(\''+a.from+'\')">✕</button></span></div>'});
     h+='</div>';
-  }
-  // Tagesdetail: Planung / Sport / Gewicht getrennt
-  if(state.calSel){
-    const iso=state.calSel;const hasSess=(byDate[iso]||[]).length;
-    const absHere=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
-    h+='<div class="card" style="padding:10px 12px"><div class="row" style="justify-content:space-between;margin-bottom:8px"><b style="font-size:15px">'+fmtD(iso)+'</b><button class="chip" style="padding:4px 10px" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;render()">✕</button></div>';
-    h+='<div style="border:1px solid var(--s2);border-radius:10px;padding:9px;margin-bottom:8px"><span class="lbl">Planung</span>';
-    if(state.moveLog){
-      const ml=state.logs.find(x=>x.id===state.moveLog);
-      h+='<div style="border:1px solid var(--s2);border-radius:10px;padding:9px;margin-bottom:8px"><span class="lbl">Datum korrigieren</span>'
-       +'<button class="chip" style="width:100%;padding:10px;color:var(--red2);margin-top:6px" onclick="moveLogTo(\''+iso+'\')">'+esc(ml?ml.sessionName:"")+' vom '+(ml?fmtD(ml.date):"")+' → hierher ('+fmtD(iso)+')</button>'
-       +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
-    }
-    if(state.absTmp){
-      h+='<button class="chip" style="width:100%;padding:10px;color:var(--sky);margin-top:6px" onclick="finishAbs(\''+iso+'\')">'+(state.absKind==="krank"?"🤒 Krank ":"🏖 Urlaub ")+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button>'
-       +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.absTmp=null;render()">Abbrechen</button>'
-       +'<p class="tiny" style="margin-top:5px;opacity:.8">Ende antippen (gleicher Tag = nur dieser Tag). Später verlängern: neu eintragen.</p>';
-    }else if(state.moveFrom&&state.moveFrom!==iso){
-      h+='<button class="chip" style="width:100%;padding:10px;color:var(--red2);margin-top:6px" onclick="moveSession(\''+state.moveFrom+'\',\''+iso+'\')">→ Training vom '+fmtD(state.moveFrom)+' hierhin</button>'
-       +'<button class="chip" style="width:100%;padding:8px;margin-top:5px" onclick="state.moveFrom=null;render()">Abbrechen</button>';
-    }else{
-      if(planByDate[iso]&&!hasSess)h+='<div class="row" style="gap:5px;margin-top:6px"><span class="tiny" style="flex:1">Geplant: <b style="color:var(--red2)">'+esc((activePlan().sessions.find(x=>x.id===planByDate[iso].sessionId)||{}).name||"")+'</b></span><button class="chip" style="padding:8px 11px;color:var(--red2)" onclick="state.moveFrom=\''+iso+'\';render()">Verschieben</button></div>';
-      h+=absHere
-        ?'<button class="chip" style="width:100%;padding:9px;color:var(--red2);margin-top:6px" onclick="delAbs(\''+absHere.from+'\')">'+absIcon(absHere)+' '+absName(absHere)+' entfernen</button>'
-        :'<div class="row" style="gap:6px;margin-top:6px"><button class="chip" style="flex:1;padding:9px;color:var(--sky)" onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()">🏖 Urlaub ab hier</button>'
-         +'<button class="chip" style="flex:1;padding:9px;color:var(--amb)" onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()">🤒 Krank ab hier</button></div>';
-      (byDate[iso]||[]).forEach(l=>{h+='<button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="startMoveLog(\''+l.id+'\')">📅 '+esc(l.sessionName)+' auf anderen Tag verschieben</button>'});
-      if(!hasSess&&!planByDate[iso])h+='<p class="tiny" style="margin-top:5px">Kein Training an diesem Tag.</p>';
-    }
-    h+='</div>';
-    const aEntry=(state.acts||[]).find(a=>a.date===iso);
-    h+='<div style="border:1px solid var(--s2);border-radius:10px;padding:9px;margin-bottom:8px"><span class="lbl">Andere Sportart</span>'
-     +'<div class="row" style="gap:4px;margin:6px 0">'+Object.keys(ACT_TYPES).map(k=>'<button class="chip'+((state.actType===k||(aEntry&&aEntry.type===k&&!state.actType))?" on-n":"")+'" style="flex:1;padding:9px 2px;font-size:14px" onclick="state.actType=\''+k+'\';render()">'+ACT_TYPES[k].i+'</button>').join("")+'</div>'
-     +'<div class="row" style="gap:4px"><input type="text" inputmode="numeric" id="actMin" placeholder="Min" value="'+(aEntry?aEntry.min:"")+'" style="flex:1;text-align:center" class="mono">'
-     +'<input type="text" inputmode="decimal" id="actKm" placeholder="km" value="'+(aEntry&&aEntry.km?aEntry.km:"")+'" style="flex:1;text-align:center" class="mono">'
-     +'<input type="text" inputmode="numeric" id="actRpe" placeholder="RPE" value="'+(aEntry?aEntry.rpe:"")+'" style="flex:.8;text-align:center" class="mono"></div>'
-     +'<div class="row" style="gap:5px;margin-top:5px"><button class="chip" style="flex:1;padding:9px" onclick="saveAct(\''+iso+'\')">Speichern</button>'
-     +(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div>'
-     +(aEntry?'<p class="tiny" style="margin-top:5px;color:var(--sky)">'+((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' · '+aEntry.min+'min'+(aEntry.km?' · '+aEntry.km+'km':'')+' · RPE '+aEntry.rpe+' → '+actLoad(aEntry)+' Pkt</p>':'')+'</div>';
-    const wEntry=(state.weights||[]).find(w=>w.date===iso);
-    h+='<div style="border:1px solid var(--s2);border-radius:10px;padding:9px"><span class="lbl">Körpergewicht</span>'
-     +'<div class="row" style="gap:5px;margin-top:6px"><span style="font-size:17px">⚖</span>'
-     +'<input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono">'
-     +'<button class="chip" style="padding:9px 12px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'
-     +(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
-    h+='</div>';
-  }
-  if(state.calSel&&byDate[state.calSel]){
-    byDate[state.calSel].forEach(l=>{
-      h+='<div class="card" style="border-color:var(--red2)"><div class="row" style="justify-content:space-between"><b>'+esc(l.sessionName)+(l.deload?' <span style="color:var(--amb);font-size:10px;font-weight:800;border:1px solid var(--amb);border-radius:5px;padding:1px 5px">DELOAD</span>':'')+(l.altGym?' <span style="color:var(--sky);font-size:10px;font-weight:800;border:1px solid var(--sky);border-radius:5px;padding:1px 5px">ANDERES GYM</span>':'')+'</b><span class="row" style="gap:6px"><span class="tiny mono">'+fmtD(l.date)+'</span><button class="chip" style="padding:3px 9px" onclick="state.calSel=null;render()">✕ Schließen</button></span></div><div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">';
-      if(l.checkin&&(l.checkin.gefuehl||l.checkin.schlaf||l.checkin.essen||l.checkin.befinden!=null))h+='<p class="tiny mono">Check-in: '+(l.checkin.gefuehl?'Gefühl '+l.checkin.gefuehl:'')+(l.checkin.schlaf?' · Schlaf '+l.checkin.schlaf:'')+(l.checkin.essen?' · Essen '+l.checkin.essen:'')+(l.checkin.befinden!=null?' · Befinden '+l.checkin.befinden+'/10':'')+'</p>';
-      l.entries.forEach(e=>{h+='<p class="tiny mono" style="color:var(--mut)"><span style="color:var(--tx)">'+esc(e.name)+':</span> '+e.sets.map(s=>s.w+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join(' | ')+(e.exNote?' <span class="note-a">— „'+esc(e.exNote)+'"</span>':'')+'</p>'});
-      if(l.note)h+='<p class="note-a" style="font-style:italic">„'+esc(l.note)+'"</p>';
-      h+='<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" style="align-self:flex-start;margin-top:4px" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Eintrag löschen")+'</button>';
-      h+='</div></div>'});
   }
   return h;
 }
@@ -1908,7 +1922,7 @@ function moveLogTo(iso){
   buildSchedule(true);autoPlanDeload();render();
   toast("Einheit von "+fmtD(old)+" auf "+fmtD(iso)+" verschoben");
 }
-function calPick(iso){state.calSel=state.calSel===iso?null:iso;render()}
+function calPick(iso){if(!state.absTmp&&!state.moveFrom&&!state.moveLog){state.calSel=state.calSel===iso?null:iso;state.calPanel=null}else state.calSel=iso;render()}
 function addAbs(){const f=$("absfrom").value,t=$("absto").value;if(!f||!t){toast("Von- und Bis-Datum wählen");return}
   if(t<f){toast("Bis-Datum liegt vor Von-Datum");return}
   state.settings.absences=[...(state.settings.absences||[]),{from:f,to:t,note:($("absnote").value||"").trim()}];
