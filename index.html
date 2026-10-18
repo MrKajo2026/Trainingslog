@@ -134,7 +134,7 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .l-row.done .l-ck{background:rgba(52,211,153,.18);color:var(--grn)}
 .l-rn{flex:1;min-width:0;font-size:14px;font-weight:600}.l-rs{font-size:12px;color:var(--mut);white-space:nowrap}
 .l-ss{font-size:10px;font-weight:800;color:var(--sky);background:rgba(56,189,248,.15);border-radius:5px;padding:1px 5px}
-.l-open{border-color:rgba(245,158,11,.55)!important}
+.l-open{border-color:rgba(245,158,11,.55)!important}.l-open,.l-row{scroll-margin-top:96px}
 .l-title{background:none;border:none;padding:0;font-size:17px;font-weight:800;text-align:left}
 .l-meta{display:grid;grid-template-columns:1fr 1.4fr;gap:6px;margin-top:8px}
 .l-meta label{display:flex;align-items:flex-start;gap:5px;background:var(--bg);border:1px solid var(--s2);border-radius:9px;padding:4px 7px}
@@ -260,7 +260,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v120";
+const APP_VERSION="v121";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -720,6 +720,23 @@ const exDone=e=>e.sets.length>0&&e.sets.every(s=>num(s.r)>0);
 function exSum(e){const ws=e.sets.map(s=>num(s.w)),rs=e.sets.map(s=>num(s.r)).filter(Boolean);
   const w=ws.length?Math.max(...ws):0;
   return e.sets.length+' × '+(rs.length&&rs.length===e.sets.length?rs.join("/")+' · ':'')+(w>0?String(w).replace(".",",")+' kg':(e.sets[0]&&e.sets[0].w===""?"neu":"–"))}
+// Übung fertig (alle Sätze mit Wdh., letzter Satz mit RIR) → zuklappen, Position halten, nächste offene Übung aufklappen
+let autoNextT=null;
+function autoNext(ei){
+  const a=state.active;if(!a)return;const e=a.entries[ei];
+  if(!exDone(e)||e.sets[e.sets.length-1].rir==null)return;
+  clearTimeout(autoNextT);
+  autoNextT=setTimeout(()=>{
+    if(!state.active)return;
+    state.openEx=state.openEx||{};state.openEx[ei]=false;
+    const n=a.entries.length;let nx=-1;
+    for(let k=1;k<=n;k++){const j=(ei+k)%n;if(!exDone(a.entries[j])){nx=j;break}}
+    if(nx>=0){state.openEx[nx]=true;const ne=a.entries[nx];if(ne.ss)a.entries.forEach((x,j)=>{if(x.ss===ne.ss&&!exDone(x))state.openEx[j]=true})}
+    render();
+    const el=document.getElementById("ex-"+(nx>=0?nx:ei));
+    if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+  },700);
+}
 function toggleEx(ei){state.openEx=state.openEx||{};const cur=isOpenEx(ei);state.openEx[ei]=!cur;render()}
 function curExIdx(){const a=state.active;const i=a.entries.findIndex(e=>!exDone(e));return i}
 function isOpenEx(ei){const a=state.active;if(state.openEx&&state.openEx[ei]!==undefined)return state.openEx[ei];
@@ -760,13 +777,13 @@ function vLogger(){
   a.entries.forEach((e,ei)=>{
     const done=exDone(e),open=isOpenEx(ei);
     if(!open){
-      h+='<button class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span><span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+'</span><span class="l-rs mono">'+exSum(e)+'</span></button>';
+      h+='<button id="ex-'+ei+'" class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span><span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+'</span><span class="l-rs mono">'+exSum(e)+'</span></button>';
       return;}
     const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
     const rec=a.deload?null:recommendFor(e);
     const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>num(x.w))):0;
     const dlW=dlBase?roundPlate(dlBase*DELOAD_LOAD):0;
-    h+='<div class="card l-open"><div class="row" style="justify-content:space-between;gap:6px"><button class="l-title" onclick="toggleEx('+ei+')">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' <span style="color:var(--sky);font-size:11px">⇄</span>':'')+'</button>'
+    h+='<div id="ex-'+ei+'" class="card l-open"><div class="row" style="justify-content:space-between;gap:6px"><button class="l-title" onclick="toggleEx('+ei+')">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' <span style="color:var(--sky);font-size:11px">⇄</span>':'')+'</button>'
      +'<span class="row" style="gap:6px"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+(e.rest?' · ⏱'+fmtRest(e.rest):'')+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.ss&&(ei===0||a.entries[ei-1].ss!==e.ss))h+='<p class="tiny" style="color:var(--sky);margin-top:4px">Supersatz '+esc(e.ss)+': im Wechsel mit der nächsten Übung, volle Pause nach dem Durchgang</p>';
     if(e.note)h+='<p class="note-a" style="margin-top:5px">'+esc(e.note)+'</p>';
@@ -892,8 +909,9 @@ function pinTimer(){
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
-  if(s.rir!==null&&num(s.r)>0){                                   // jedes Mal beim Abschluss eines Satzes                       // Satz abgeschlossen → Pause starten
+  if(s.rir!==null&&num(s.r)>0){                                   // Satz abgeschlossen → Pause starten
     const rr=ssRest(e,si);startRest(rr.sec,rr.label);
+    autoNext(ei);
   }}
 function setExSetting(id,v){
   const e=state.library.find(x=>x.id===id);
