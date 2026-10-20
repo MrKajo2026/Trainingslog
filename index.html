@@ -260,7 +260,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v123";
+const APP_VERSION="v124";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -723,26 +723,41 @@ function exSum(e){const ws=e.sets.map(s=>num(s.w)),rs=e.sets.map(s=>num(s.r)).fi
   return e.sets.length+' × '+(rs.length&&rs.length===e.sets.length?rs.join("/")+' · ':'')+(w>0?String(w).replace(".",",")+' kg':(e.sets[0]&&e.sets[0].w===""?"neu":"–"))}
 // Übung fertig (alle Sätze mit Wdh., letzter Satz mit RIR) → zuklappen, Position halten, nächste offene Übung aufklappen
 let autoNextT=null;
+function setsDone(e){return e.sets.filter(x=>num(x.r)>0&&x.rir!=null).length}
+// Supersatz: dran ist der Partner mit den wenigsten erledigten Sätzen (bei Gleichstand der erste) – nur solange er noch Sätze offen hat
+function ssTurn(tag){const a=state.active;let best=-1;
+  a.entries.forEach((x,j)=>{if(x.ss!==tag||exDone(x))return;if(best<0||setsDone(x)<setsDone(a.entries[best]))best=j});return best}
 function autoNext(ei){
   const a=state.active;if(!a)return;const e=a.entries[ei];
-  if(!exDone(e)||e.sets[e.sets.length-1].rir==null)return;
+  const groupOpen=e.ss&&a.entries.some(x=>x.ss===e.ss&&!exDone(x));
+  if(!groupOpen&&(!exDone(e)||e.sets[e.sets.length-1].rir==null))return;
   clearTimeout(autoNextT);
   autoNextT=setTimeout(()=>{
     if(!state.active)return;
-    state.openEx=state.openEx||{};state.openEx[ei]=false;
-    const n=a.entries.length;let nx=-1;
-    for(let k=1;k<=n;k++){const j=(ei+k)%n;if(!exDone(a.entries[j])){nx=j;break}}
-    if(nx>=0){state.openEx[nx]=true;const ne=a.entries[nx];if(ne.ss)a.entries.forEach((x,j)=>{if(x.ss===ne.ss&&!exDone(x))state.openEx[j]=true})}
+    state.openEx=state.openEx||{};
+    let target=-1;
+    if(groupOpen){                                   // im Supersatz zum Partner wechseln, der jetzt dran ist
+      target=ssTurn(e.ss);
+      a.entries.forEach((x,j)=>{if(x.ss===e.ss)state.openEx[j]=(j===target)});
+    }else{
+      state.openEx[ei]=false;
+      const n=a.entries.length;
+      for(let k=1;k<=n;k++){const j=(ei+k)%n;if(!exDone(a.entries[j])){target=j;break}}
+      if(target>=0){const ne=a.entries[target];
+        if(ne.ss){target=ssTurn(ne.ss);a.entries.forEach((x,j)=>{if(x.ss===ne.ss)state.openEx[j]=(j===target)})}
+        else state.openEx[target]=true}
+    }
     render();
-    const el=document.getElementById("ex-"+(nx>=0?nx:ei));
+    const el=document.getElementById("ex-"+(target>=0?target:ei));
     if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
   },700);
 }
 function toggleEx(ei){state.openEx=state.openEx||{};const cur=isOpenEx(ei);state.openEx[ei]=!cur;render()}
 function curExIdx(){const a=state.active;const i=a.entries.findIndex(e=>!exDone(e));return i}
 function isOpenEx(ei){const a=state.active;if(state.openEx&&state.openEx[ei]!==undefined)return state.openEx[ei];
-  const c=curExIdx();if(c<0)return false;if(ei===c)return true;
-  const e=a.entries[ei],ce=a.entries[c];return !!(ce.ss&&e.ss===ce.ss&&!exDone(e))}
+  const c=curExIdx();if(c<0)return false;
+  const ce=a.entries[c];if(ce.ss)return ei===ssTurn(ce.ss);
+  return ei===c}
 function vLogger(){
   const a=state.active;
   const nDone=a.entries.filter(exDone).length,nEx=a.entries.length;
