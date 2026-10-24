@@ -187,6 +187,7 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .pe-mv{display:flex;flex-direction:column;gap:2px}.pe-mv button{border:none;background:var(--s2);color:var(--mut);border-radius:6px;padding:1px 8px;font-size:10px}.pe-mv button:disabled{opacity:.3}
 .h-kw{background:none;border:none;padding:2px 6px;text-align:center}
 .h-d.now{flex:1.3;transform:translateY(-3px);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--amb),0 6px 16px rgba(245,158,11,.35)}.h-d.now b{font-size:19px;font-weight:800}.h-d.now small{font-weight:700}.h-days{align-items:center;padding-top:4px}
+.h-scroll{overflow-x:auto;overflow-y:visible;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:6px 2px 8px}.h-scroll::-webkit-scrollbar{display:none}.h-scroll .h-d{flex:0 0 calc((100% - 30px)/7);scroll-snap-align:center}.h-scroll .h-d.now{flex:0 0 calc((100% - 30px)/7*1.25)}.h-d.m1{border-left:2px solid var(--s3)}
 </style>
 </head>
 <body>
@@ -261,7 +262,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v128";
+const APP_VERSION="v129";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -717,34 +718,31 @@ function vHome(){
    +'<button class="h-other" onclick="state.showOther=!state.showOther;render()">Andere Einheit '+(state.showOther?"▴":"▾")+'</button>';
   if(state.showOther)h+='<div class="h-olist">'+p.sessions.filter(s=>s.id!==ns.id).map(s=>'<button onclick="state.showOther=false;startSession(\''+s.id+'\')"><b>'+esc(s.name)+'</b> <span class="tiny">'+esc(s.sub||"")+'</span></button>').join("")+'</div>';
   h+='</div>';
-  // 3. Wochenleiste (wischbar)
-  const off=state.wkOff||0,mid=addDays(t,off*7),m0=addDays(mid,-3),m6=addDays(m0,6);   // heute immer in der Mitte
-  const kw=(d=>{const x=new Date(d);x.setDate(x.getDate()+3-((x.getDay()+6)%7));const y=new Date(x.getFullYear(),0,4);return 1+Math.round(((x-y)/864e5-3+((y.getDay()+6)%7))/7)})(mid);
+  // 3. Tagesleiste: frei scrollbar, heute mittig
   const plan={};(state.settings.schedule||[]).forEach(x=>plan[x.date]=x);
-  const pd=state.settings.plannedDeload;
-  h+='<div class="h-wk" id="wkstrip"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="state.wkOff=(state.wkOff||0)-1;render()">‹</button>'
-   +'<button class="h-kw" onclick="state.wkOff=0;render()"><b style="font-size:14px">KW '+kw+' · '+fmtD(m0)+'–'+fmtD(m6)+'</b>'+(off?'<span class="tiny" style="display:block;color:var(--amb)">↺ zu heute</span>':'')+'</button><button class="h-a" onclick="state.wkOff=(state.wkOff||0)+1;render()">›</button></div><div class="h-days">';
   const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];const dlSet=deloadDates();
-  for(let i=0;i<7;i++){const d=addDays(m0,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
+  const tl=new Date(t).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
+  h+='<div class="h-wk"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
+   +'<button class="h-kw" onclick="wkCenter(true)"><b style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:block;color:var(--amb);visibility:hidden">↺ zu heute</span></button>'
+   +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
+  for(let i=-28;i<=35;i++){const d=addDays(t,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
     if(lg.length){cls=lg.some(l=>l.deload)?"dl-done":"done";lab=lg.map(l=>l.sessionName).join("+")}
     else if(ab){cls=ab.kind==="krank"?"sick":"vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
-    h+='<button class="h-d '+cls+'" onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(lab)+'</em></button>'}
-  h+='</div>'+'</div>';
+    const first=d.slice(8)==="01";
+    h+='<button class="h-d '+cls+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)+'</em></button>'}
+  h+='</div></div>';
   h+='<details class="h-rules"><summary>Regeln ('+p.rules.length+')</summary>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</details>';
   return h;
 }
-function wkSwipe(){
-  const el=document.getElementById("wkstrip");if(!el)return;
-  let x0=null,y0=null;
-  el.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
-  el.addEventListener("touchend",e=>{if(x0===null)return;
-    const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
-    if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5){state.wkOff=(state.wkOff||0)+(dx<0?1:-1);render()}
-    x0=null},{passive:true});
-}
+function wkCenter(smooth){const el=document.getElementById("wkstrip"),td=document.getElementById("wktoday");if(!el||!td)return;
+  el.scrollTo({left:td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2,behavior:smooth?"smooth":"auto"})}
+function wkScroll(days){const el=document.getElementById("wkstrip");if(!el)return;const c=el.querySelector(".h-d:not(.now)");el.scrollBy({left:days*((c?c.offsetWidth:48)+5),behavior:"smooth"})}
+function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;wkCenter(false);
+  const back=document.getElementById("wkback"),td=document.getElementById("wktoday");
+  el.addEventListener("scroll",()=>{if(!back||!td)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2;back.style.visibility=Math.abs(el.scrollLeft-c)>60?"visible":"hidden"},{passive:true})}
 // ================= Logger =================
 const exDone=e=>e.sets.length>0&&e.sets.every(s=>num(s.r)>0);
 function exSum(e){const ws=e.sets.map(s=>num(s.w)),rs=e.sets.map(s=>num(s.r)).filter(Boolean);
