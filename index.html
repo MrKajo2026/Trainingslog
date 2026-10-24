@@ -261,7 +261,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v127";
+const APP_VERSION="v128";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -378,6 +378,9 @@ function boot(){
   if(ensureNewestPlan())setTimeout(()=>toast("Plan automatisch auf "+PLAN_V2.name.split(" ·")[0]+" aktualisiert"),2400);
   const zfix=repairZeroWeights();
   const cleaned=migrateDupes();
+  // Abgeschlossener Deload ohne Zyklus-Neustart (z.B. nach Backup-Import) → nachholen
+  {const dl=state.logs.filter(l=>l.deload&&l.date>=state.settings.cycleStart).sort((x,y)=>x.date.localeCompare(y.date));
+   if(dl.length>=DELOAD_RUN){const st=addDays(dl[dl.length-1].date,1);state.settings.cycleStart=st;state.settings.cycleManual=st;delete state.settings.plannedDeload;delete state.settings.deloadEarly;delete state.settings.mesoFloor;saveJ("settings",state.settings)}}
   const cyc=repairCycle();
   absenceReset();buildSchedule();autoPlanDeload();
   if(cyc)setTimeout(()=>toast("Zykluszähler korrigiert: "+sessionsSinceCycle()+"/"+DELOAD_AFTER+" Einh."),1800);
@@ -504,6 +507,9 @@ function startSession(sid,dl){
       return{exerciseId:ex.id,name:ex.name,reps:ex.reps,scheme:(state.pendingDeload&&!reha)?"RIR3-4 · Deload":ex.scheme,planScheme:ex.scheme,note:ex.note||"",rest:ex.rest||0,ss:ex.ss||"",exNote:"",mesoExtra:extra,
       sets:Array.from({length:nSets},(_,i)=>{
         let w=lv&&lv.sets[i]?lv.sets[i].w:ex.start;
+        // Neue Übung nur im Deload ermittelt → Arbeitsgewicht daraus ableiten (Deload-Gewicht ÷ 0,9)
+        if(!lv&&!(num(ex.start)>0)&&!state.pendingDeload){const dl=[...state.logs].filter(l=>l.deload).sort((x,y)=>y.date.localeCompare(x.date)).map(l=>l.entries.find(e=>e.exerciseId===ex.id)).find(Boolean);
+          if(dl){const mx=Math.max(...dl.sets.map(x=>num(x.w)));if(mx>0)w=roundPlate(mx/DELOAD_LOAD)}}
         // Plan-Startgewicht gewinnt, wenn es UNTER dem letzten Wert liegt und die Planversion neuer ist als die letzte Einheit
         if(lv&&num(ex.start)>0&&num(ex.start)<num(w)&&(activePlan().createdAt||"")>=(lv.date||""))w=ex.start;
         if(re&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*re.factor);
