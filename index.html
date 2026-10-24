@@ -186,6 +186,7 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .pe-g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .pe-mv{display:flex;flex-direction:column;gap:2px}.pe-mv button{border:none;background:var(--s2);color:var(--mut);border-radius:6px;padding:1px 8px;font-size:10px}.pe-mv button:disabled{opacity:.3}
 .h-kw{background:none;border:none;padding:2px 6px;text-align:center}
+.h-d.now{flex:1.3;transform:translateY(-3px);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--amb),0 6px 16px rgba(245,158,11,.35)}.h-d.now b{font-size:19px;font-weight:800}.h-d.now small{font-weight:700}.h-days{align-items:center;padding-top:4px}
 </style>
 </head>
 <body>
@@ -260,7 +261,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v126";
+const APP_VERSION="v127";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -665,6 +666,14 @@ function initSwipe(){
     }
     x0=null},{passive:true});
 }
+// Termine, die als Deload laufen: die restlichen Einheiten des laufenden bzw. fälligen Deloads, sonst die ersten 4 ab geplantem Termin
+function deloadDates(){
+  const t=todayISO(),dp=deloadPhase(),sc=(state.settings.schedule||[]).filter(x=>x.date>=t&&!state.logs.some(l=>l.date===x.date));
+  const pd=state.settings.plannedDeload;let list=[];
+  if(dp.active||deloadDueNow())list=sc.slice(0,DELOAD_RUN-dp.n);
+  else if(pd)list=sc.filter(x=>x.date>=pd).slice(0,DELOAD_RUN);
+  return new Set(list.map(x=>x.date));
+}
 function goHome(){editPlanId=null;state.calSel=null;state.wkOff=0;state.showOther=false;go("training")}
 function go(t){state.tab=t;state.confirmDel=null;render();window.scrollTo(0,0)}
 // ================= Training Home =================
@@ -703,20 +712,20 @@ function vHome(){
   if(state.showOther)h+='<div class="h-olist">'+p.sessions.filter(s=>s.id!==ns.id).map(s=>'<button onclick="state.showOther=false;startSession(\''+s.id+'\')"><b>'+esc(s.name)+'</b> <span class="tiny">'+esc(s.sub||"")+'</span></button>').join("")+'</div>';
   h+='</div>';
   // 3. Wochenleiste (wischbar)
-  const off=state.wkOff||0,m0=addDays(mon,off*7),m6=addDays(m0,6);
-  const kw=(d=>{const x=new Date(d);x.setDate(x.getDate()+3-((x.getDay()+6)%7));const y=new Date(x.getFullYear(),0,4);return 1+Math.round(((x-y)/864e5-3+((y.getDay()+6)%7))/7)})(m0);
+  const off=state.wkOff||0,mid=addDays(t,off*7),m0=addDays(mid,-3),m6=addDays(m0,6);   // heute immer in der Mitte
+  const kw=(d=>{const x=new Date(d);x.setDate(x.getDate()+3-((x.getDay()+6)%7));const y=new Date(x.getFullYear(),0,4);return 1+Math.round(((x-y)/864e5-3+((y.getDay()+6)%7))/7)})(mid);
   const plan={};(state.settings.schedule||[]).forEach(x=>plan[x.date]=x);
   const pd=state.settings.plannedDeload;
   h+='<div class="h-wk" id="wkstrip"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="state.wkOff=(state.wkOff||0)-1;render()">‹</button>'
    +'<button class="h-kw" onclick="state.wkOff=0;render()"><b style="font-size:14px">KW '+kw+' · '+fmtD(m0)+'–'+fmtD(m6)+'</b>'+(off?'<span class="tiny" style="display:block;color:var(--amb)">↺ zu heute</span>':'')+'</button><button class="h-a" onclick="state.wkOff=(state.wkOff||0)+1;render()">›</button></div><div class="h-days">';
-  const WD=["Mo","Di","Mi","Do","Fr","Sa","So"];
+  const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];const dlSet=deloadDates();
   for(let i=0;i<7;i++){const d=addDays(m0,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
     if(lg.length){cls=lg.some(l=>l.deload)?"dl-done":"done";lab=lg.map(l=>l.sessionName).join("+")}
     else if(ab){cls=ab.kind==="krank"?"sick":"vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
-    else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=(dlNow||(pd&&d>=pd))?"plan dl":"plan"}
+    else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
-    h+='<button class="h-d '+cls+'" onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+WD[i]+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(lab)+'</em></button>'}
+    h+='<button class="h-d '+cls+'" onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(lab)+'</em></button>'}
   h+='</div>'+'</div>';
   h+='<details class="h-rules"><summary>Regeln ('+p.rules.length+')</summary>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</details>';
   return h;
@@ -1869,7 +1878,7 @@ function vCal(){
   const byDate={};state.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
   const sched=buildSchedule();
   const planByDate={};sched.forEach(x=>{planByDate[x.date]=x});
-  const sesName=id=>(activePlan().sessions.find(x=>x.id===id)||{}).name||"";
+  const sesName=id=>(activePlan().sessions.find(x=>x.id===id)||{}).name||"";const dlSet=deloadDates();
   const today=todayISO();
   let h='<div class="row" style="justify-content:space-between"><button class="h-a" onclick="calShift(-1)">‹</button><b style="font-size:17px">'+monthName+'</b><button class="h-a" onclick="calShift(1)">›</button></div>';
   h+='<div id="calgrid" class="c-grid">';
@@ -1885,7 +1894,7 @@ function vCal(){
     let cls="c-d",lab="";
     if(sess.length){cls+=sess.some(l=>l.deload)?" dl-done":" done";lab=sess.map(l=>l.sessionName).join("+")}
     else if(ab){cls+=ab.kind==="krank"?" sick":" vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
-    else if(pln){lab=sesName(pln.sessionId);cls+=(dp.active||(pdIso&&iso>=pdIso&&(dp.active||deloadDueNow()||iso<addDays(pdIso,8))))?" plan dl":" plan"}
+    else if(pln){lab=sesName(pln.sessionId);cls+=dlSet.has(iso)?" plan dl":" plan"}
     if(iso===today)cls+=" now";
     if(state.calSel===iso)cls+=" sel";
     h+='<button class="'+cls+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em>'+esc(lab)+'</em><i>'+(act?((ACT_TYPES[act.type]||{}).i||"⚡"):"")+(hasW?'<span style="color:var(--sky)">•</span>':"")+'</i></button>';
@@ -1903,7 +1912,7 @@ function vCal(){
     const dn=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
     const stat=hasSess?"trainiert":ab?absName(ab):pl?"geplant":"frei";
     h+='<div class="s-card c-day"><div class="s-h"><b style="font-size:17px">'+dn+'</b><span>'+stat+' <button class="c-x" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></span></div>';
-    if(pl)h+='<p style="font-size:15px">'+esc(sesName(pl.sessionId))+((dp.active||(pdIso&&iso>=pdIso))?' <span style="color:var(--amb);font-size:13px;font-weight:700">Deload</span>':'')+'</p>';
+    if(pl)h+='<p style="font-size:15px">'+esc(sesName(pl.sessionId))+(deloadDates().has(iso)?' <span style="color:var(--amb);font-size:13px;font-weight:700">Deload</span>':'')+'</p>';
     if(aEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:4px">'+((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' · '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+'</p>';
     if(wEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:2px">⚖ '+String(wEntry.kg).replace(".",",")+' kg</p>';
     // laufende Aktion
