@@ -188,6 +188,21 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .h-kw{background:none;border:none;padding:2px 6px;text-align:center}
 .h-d.now{flex:1.3;transform:translateY(-3px);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--amb),0 6px 16px rgba(245,158,11,.35)}.h-d.now b{font-size:19px;font-weight:800}.h-d.now small{font-weight:700}.h-days{align-items:center;padding-top:4px}
 .h-scroll{overflow-x:auto;overflow-y:visible;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:6px 2px 8px}.h-scroll::-webkit-scrollbar{display:none}.h-scroll .h-d{flex:0 0 calc((100% - 30px)/7);scroll-snap-align:center}.h-scroll .h-d.now{flex:0 0 calc((100% - 30px)/7*1.25)}.h-d.m1{border-left:2px solid var(--s3)}
+.s-rng{display:flex;gap:6px;flex-wrap:wrap}.s-rng button{border:none;background:var(--s2);color:var(--mut);border-radius:999px;padding:6px 12px;font-size:12px}.s-rng button.on{background:var(--tx);color:#111;font-weight:700}
+.s-kpi{font-size:42px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.k-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;touch-action:pan-y}
+.k-d{height:46px;border:none;background:none;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
+.k-d b{font-size:15px;font-weight:500}.k-d small{position:absolute;top:2px;right:4px;font-size:8px}
+.k-d.now{background:var(--amb);color:#111}.k-d.now b{font-weight:800}.k-d.sel{box-shadow:inset 0 0 0 2px var(--tx)}
+.k-dot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:middle;margin-right:4px}.k-d .k-dot{margin:0}
+.k-dot.tr{background:var(--red2)}.k-dot.dl{background:var(--amb)}.k-dot.pl{border:1.5px solid var(--red2)}.k-dot.pdl{border:1.5px solid var(--amb)}.k-dot.ab{background:var(--sky)}
+.k-d.now .k-dot{border-color:#111}.k-d.now .k-dot.tr,.k-d.now .k-dot.dl{background:#111}
+.k-sheet{background:var(--s1);border:1px solid var(--s2);border-radius:22px;padding:10px 16px 14px}
+.k-grab{width:38px;height:4px;border-radius:2px;background:var(--s3);margin:0 auto 10px}
+.k-pill{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:rgba(239,68,68,.15);color:#fca5a5}
+.k-pill.dl{background:rgba(245,158,11,.16);color:var(--amb)}.k-pill.plan{background:none;border:1px dashed rgba(239,68,68,.6)}.k-pill.plan.dl{border-color:var(--amb)}.k-pill.ab{background:rgba(56,189,248,.14);color:var(--sky)}
+.k-notes{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.08)}.k-notes p{font-size:12px;color:var(--amb);line-height:1.5}
+.k-acts{grid-template-columns:repeat(6,1fr)}
 </style>
 </head>
 <body>
@@ -262,7 +277,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v129";
+const APP_VERSION="v130";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1254,101 +1269,99 @@ function rangeFilter(ls,r){
   const cut=new Date(Date.now()-days*864e5).toISOString().slice(0,10);
   return ls.filter(l=>l.date>=cut);
 }
+// Kraftverlauf über die Zeit: Ø-Zuwachs aller Übungen (gleiche Metrik wie growth)
+function strengthSeries(pl,allEx){
+  pl=pl.filter(l=>!l.deload&&!l.altGym);
+  const per={};
+  allEx.forEach(ex=>{if(!(MUSCLE_MAP[ex.id]||{}).p)return;const ents=pl.map(l=>({d:l.date,e:l.entries.find(x=>x.exerciseId===ex.id)})).filter(x=>x.e);if(ents.length<2)return;
+    const validE=ents.filter(x=>x.e.sets.some(s=>e1rm(s.w,s.r,s.rir)>0)).length;const useE=validE>=Math.ceil(ents.length*0.6);
+    per[ex.id]=ents.map(x=>({d:x.d,v:useE?x.e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r,s.rir)),0):volLoad(x.e.sets)})).filter(x=>x.v>0)});
+  const dates=[...new Set(pl.map(l=>l.date))].sort();const out=[];
+  dates.forEach(d=>{let sum=0,n=0;Object.values(per).forEach(s=>{if(s.length<2||s[0].d>d)return;const last=s.filter(x=>x.d<=d).pop();sum+=(last.v/s[0].v-1)*100;n++});if(n)out.push({d,v:sum/n})});
+  return out;
+}
 function vStats(){
-  if(!state.statPlan)state.statPlan="all";
-  const allPlans=state.statPlan==="all";
-  const p=allPlans?activePlan():(state.plans.find(x=>x.id===state.statPlan)||activePlan());
-  const rng=state.statRange||"all";
-  const plAll=(allPlans?state.logs:state.logs.filter(l=>l.planId===p.id)).slice().sort((a,b)=>a.date.localeCompare(b.date));
-  const pl=rangeFilter(plAll,rng);
-  const allEx=(allPlans?state.plans.flatMap(x=>x.sessions.flatMap(se=>se.exercises)):p.sessions.flatMap(se=>se.exercises))
-    .filter((e,i,arr)=>arr.findIndex(y=>y.id===e.id)===i);
+  const rng=state.statRange||"all",tab=state.statTab||"ueberblick";
+  const p=activePlan();
+  const pl=rangeFilter(state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
+  const allEx=state.plans.flatMap(x=>x.sessions.flatMap(se=>se.exercises)).filter((e,i,arr)=>arr.findIndex(y=>y.id===e.id)===i);
   if(!state.statEx||!allEx.some(e=>e.id===state.statEx))state.statEx=allEx[0]?allEx[0].id:null;
   const fx=(v,d)=>Number(v).toFixed(d==null?1:d).replace(".",",");
   const sg=v=>(v>0?"+":"")+fx(v,Math.abs(v)>=10?0:1);
   const col=v=>v>0?"var(--grn)":v<0?"var(--red2)":"var(--mut)";
-  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)):0;
   const g=growth(pl,allEx);
   const ws=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
   const wt=weightTrend();
-  // Filter
-  let h='<div class="s-seg">'+Object.keys(RANGES).map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>'
-   +'<select class="s-sel" onchange="state.statPlan=this.value;state.statEx=null;state.tonMode=null;render()">'
-   +'<option value="all"'+(allPlans?" selected":"")+'>Alle Pläne (durchgehend)</option>'
-   +state.plans.map(x=>'<option value="'+x.id+'"'+(!allPlans&&x.id===p.id?" selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select>';
-  // Kennzahlen
-  const wLast=ws.length?ws[ws.length-1].kg:null;
-  h+='<div class="h-tiles">'
-   +'<div class="h-t"><b style="color:'+(g.overall==null?"var(--tx)":col(g.overall))+'">'+(g.overall==null?"–":sg(g.overall)+" %")+'</b><span>Kraft</span></div>'
-   +'<div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
-   +'<div class="h-t"><b>'+(wt?fx(wt.cur):wLast!=null?fx(wLast):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div></div>';
-  // Körpergewicht (schmal)
-  if(ws.length>=2){
-    const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
-    h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b><span>'+(diff>0?"+":"")+fx(diff)+' kg im Zeitraum</span></div><div id="wchart"></div>'
-     +'<div class="s-leg"><span><i style="background:var(--sky)"></i>Messung</span><span><i style="background:var(--tx)"></i>Ø 7 Tage</span><span>Ziel max. +0,5 kg/Woche</span></div></div>';
-  }else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
-  // Muskeln: Wochensätze + Kraftzuwachs
-  {const sw=setsPerWeek(8);const gg={};g.groups.forEach(x=>gg[x.g]=x.v);
-   const ms=mesoState();
-   const scale=SET_TARGET.max*1.5;
-   h+='<div class="s-card"><div class="s-h"><b>Muskeln</b><span>Sätze/Woche · Kraft</span></div>';
-   MUSCLE_ORDER.forEach(m=>{const v=sw?(sw.sets[m]||0):0;const c=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
-     h+='<div class="s-m"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span>'
-      +'<div class="s-bar"><i class="band" style="left:'+(SET_TARGET.min/scale*100)+'%;width:'+((SET_TARGET.max-SET_TARGET.min)/scale*100)+'%"></i><i style="width:'+Math.min(v/scale*100,100)+'%;background:'+c+'"></i></div>'
-      +'<span class="mono" style="color:'+c+'">'+fx(v)+'</span><span class="mono" style="color:'+(gg[m]==null?"var(--dim)":col(gg[m]))+'">'+(gg[m]==null?"–":sg(gg[m])+"%")+'</span></div>'});
-   h+='<p class="s-foot">Grünes Feld = Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+' harte Sätze/Woche'+(sw?' (letzte '+sw.n+' Einheiten)':'')+' · rot = Mesozyklus-Fokus · rechts Kraftzuwachs (e1RM)'+(g.nDeload?' · '+g.nDeload+' Deload-Einheit(en) nicht gewertet':'')+'</p></div>';}
-  // Übungen mit Verlauf
-  {const unit=state.statUnit||"pct";
-   h+='<div class="s-card"><div class="s-h"><b>Übungen</b><span><button class="s-tg'+(unit==="pct"?" on":"")+'" onclick="state.statUnit=\'pct\';render()">%</button><button class="s-tg'+(unit==="kg"?" on":"")+'" onclick="state.statUnit=\'kg\';render()">kg</button></span></div>';
-   const sel=g.perEx.find(e=>e.id===state.statEx);
-   h+='<div class="s-big"><div class="s-h" style="margin:0"><b style="font-size:14px">'+esc(sel?sel.name:(allEx.find(e=>e.id===state.statEx)||{}).name||"")+'</b><span>antippen wechselt</span></div><div id="exchart"></div></div>';
-   g.perEx.forEach(e=>{const s=e.series||[];let sp="";
-     if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
-     const dkg=e.last-e.first;
-     h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span>'+sp
-      +'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
-   h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';}
-  // Mesozyklus
-  {const ms=mesoState();const cur=(setsPerWeek(8)||{sets:{}}).sets;
-   h+='<div class="s-card"><div class="s-h"><b>Mesozyklus · Woche '+ms.week+'</b><span>+'+ms.add+' Sätze · '+(ms.stop?'<b style="color:var(--amb)">gestoppt</b>':'läuft')+'</span></div>'
-    +'<p class="tiny" style="margin-bottom:6px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b>'+(ms.stop?' — Steigerung pausiert wegen Ermüdungssignalen':'')+'</p>';
-   ms.focus.forEach(gm=>{const exs=activePlan().sessions.flatMap(se=>se.exercises).filter(x=>{const m=MUSCLE_MAP[x.id];return m&&m.p===gm&&!/Prehab|BW|Core|3s/i.test(x.scheme||"")});
-     if(exs.length&&exs.every(x=>x.sets>=MAX_SETS_PER_EX))h+='<p class="tiny" style="color:var(--amb);margin-bottom:6px">'+gm+': alle Übungen bei '+MAX_SETS_PER_EX+' Sätzen — mehr nur über eine zusätzliche Übung.</p>'});
-   MUSCLE_ORDER.filter(m=>ms.target[m]).forEach(m=>{const t=ms.target[m],c=Math.round((cur[m]||0)*10)/10;const cc=c>=t?"var(--grn)":c>=t*0.7?"var(--amb)":"var(--mut)";
-     h+='<div class="s-row"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><span class="mono" style="color:'+cc+'">'+fx(c)+' / '+fx(t)+'</span></div>'});
-   h+='<p class="s-foot">Ist / Wochenziel. Fokus = Muskeln mit dem größten Rückstand, +1 Satz pro Woche (max. +'+MESO_MAX_ADD+'), nur auf ermüdungsarme Übungen.</p></div>';}
-  // Wochenlast
-  {const li=loadIndex();
-   if(li){const st=li.acwr>1.2?{c:"var(--amb)",t:"höher als üblich"}:li.acwr<0.8?{c:"var(--sky)",t:"niedriger als üblich"}:{c:"var(--grn)",t:"im üblichen Rahmen"};
-    h+='<div class="s-card"><div class="s-h"><b>Wochenlast</b><span class="mono" style="color:'+st.c+';font-weight:800;font-size:15px">'+fx(li.acwr,2)+'</span></div>'
-     +'<p class="tiny">Letzte volle Woche <b>'+li.cur+'</b> · Ø 4 Wochen davor <b>'+li.chronic+'</b> — '+st.t+'.</p>'
-     +'<p class="s-foot">Sätze × Anstrengung (10−RIR) + Sport. Nur Orientierung, feste Risikogrenzen sind nicht belegt.</p></div>';}}
-  // Kraft & Körpergewicht
-  if(g.overall!==null&&ws.length>=2){
-    const dkg=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;let msg,c;
-    if(dkg>0.8&&g.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";c="var(--amb)"}
-    else if(dkg>0.3&&g.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";c="var(--grn)"}
-    else if(dkg<-0.3&&g.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";c="var(--amb)"}
-    else if(dkg<-0.3&&g.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";c="var(--red2)"}
-    else{msg="Gewicht und Kraft weitgehend stabil.";c="var(--mut)"}
-    h+='<div class="s-card"><div class="s-h"><b>Kraft & Körpergewicht</b><span class="mono">'+(dkg>0?"+":"")+fx(dkg)+' kg · '+sg(g.overall)+' %</span></div><p class="tiny" style="color:'+c+'">'+msg+'</p></div>';
+  const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)):0;
+  const T=[["ueberblick","Überblick"],["muskeln","Muskeln"],["uebungen","Übungen"],["mehr","Mehr"]];
+  let h='<div class="s-seg">'+T.map(([k,l])=>'<button class="'+(tab===k?"on":"")+'" onclick="state.statTab=\''+k+'\';render()">'+l+'</button>').join("")+'</div>'
+   +'<div class="s-rng">'+Object.keys(RANGES).map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
+  const sw=setsPerWeek(8);
+  if(tab==="ueberblick"){
+    const ss=strengthSeries(pl,allEx);let sp="";
+    if(ss.length>=2){const vs=ss.map(x=>x.v),mn=Math.min(0,...vs),mx=Math.max(...vs,1);
+      sp='<svg viewBox="0 0 320 54" style="width:100%;margin-top:6px"><polyline fill="none" stroke="var(--grn)" stroke-width="2.5" points="'+ss.map((x,i)=>(i/(ss.length-1)*316+2).toFixed(1)+','+(50-(x.v-mn)/((mx-mn)||1)*44).toFixed(1)).join(" ")+'"/></svg>'
+       +'<div class="row tiny"><span>'+fmtD(ss[0].d)+'</span><span style="margin-left:auto">'+fmtD(ss[ss.length-1].d)+'</span></div>'}
+    h+='<div class="s-card"><p class="tiny">Kraft · alle Pläne zusammen</p><div class="row" style="align-items:flex-end;gap:10px"><b class="s-kpi" style="color:'+(g.overall==null?"var(--tx)":col(g.overall))+'">'+(g.overall==null?"–":sg(g.overall)+" %")+'</b><span class="tiny" style="padding-bottom:9px">Ø aller Übungen (e1RM)</span></div>'+sp+'</div>';
+    const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
+    h+='<div class="h-tiles"><div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
+     +'<div class="h-t"><b>'+(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div>'
+     +'<div class="h-t"><b style="color:'+(inT>=7?"var(--grn)":"var(--amb)")+'">'+inT+' / '+MUSCLE_ORDER.length+'</b><span>Muskeln im Ziel</span></div></div>';
+    if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
+      h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b><span>'+(diff>0?"+":"")+fx(diff)+' kg im Zeitraum</span></div><div id="wchart"></div>'
+       +'<div class="s-leg"><span><i style="background:var(--sky)"></i>Messung</span><span><i style="background:var(--tx)"></i>Ø 7 Tage</span><span>Ziel max. +0,5 kg/Woche</span></div></div>'}
+    else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
+    const top=g.perEx.filter(e=>e.pct>1).slice(0,3),att=g.perEx.slice().sort((a,b)=>a.pct-b.pct).filter(e=>e.pct<=1).slice(0,3);
+    const row=e=>'<button class="s-ex" onclick="state.statTab=\'uebungen\';state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span><b class="mono" style="color:'+col(Math.abs(e.pct)<1?0:e.pct)+'">'+(Math.abs(e.pct)<1?"±0 %":sg(e.pct)+" %")+'</b></button>';
+    if(top.length)h+='<div class="s-card"><div class="s-h" style="margin-bottom:2px"><b>Größte Fortschritte</b><span>'+RANGES[rng]+'</span></div>'+top.map(row).join("")+'</div>';
+    if(att.length)h+='<div class="s-card"><div class="s-h" style="margin-bottom:2px"><b>Braucht Aufmerksamkeit</b><span>stagniert / fällt</span></div>'+att.map(row).join("")+'</div>';
   }
-  // Tonnage
-  const tmode=state.tonMode||"woche";
-  h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
-   +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;
-     return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
-  // Daten
-  h+='<details class="s-card" style="padding:0"><summary style="padding:13px 14px" class="row"><b style="flex:1;font-size:15px">Daten: Export & Backup</b><span class="tiny">▾</span></summary><div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px">'
-  +'<div class="row"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
-  +(state.shortText?'<textarea readonly rows="5" class="mono" style="font-size:11px" onclick="this.select()">'+esc(state.shortText)+'</textarea>':'')
-  +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Voll-Backup</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇ Datei</button></div>'
-  +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea>':'')
-  +'<div style="border-top:1px solid var(--s2);padding-top:10px"><p class="tiny" style="margin-bottom:6px">Wiederherstellen: Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p>'
-  +'<textarea rows="3" id="imptext" class="mono" style="font-size:11px" placeholder=\'{"version":1,...}\'></textarea>'
-  +'<button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></div></div></details>';
-  h+='<p class="tiny" style="text-align:center;padding:6px">Einzelne Einheiten findest du im Kalender — Tag antippen.</p>';
+  if(tab==="muskeln"){
+    const gg={};g.groups.forEach(x=>gg[x.g]=x.v);const ms=mesoState();const scale=SET_TARGET.max*1.5;
+    h+='<div class="s-card"><div class="s-h"><b>Wochensätze & Kraft</b><span>Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+'</span></div>';
+    MUSCLE_ORDER.forEach(m=>{const v=sw?(sw.sets[m]||0):0;const c=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
+      h+='<div class="s-m"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><div class="s-bar"><i class="band" style="left:'+(SET_TARGET.min/scale*100)+'%;width:'+((SET_TARGET.max-SET_TARGET.min)/scale*100)+'%"></i><i style="width:'+Math.min(v/scale*100,100)+'%;background:'+c+'"></i></div>'
+       +'<span class="mono" style="color:'+c+'">'+fx(v)+'</span><span class="mono" style="color:'+(gg[m]==null?"var(--dim)":col(gg[m]))+'">'+(gg[m]==null?"–":sg(gg[m])+"%")+'</span></div>'});
+    h+='<p class="s-foot">Grünes Feld = Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+' harte Sätze/Woche'+(sw?' (letzte '+sw.n+' Einheiten)':'')+' · rot = Mesozyklus-Fokus · rechts Kraftzuwachs (e1RM)'+(g.nDeload?' · '+g.nDeload+' Deload-Einheit(en) nicht gewertet':'')+'</p></div>';
+    const cur=(sw||{sets:{}}).sets;
+    h+='<div class="s-card"><div class="s-h"><b>Mesozyklus · Woche '+ms.week+'</b><span>+'+ms.add+' Sätze · '+(ms.stop?'<b style="color:var(--amb)">gestoppt</b>':'läuft')+'</span></div><p class="tiny" style="margin-bottom:6px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b>'+(ms.stop?' — Steigerung pausiert wegen Ermüdungssignalen':'')+'</p>';
+    ms.focus.forEach(gm=>{const exs=activePlan().sessions.flatMap(se=>se.exercises).filter(x=>{const m=MUSCLE_MAP[x.id];return m&&m.p===gm&&!/Prehab|BW|Core|3s/i.test(x.scheme||"")});
+      if(exs.length&&exs.every(x=>x.sets>=MAX_SETS_PER_EX))h+='<p class="tiny" style="color:var(--amb);margin-bottom:6px">'+gm+': alle Übungen bei '+MAX_SETS_PER_EX+' Sätzen — mehr nur über eine zusätzliche Übung.</p>'});
+    MUSCLE_ORDER.filter(m=>ms.target[m]).forEach(m=>{const t=ms.target[m],c=Math.round((cur[m]||0)*10)/10;const cc=c>=t?"var(--grn)":c>=t*0.7?"var(--amb)":"var(--mut)";
+      h+='<div class="s-row"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><span class="mono" style="color:'+cc+'">'+fx(c)+' / '+fx(t)+'</span></div>'});
+    h+='<p class="s-foot">Ist / Wochenziel. +1 Satz pro Woche für die Fokus-Muskeln (max. +'+MESO_MAX_ADD+').</p></div>';
+  }
+  if(tab==="uebungen"){
+    const unit=state.statUnit||"pct";const sel=g.perEx.find(e=>e.id===state.statEx);
+    h+='<div class="s-card"><div class="s-h"><b>'+esc(sel?sel.name:(allEx.find(e=>e.id===state.statEx)||{}).name||"")+'</b><span><button class="s-tg'+(unit==="pct"?" on":"")+'" onclick="state.statUnit=\'pct\';render()">%</button><button class="s-tg'+(unit==="kg"?" on":"")+'" onclick="state.statUnit=\'kg\';render()">kg</button></span></div><div id="exchart"></div></div>';
+    h+='<div class="s-card" style="padding-top:6px">';
+    g.perEx.forEach(e=>{const s=e.series||[];let sp="";
+      if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
+      const dkg=e.last-e.first;
+      h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();window.scrollTo({top:0,behavior:\'smooth\'})"><span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
+    h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';
+  }
+  if(tab==="mehr"){
+    if(g.overall!==null&&ws.length>=2){const dkg=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;let msg,c;
+      if(dkg>0.8&&g.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";c="var(--amb)"}
+      else if(dkg>0.3&&g.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";c="var(--grn)"}
+      else if(dkg<-0.3&&g.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";c="var(--amb)"}
+      else if(dkg<-0.3&&g.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";c="var(--red2)"}
+      else{msg="Gewicht und Kraft weitgehend stabil.";c="var(--mut)"}
+      h+='<div class="s-card"><div class="s-h"><b>Kraft & Körpergewicht</b><span class="mono">'+(dkg>0?"+":"")+fx(dkg)+' kg · '+sg(g.overall)+' %</span></div><p class="tiny" style="color:'+c+'">'+msg+'</p></div>'}
+    const li=loadIndex();
+    if(li){const st=li.acwr>1.2?{c:"var(--amb)",t:"höher als üblich"}:li.acwr<0.8?{c:"var(--sky)",t:"niedriger als üblich"}:{c:"var(--grn)",t:"im üblichen Rahmen"};
+      h+='<div class="s-card"><div class="s-h"><b>Wochenlast</b><span class="mono" style="color:'+st.c+';font-weight:800;font-size:15px">'+fx(li.acwr,2)+'</span></div><p class="tiny">Letzte volle Woche <b>'+li.cur+'</b> · Ø 4 Wochen davor <b>'+li.chronic+'</b> — '+st.t+'.</p><p class="s-foot">Sätze × Anstrengung (10−RIR) + Sport. Nur Orientierung, feste Risikogrenzen sind nicht belegt.</p></div>'}
+    const tmode=state.tonMode||"woche";
+    h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
+     +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
+    h+='<div class="s-card"><div class="s-h"><b>Export & Backup</b></div><div style="display:flex;flex-direction:column;gap:10px">'
+    +'<div class="row"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
+    +(state.shortText?'<textarea readonly rows="5" class="mono" style="font-size:11px" onclick="this.select()">'+esc(state.shortText)+'</textarea>':'')
+    +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Voll-Backup</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇ Datei</button></div>'
+    +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea>':'')
+    +'<details><summary class="tiny">Backup wiederherstellen ▾</summary><p class="tiny" style="margin-top:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p><textarea rows="3" id="imptext" class="mono" style="font-size:11px;margin-top:6px" placeholder=\'{"version":1,...}\'></textarea><button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></details></div></div>';
+  }
   return h;
 }
 function growth(pl,allEx){
@@ -1380,9 +1393,7 @@ function delLog(id){if(state.confirmDel!=="h:"+id){state.confirmDel="h:"+id;rend
   state.logs=state.logs.filter(l=>l.id!==id);saveJ("logs",state.logs);state.confirmDel=null;render();toast("Eintrag gelöscht")}
 // SVG-Charts
 function drawCharts(){
-  const allPlans=(state.statPlan||"all")==="all";
-  const p=allPlans?activePlan():(state.plans.find(x=>x.id===state.statPlan)||activePlan());
-  const src=allPlans?state.logs:state.logs.filter(l=>l.planId===p.id);
+  const allPlans=true;const p=activePlan();const src=state.logs;
   const pl=rangeFilter(src.slice().sort((a,b)=>a.date.localeCompare(b.date)),state.statRange||"all");
   // Gruppen-Balken
   const gEx=(allPlans?state.plans.flatMap(x=>x.sessions.flatMap(se=>se.exercises)):p.sessions.flatMap(se=>se.exercises)).filter((e,i,arr)=>arr.findIndex(y=>y.id===e.id)===i);
@@ -1885,27 +1896,24 @@ function vCal(){
   const sesName=id=>(activePlan().sessions.find(x=>x.id===id)||{}).name||"";const dlSet=deloadDates();
   const today=todayISO();
   let h='<div class="row" style="justify-content:space-between"><button class="h-a" onclick="calShift(-1)">‹</button><b style="font-size:17px">'+monthName+'</b><button class="h-a" onclick="calShift(1)">›</button></div>';
-  h+='<div id="calgrid" class="c-grid">';
+  h+='<div id="calgrid" class="k-grid">';
   ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>h+='<span class="c-wd">'+d+'</span>');
   for(let i=0;i<startDow;i++)h+='<span></span>';
   for(let d=1;d<=days;d++){
     const iso=Y+"-"+String(M).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const sess=byDate[iso]||[];
     const ab=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
-    const act=(state.acts||[]).find(a=>a.date===iso);
-    const hasW=(state.weights||[]).some(w=>w.date===iso);
     const pln=!sess.length?planByDate[iso]:null;
-    let cls="c-d",lab="";
-    if(sess.length){cls+=sess.some(l=>l.deload)?" dl-done":" done";lab=sess.map(l=>l.sessionName).join("+")}
-    else if(ab){cls+=ab.kind==="krank"?" sick":" vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
-    else if(pln){lab=sesName(pln.sessionId);cls+=dlSet.has(iso)?" plan dl":" plan"}
-    if(iso===today)cls+=" now";
-    if(state.calSel===iso)cls+=" sel";
-    h+='<button class="'+cls+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em>'+esc(lab)+'</em><i>'+(act?((ACT_TYPES[act.type]||{}).i||"⚡"):"")+(hasW?'<span style="color:var(--sky)">•</span>':"")+'</i></button>';
+    let dot="";
+    if(sess.length)dot=sess.some(l=>l.deload)?"dl":"tr";
+    else if(ab)dot="ab";
+    else if(pln)dot=dlSet.has(iso)?"pdl":"pl";
+    const extra=((state.acts||[]).some(a=>a.date===iso)?"🚴":"");
+    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><i class="k-dot '+dot+'"></i>'+(extra?'<small>'+extra+'</small>':'')+'</button>';
   }
   h+='</div>';
-  h+='<div class="c-leg"><span><i class="c-sw done"></i>trainiert</span><span><i class="c-sw plan"></i>geplant</span><span><i class="c-sw dl"></i>Deload</span><span><i class="c-sw sick"></i>krank/Urlaub</span></div>';
-  if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' erledigt — danach automatisch neuer Zyklus</p>';
+  h+='<div class="c-leg"><span><i class="k-dot tr"></i>Training</span><span><i class="k-dot dl"></i>Deload</span><span><i class="k-dot pl"></i>geplant</span><span><i class="k-dot ab"></i>krank/Urlaub</span></div>';
+  if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' — danach automatisch neuer Zyklus</p>';
   else if(pdIso)h+='<p class="tiny" style="text-align:center;color:var(--amb)">'+(pdIso<=today?'Deload fällig seit '+fmtD(pdIso):'Deload geplant ab '+fmtD(pdIso))+'</p>';
   // Tageskarte
   if(state.calSel){
@@ -1914,12 +1922,20 @@ function vCal(){
     const pl=!hasSess?planByDate[iso]:null;
     const aEntry=(state.acts||[]).find(a=>a.date===iso),wEntry=(state.weights||[]).find(w=>w.date===iso);
     const dn=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
-    const stat=hasSess?"trainiert":ab?absName(ab):pl?"geplant":"frei";
-    h+='<div class="s-card c-day"><div class="s-h"><b style="font-size:17px">'+dn+'</b><span>'+stat+' <button class="c-x" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></span></div>';
-    if(pl)h+='<p style="font-size:15px">'+esc(sesName(pl.sessionId))+(deloadDates().has(iso)?' <span style="color:var(--amb);font-size:13px;font-weight:700">Deload</span>':'')+'</p>';
-    if(aEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:4px">'+((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' · '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+'</p>';
-    if(wEntry)h+='<p class="tiny" style="color:var(--sky);margin-top:2px">⚖ '+String(wEntry.kg).replace(".",",")+' kg</p>';
-    // laufende Aktion
+    h+='<div class="k-sheet"><div class="k-grab"></div><div class="row" style="gap:8px;flex-wrap:wrap"><b style="font-size:18px">'+dn+'</b>';
+    ls.forEach(l=>{h+='<span class="k-pill'+(l.deload?" dl":"")+'">'+esc(l.sessionName)+(l.deload?' · Deload':'')+(l.reentry?' · Wiedereinstieg':'')+(l.altGym?' · anderes Studio':'')+'</span>'});
+    if(pl)h+='<span class="k-pill plan'+(dlSet.has(iso)?" dl":"")+'">'+esc(sesName(pl.sessionId))+' geplant'+(dlSet.has(iso)?' · Deload':'')+'</span>';
+    if(ab)h+='<span class="k-pill ab">'+absIcon(ab)+' '+absName(ab)+'</span>';
+    h+='<button class="c-x" style="margin-left:auto" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></div>';
+    const info=[];
+    ls.forEach(l=>{const c=l.checkin||{};
+      info.push([l.nettoMin?'⏱ '+l.nettoMin+' min netto':'',c.gefuehl?'Gefühl '+c.gefuehl:'',c.schlaf?'Schlaf '+c.schlaf:'',c.essen?'Essen '+c.essen:'',c.befinden!=null?'Befinden '+c.befinden:''].filter(Boolean).join(' · '))});
+    if(aEntry)info.push(((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+' · Belastung '+actLoad(aEntry)+' Pkt');
+    if(wEntry)info.push('⚖ '+String(wEntry.kg).replace(".",",")+' kg');
+    if(info.filter(Boolean).length)h+='<p class="tiny" style="margin-top:5px">'+info.filter(Boolean).map(esc).join('<br>')+'</p>';
+    if(!hasSess&&!pl&&!ab&&!aEntry&&!wEntry)h+='<p class="tiny" style="margin-top:5px">Kein Eintrag an diesem Tag.</p>';
+    const notes=[];ls.forEach(l=>{l.entries.forEach(e=>{if(e.exNote)notes.push(e.name+': '+e.exNote)});if(l.note)notes.push(l.note)});
+    if(notes.length)h+='<div class="k-notes">'+notes.map(n=>'<p>✎ '+esc(n)+'</p>').join("")+'</div>';
     if(state.absTmp){
       h+='<div class="c-flow"><p class="tiny">'+(state.absKind==="krank"?"🤒 Krank":"🏖 Urlaub")+' ab '+fmtD(state.absTmp)+' — jetzt den letzten Tag antippen (gleicher Tag = nur dieser Tag)</p>'
        +'<button class="btn red" style="margin-top:8px" onclick="finishAbs(\''+iso+'\')">'+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.absTmp=null;render()">Abbrechen</button></div>';
@@ -1930,30 +1946,22 @@ function vCal(){
       h+='<div class="c-flow"><button class="btn red" onclick="moveLogTo(\''+iso+'\')">'+esc(ml?ml.sessionName:"")+' vom '+(ml?fmtD(ml.date):"")+' hierher</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
     }else{
       const mv=hasSess?'startMoveLog(\''+ls[0].id+'\');toast(\'Neuen Tag antippen\')':pl?'state.moveFrom=\''+iso+'\';render();toast(\'Neuen Tag antippen\')':'';
-      h+='<div class="c-acts">'
-       +'<button '+(mv?'onclick="'+mv+'"':'disabled')+'><b>↔</b>Verschieben</button>'
-       +(ab?'<button onclick="delAbs(\''+ab.from+'\')"><b>'+absIcon(ab)+'</b>entfernen</button>'
-          :'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()"><b>🤒</b>Krank</button>')
+      h+='<div class="c-acts k-acts">'
+       +'<button '+(mv?'onclick="'+mv+'"':'disabled')+'><b>↔</b>Datum</button>'
+       +(ab?'<button onclick="delAbs(\''+ab.from+'\')"><b>'+absIcon(ab)+'</b>entfernen</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()"><b>🤒</b>Krank</button>')
        +(ab?'<button disabled><b>🏖</b>Urlaub</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()"><b>🏖</b>Urlaub</button>')
        +'<button class="'+(state.calPanel==="act"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'act\'?null:\'act\';render()"><b>🚴</b>Sport</button>'
-       +'<button class="'+(state.calPanel==="w"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'w\'?null:\'w\';render()"><b>⚖️</b>Gewicht</button></div>';
+       +'<button class="'+(state.calPanel==="w"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'w\'?null:\'w\';render()"><b>⚖️</b>Gewicht</button>'
+       +'<button class="'+(state.calPanel==="more"?"on":"")+'" '+(hasSess?'':'disabled')+' onclick="state.calPanel=state.calPanel===\'more\'?null:\'more\';render()"><b>⋯</b>mehr</button></div>';
       if(state.calPanel==="act"){
         h+='<div class="c-flow"><div class="row" style="gap:4px;margin-bottom:6px">'+Object.keys(ACT_TYPES).map(k=>'<button class="chip'+((state.actType===k||(aEntry&&aEntry.type===k&&!state.actType))?" on-n":"")+'" style="flex:1;padding:9px 2px;font-size:15px" onclick="state.actType=\''+k+'\';render()">'+ACT_TYPES[k].i+'</button>').join("")+'</div>'
          +'<div class="row" style="gap:4px"><input type="text" inputmode="numeric" id="actMin" placeholder="Min" value="'+(aEntry?aEntry.min:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="decimal" id="actKm" placeholder="km" value="'+(aEntry&&aEntry.km?aEntry.km:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="numeric" id="actRpe" placeholder="RPE" value="'+(aEntry?aEntry.rpe:"")+'" style="flex:.8;text-align:center" class="mono"></div>'
-         +'<div class="row" style="gap:5px;margin-top:6px"><button class="chip" style="flex:1;padding:10px" onclick="saveAct(\''+iso+'\')">Speichern</button>'+(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div>'
-         +(aEntry?'<p class="tiny" style="margin-top:5px">Belastung: '+actLoad(aEntry)+' Pkt</p>':'')+'</div>';
+         +'<div class="row" style="gap:5px;margin-top:6px"><button class="chip" style="flex:1;padding:10px" onclick="saveAct(\''+iso+'\')">Speichern</button>'+(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div></div>';
       }
-      if(state.calPanel==="w"){
-        h+='<div class="c-flow"><div class="row" style="gap:5px"><input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono"><button class="chip" style="padding:10px 14px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'+(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
-      }
+      if(state.calPanel==="w")h+='<div class="c-flow"><div class="row" style="gap:5px"><input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono"><button class="chip" style="padding:10px 14px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'+(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
+      if(state.calPanel==="more")h+='<div class="c-flow">'+ls.map(l=>'<div class="row" style="gap:6px;padding:4px 0"><span class="tiny" style="flex:1">'+esc(l.sessionName)+'</span>'+(ls.length>1?'<button class="chip" onclick="startMoveLog(\''+l.id+'\');toast(\'Neuen Tag antippen\')">Datum</button>':'')+'<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Einheit löschen")+'</button></div>').join("")+'</div>';
     }
     h+='</div>';
-    ls.forEach(l=>{
-      h+='<div class="s-card"><div class="s-h"><b>'+esc(l.sessionName)+(l.deload?' <span class="l-badge">Deload</span>':'')+(l.reentry?' <span class="l-badge" style="color:var(--sky);background:rgba(56,189,248,.14)">Wiedereinstieg</span>':'')+(l.altGym?' <span class="l-badge" style="color:var(--sky);background:rgba(56,189,248,.14)">anderes Studio</span>':'')+'</b><span>'+(l.nettoMin?l.nettoMin+' min netto':'')+'</span></div>';
-      if(l.checkin&&(l.checkin.gefuehl||l.checkin.schlaf||l.checkin.essen||l.checkin.befinden!=null))h+='<p class="tiny" style="margin-bottom:6px">Check-in: '+[l.checkin.gefuehl&&'Gefühl '+l.checkin.gefuehl,l.checkin.schlaf&&'Schlaf '+l.checkin.schlaf,l.checkin.essen&&'Essen '+l.checkin.essen,l.checkin.befinden!=null&&'Befinden '+l.checkin.befinden+'/10'].filter(Boolean).join(' · ')+'</p>';
-      l.entries.forEach(e=>{h+='<div class="c-ex"><span>'+esc(e.name)+'</span><span class="mono">'+e.sets.map(s=>String(s.w).replace(".",",")+'×'+s.r+(s.rir!=null?'@'+s.rir:'')).join('  ')+'</span>'+(e.exNote?'<p class="note-a">„'+esc(e.exNote)+'“</p>':'')+'</div>'});
-      if(l.note)h+='<p class="note-a" style="margin-top:6px">„'+esc(l.note)+'“</p>';
-      h+='<div class="row" style="margin-top:8px;gap:6px"><button class="chip" onclick="startMoveLog(\''+l.id+'\');toast(\'Neuen Tag antippen\')">Datum ändern</button><button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Löschen")+'</button></div></div>'});
   }
   // Pausen
   const absList=(state.settings.absences||[]).slice().sort((a,b)=>a.from.localeCompare(b.from)).filter(a=>a.to>=todayISO());
