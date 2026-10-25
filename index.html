@@ -340,7 +340,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v157";
+const APP_VERSION="v158";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1160,7 +1160,10 @@ function drawLib(){if(!state.libOpen)return;
    +(state.libNew?'<div class="lib-open" style="margin:4px 0 8px"><input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)" style="flex:1 1 100%"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"><button class="chip" style="flex:1 1 100%;padding:10px" onclick="addLib();state.libNew=false;drawLib()">+ In Bibliothek aufnehmen</button></div>':'')
    +'<input type="text" placeholder="Übung suchen …" value="'+esc(state.libQ||"")+'" oninput="state.libQ=this.value;$(\'libList\').innerHTML=libRows()">'
    +'<div class="lib-chips">'+groups.map(g=>'<span class="'+((state.libG||"Alle")===g?"on":"")+'" onclick="state.libG=\''+g+'\';drawLib()">'+esc(g)+(g==="Alle"?' '+state.library.length:'')+'</span>').join("")+'</div>'
-   +'<div id="libList">'+libRows()+'</div></div></div>'}
+   +'<div id="libList">'+libRows()+'</div></div></div>';
+  const hd=document.querySelector("header"),bg=document.querySelector("#overlay .sheet-bg"),sh=document.querySelector("#overlay .lib-sheet");
+  if(hd&&bg&&sh){const top=Math.round(hd.getBoundingClientRect().bottom);bg.style.top=top+"px";sh.style.height="100%";sh.style.maxHeight="none"}
+  const ch=document.querySelector("#overlay .lib-chips .on");if(ch)ch.scrollIntoView({block:"nearest",inline:"center"})}
 
 function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
 // ================= Pläne =================
