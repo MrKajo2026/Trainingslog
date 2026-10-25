@@ -354,7 +354,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v165";
+const APP_VERSION="v166";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1069,8 +1069,8 @@ window.addEventListener("load",()=>{const i=document.querySelector(".hban");if(i
 // Startseite/Kalender: alles ohne Scrollen sichtbar → Ring bzw. Kalenderzeilen bei Platzmangel verkleinern
 function fitPage(){try{const m=$("main");if(!m||!m.classList.contains("fill"))return;
   const over=()=>m.scrollHeight-m.clientHeight;
-  if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r)return;
-    for(let i=0;i<3&&over()>0;i++){const sz=Math.max(130,r.offsetHeight-over()-2);r.style.width=r.style.height=sz+"px";if(sz===130)break}}
+  if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r||state.calSel)return;   // Funktionsleiste offen → nicht stauchen, Seite scrollt
+    for(let i=0;i<3&&over()>0;i++){const sz=Math.max(176,r.offsetHeight-over()-2);r.style.width=r.style.height=sz+"px";if(sz===176)break}}
   else if(state.tab==="kalender"){const g=m.querySelector(".k-grid");if(!g)return;const rows=Math.ceil(g.querySelectorAll(".k-d,.k-e").length/7);
     for(let i=0;i<3&&over()>0;i++){const cur=parseFloat(getComputedStyle(g.querySelector(".k-d")).minHeight)||56;const nh=Math.max(40,Math.floor(cur-over()/rows)-1);
       g.querySelectorAll(".k-d,.k-e").forEach(e=>{e.style.minHeight=nh+"px"});if(nh===40)break}}
