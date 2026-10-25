@@ -279,7 +279,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v131";
+const APP_VERSION="v132";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -757,7 +757,7 @@ function vHome(){
 function wkCenter(smooth){const el=document.getElementById("wkstrip"),td=document.getElementById("wktoday");if(!el||!td)return;
   el.scrollTo({left:td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2,behavior:smooth?"smooth":"auto"})}
 function wkScroll(days){const el=document.getElementById("wkstrip");if(!el)return;const c=el.querySelector(".h-d:not(.now)");el.scrollBy({left:days*((c?c.offsetWidth:48)+5),behavior:"smooth"})}
-function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(state.calSel&&state.wkPos!=null)el.scrollLeft=state.wkPos;else wkCenter(false);
+function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(state.wkPos!=null){el.scrollLeft=state.wkPos;if(!state.calSel)state.wkPos=null}else wkCenter(false);
   const kc=document.getElementById("hdaycard");if(kc&&(state.wkJump||(state.calPanel||null)!==(state._lp||null))){state.wkJump=false;state._lp=state.calPanel;const r=kc.getBoundingClientRect(),nv=document.querySelector("nav"),lim=innerHeight-(nv?nv.offsetHeight:70)-12;if(r.bottom>lim)window.scrollBy({top:Math.min(r.bottom-lim,r.top-70),behavior:"smooth"})}
   const back=document.getElementById("wkback"),td=document.getElementById("wktoday");
   el.addEventListener("scroll",()=>{if(!back||!td)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2;back.style.visibility=Math.abs(el.scrollLeft-c)>60?"visible":"hidden"},{passive:true})}
