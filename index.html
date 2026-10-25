@@ -271,6 +271,15 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-scroll .h-d,.h-scroll .h-d.now{flex:0 0 calc((100% - 30px)/7)!important;scroll-snap-align:start!important}
 .h-d.now{transform:translateY(-3px)}
 .h-t.f-t{align-items:center;text-align:center;justify-content:flex-start;gap:0;padding:9px 4px 11px!important}.h-t.f-t em{font-style:normal;font-size:9.5px;color:var(--dim);margin:1px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.h-t.f-t span{font-size:11px!important;color:var(--mut);font-weight:600}.h-t.f-t b{font-size:19px!important}.h-t.f-t b small{font-size:11px}
+.xc{background:linear-gradient(180deg,#19191b,#141416);border:1px solid var(--s2);border-radius:14px;overflow:hidden;margin-top:10px;cursor:pointer}.xc.on{border-color:#8a8a8e}
+.xc-top{display:flex;gap:11px;padding:10px}
+.xc-img{width:84px;height:84px;border-radius:11px;flex-shrink:0;background:radial-gradient(circle at 50% 38%,#2e2e32,#141416 72%);display:grid;place-items:center}.xc-img svg{width:80px;height:80px}
+.xc-h{flex:1;min-width:0}.xc-h b{display:block;font-size:15px;line-height:1.2}.xc-sub{font-size:11.5px;color:var(--mut);margin-top:2px}
+.xc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.xc-tags span{font-size:10.5px;font-weight:700;border-radius:6px;padding:3px 7px;background:rgba(220,220,220,.1);color:#dcdcdc}.xc-tags span.off{background:none;border:1px dashed var(--s3);color:var(--mut)}
+.xc-w{text-align:right;flex-shrink:0}.xc-w b{font-size:15px;display:block}.xc-w span{font-size:10.5px}
+.xc-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--s2)}.xc-grid div{padding:7px 4px;text-align:center;border-left:1px solid var(--s2)}.xc-grid div:first-child{border-left:none}.xc-grid small{display:block;font-size:9.5px;color:var(--mut)}.xc-grid b{font-size:13px}
+.xc-info{border-top:1px solid var(--s2);padding:8px 11px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:#c8c8cc}.xc-info div{display:flex;gap:8px}.xc-info i{font-style:normal;color:var(--mut);flex:0 0 90px}
+.lib-open{margin-top:6px}
 </style>
 </head>
 <body>
@@ -345,7 +354,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v164";
+const APP_VERSION="v165";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1152,6 +1161,134 @@ function drawRules(){const ap=activePlan();
    +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")
    +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>';
   if(state.tab==="plaene")anchorSub()}
+// ===== Übungs-Pictogramme (eigene Vektorzeichnungen) =====
+const PICTO=(()=>{
+  const R="#e0473c",SK="#c9c9ce",SKD="#8e8e94",MC="#6e6e74",PAD="#3b3b40";
+  const f=n=>n.toFixed(1);
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1]],add=(a,b)=>[a[0]+b[0],a[1]+b[1]],mul=(a,k)=>[a[0]*k,a[1]*k],len=a=>Math.hypot(a[0],a[1])||1,nrm=a=>mul(a,1/len(a)),perp=a=>[-a[1],a[0]],dot=(a,b)=>a[0]*b[0]+a[1]*b[1];
+  // Gliedmaße als verjüngte Form mit runden Enden; bulge = Muskelbauch
+  function limb(p,q,w1,w2,col,bulge){const d=nrm(sub(q,p)),n=perp(d),L=len(sub(q,p));bulge=bulge||0;
+    const pts=[];const N=8;
+    for(let i=0;i<=N;i++){const t=i/N,w=(w1+(w2-w1)*t)/2+bulge*Math.sin(Math.PI*Math.min(1,t*1.25))*0.5;pts.push(add(add(p,mul(d,L*t)),mul(n,w)))}
+    for(let i=N;i>=0;i--){const t=i/N,w=(w1+(w2-w1)*t)/2+bulge*Math.sin(Math.PI*Math.min(1,t*1.25))*0.5;pts.push(add(add(p,mul(d,L*t)),mul(n,-w)))}
+    return '<path fill="'+col+'" d="M'+pts.map(x=>f(x[0])+' '+f(x[1])).join('L')+'Z"/><circle cx="'+f(p[0])+'" cy="'+f(p[1])+'" r="'+f(w1/2)+'" fill="'+col+'"/><circle cx="'+f(q[0])+'" cy="'+f(q[1])+'" r="'+f(w2/2)+'" fill="'+col+'"/>'}
+  // Muskel-Hervorhebung: Ellipse entlang eines Segments, seitlich versetzt
+  function musc(p,q,from,to,off,w,col){const d=nrm(sub(q,p)),n=perp(d),L=len(sub(q,p));
+    const c=add(add(p,mul(d,L*(from+to)/2)),mul(n,off)),ang=Math.atan2(d[1],d[0])*180/Math.PI;
+    return '<ellipse cx="'+f(c[0])+'" cy="'+f(c[1])+'" rx="'+f(L*(to-from)/2)+'" ry="'+f(w/2)+'" transform="rotate('+f(ang)+' '+f(c[0])+' '+f(c[1])+')" fill="'+(col||R)+'"/>'}
+  // Seite eines Segments bestimmen: +1 wenn Normale zum Referenzvektor zeigt
+  const side=(p,q,ref)=>dot(perp(nrm(sub(q,p))),ref)>=0?1:-1;
+  function figure(j,hl){
+    const fac=j.face||1,o=[3*fac,-2.5];   // hinteres Bein/Arm leicht versetzt
+    const far=k=>j[k+"2"]||add(j[k],o);
+    let s='';
+    // hintere Gliedmaßen dunkler
+    s+=limb(far("hip"),far("knee"),10,7,SKD,1.2)+limb(far("knee"),far("ankle"),7,4.5,SKD,1.4)+limb(far("ankle"),far("toe"),3.6,2.6,SKD);
+    s+=limb(far("sh"),far("el"),6.4,5,SKD,1)+limb(far("el"),far("hand"),5,3.8,SKD,.6)+'<circle cx="'+f(far("hand")[0])+'" cy="'+f(far("hand")[1])+'" r="2.6" fill="'+SKD+'"/>';
+    // Rumpf: Brustkorb breiter, Taille schmaler
+    const up=nrm(sub(j.sh,j.hip)),n=perp(up),fr=side(j.hip,j.sh,[fac,0])>0?n:mul(n,-1);
+    const chest=add(add(j.hip,mul(sub(j.sh,j.hip),.72)),mul(fr,2.2));
+    s+=limb(j.hip,chest,13,15.5,SK,.5)+limb(chest,j.sh,15.5,11,SK);
+    // Hals + Kopf
+    const neck=add(j.sh,mul(sub(j.head,j.sh),.45));
+    s+=limb(j.sh,neck,5.5,5,SK)+'<ellipse cx="'+f(j.head[0])+'" cy="'+f(j.head[1])+'" rx="6" ry="6.8" fill="'+SK+'"/>';
+    // Muskeln am Rumpf
+    const tf=side(j.hip,j.sh,fr);
+    if(hl.includes("chest"))s+=musc(j.hip,j.sh,.62,.92,tf*4.2,7);
+    if(hl.includes("abs"))s+=musc(j.hip,j.sh,.12,.58,tf*4,6);
+    if(hl.includes("back"))s+=musc(j.hip,j.sh,.45,.92,-tf*4.3,7.5);
+    if(hl.includes("lowback"))s+=musc(j.hip,j.sh,.08,.5,-tf*4.5,5);
+    if(hl.includes("oblique"))s+=musc(j.hip,j.sh,.15,.55,0,7);
+    if(hl.includes("glute"))s+='<circle cx="'+f(add(j.hip,mul(fr,-4.5))[0])+'" cy="'+f(add(j.hip,mul(fr,-4.5))[1])+'" r="6.2" fill="'+R+'"/>';
+    // vorderes Bein
+    s+=limb(j.hip,j.knee,11,7.5,SK,1.6)+limb(j.knee,j.ankle,7.5,4.6,SK,1.8)+limb(j.ankle,j.toe,3.8,2.8,SK);
+    const shin=sub(j.ankle,j.knee),ts=side(j.hip,j.knee,shin);           // Seite der Wade = Rückseite Oberschenkel
+    const straight=Math.abs(dot(nrm(sub(j.knee,j.hip)),nrm(shin)))>0.97,tsf=straight?-side(j.hip,j.knee,[fac,0])*-1:ts;
+    if(hl.includes("quad"))s+=musc(j.hip,j.knee,.12,.9,-tsf*2.6,6.2);
+    if(hl.includes("ham"))s+=musc(j.hip,j.knee,.15,.88,tsf*2.6,5.6);
+    const foot=sub(j.toe,j.ankle),cs=-side(j.knee,j.ankle,foot);
+    if(hl.includes("calf"))s+=musc(j.knee,j.ankle,.08,.58,cs*1.8,5.4);
+    // vorderer Arm
+    s+=limb(j.sh,j.el,7,5.4,SK,1.2)+limb(j.el,j.hand,5.4,4,SK,.8)+'<circle cx="'+f(j.hand[0])+'" cy="'+f(j.hand[1])+'" r="2.9" fill="'+SK+'"/>';
+    const fa=sub(j.hand,j.el),as=side(j.sh,j.el,fa),strA=Math.abs(dot(nrm(sub(j.el,j.sh)),nrm(fa)))>0.97;
+    if(hl.includes("delt"))s+='<circle cx="'+f(j.sh[0])+'" cy="'+f(j.sh[1])+'" r="5.2" fill="'+R+'"/>';
+    if(hl.includes("rdelt"))s+='<circle cx="'+f(add(j.sh,mul(fr,-2.5))[0])+'" cy="'+f(add(j.sh,mul(fr,-2.5))[1])+'" r="4.8" fill="'+R+'"/>';
+    if(hl.includes("tri"))s+=musc(j.sh,j.el,.18,.9,(strA?1:-as)*1.8,4.4);
+    if(hl.includes("fore"))s+=musc(j.el,j.hand,.08,.75,0,4.2);
+    return s}
+  // Szenen: Gerät (s) + Pose (j) + Muskeln (h)
+  const P={
+   legpress:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M20 26v74M20 100h84M98 100V80"/><rect x="14" y="32" width="9" height="52" rx="2" fill="'+PAD+'"/><path fill="'+PAD+'" d="M66 88h34l-3 6H69z"/><path fill="'+PAD+'" d="M90 42l9 3-11 42-8-3z"/>',
+     j:{face:-1,head:[88,34],sh:[84,45],hip:[76,84],knee:[46,64],ankle:[26,74],toe:[24,64],el:[80,64],hand:[84,84]},h:["quad","glute"]},
+   calfpress:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 26v74M14 100h90M98 100V80"/><rect x="10" y="40" width="8" height="44" rx="2" fill="'+PAD+'"/><path fill="'+PAD+'" d="M66 88h34l-3 6H69z"/><path fill="'+PAD+'" d="M90 42l9 3-11 42-8-3z"/>',
+     j:{face:-1,head:[88,34],sh:[84,45],hip:[76,84],knee:[48,78],ankle:[24,72],toe:[18,60],el:[80,64],hand:[84,84]},h:["calf"]},
+   calfseat:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M30 104h70M84 104V78"/><rect x="62" y="74" width="38" height="7" rx="3" fill="'+PAD+'"/><rect x="28" y="62" width="30" height="6" rx="3" fill="'+PAD+'"/><rect x="26" y="98" width="20" height="5" rx="2" fill="'+PAD+'"/>',
+     j:{face:-1,head:[70,22],sh:[70,34],hip:[72,72],knee:[42,70],ankle:[40,96],toe:[30,95],el:[64,52],hand:[50,64]},h:["calf"]},
+   hacksquat:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M30 12l58 94M22 108h80"/><path fill="'+PAD+'" d="M40 20l8-4 40 70-8 4z"/><path fill="'+PAD+'" d="M28 104l40-6 4 6H28z"/>',
+     j:{face:-1,head:[46,22],sh:[52,33],hip:[72,70],knee:[46,78],ankle:[54,100],toe:[44,102],el:[46,42],hand:[50,32]},h:["quad","glute"]},
+   legcurlseat:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M86 18v84M40 102h58M52 78v24"/><rect x="84" y="26" width="8" height="46" rx="3" fill="'+PAD+'"/><rect x="48" y="74" width="40" height="7" rx="3" fill="'+PAD+'"/><rect x="32" y="58" width="28" height="6" rx="3" fill="'+PAD+'"/><circle cx="30" cy="98" r="6" fill="'+PAD+'"/>',
+     j:{face:-1,head:[78,22],sh:[78,34],hip:[78,70],knee:[42,68],ankle:[36,94],toe:[26,92],el:[66,50],hand:[58,62]},h:["ham"]},
+   legcurllie:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 74h92M24 74v30M96 74v30"/><rect x="18" y="68" width="84" height="7" rx="3" fill="'+PAD+'"/><circle cx="90" cy="44" r="6" fill="'+PAD+'"/>',
+     j:{face:-1,head:[20,58],sh:[30,62],hip:[62,62],knee:[86,62],ankle:[94,40],toe:[102,38],el:[24,74],hand:[16,74]},h:["ham"]},
+   legext:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M86 18v84M40 102h58M52 78v24"/><rect x="84" y="26" width="8" height="46" rx="3" fill="'+PAD+'"/><rect x="48" y="74" width="40" height="7" rx="3" fill="'+PAD+'"/><circle cx="16" cy="76" r="5" fill="'+PAD+'"/>',
+     j:{face:-1,head:[78,22],sh:[78,34],hip:[78,70],knee:[46,68],ankle:[20,70],toe:[14,60],el:[76,52],hand:[66,74]},h:["quad"]},
+   deadlift:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 106h92"/><circle cx="46" cy="94" r="12" fill="none" stroke="'+MC+'" stroke-width="3"/><path stroke="'+MC+'" stroke-width="3" d="M32 94h30"/>',
+     j:{face:-1,head:[32,36],sh:[40,44],hip:[76,52],knee:[56,74],ankle:[60,104],toe:[50,105],el:[44,68],hand:[46,92]},h:["ham","glute","lowback"]},
+   hipthrust:{s:'<rect x="70" y="56" width="34" height="9" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M76 65v40M98 65v40M14 106h92"/><circle cx="56" cy="54" r="9" fill="none" stroke="'+MC+'" stroke-width="3"/>',
+     j:{face:-1,head:[88,50],sh:[78,56],hip:[52,62],knee:[30,62],ankle:[32,102],toe:[22,103],el:[66,62],hand:[56,56]},h:["glute","ham"]},
+   crunch:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M94 16v86M50 102h50"/><rect x="58" y="80" width="36" height="7" rx="3" fill="'+PAD+'"/><path fill="'+PAD+'" d="M90 28l8 2-4 42-8-2z"/><path fill="'+PAD+'" d="M38 32l14 4-3 6-14-4z"/>',
+     j:{face:-1,head:[42,36],sh:[52,46],hip:[76,78],knee:[46,80],ankle:[44,102],toe:[34,102],el:[42,52],hand:[46,44]},h:["abs"]},
+   deadbug:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M8 100h104"/><rect x="10" y="94" width="100" height="5" rx="2" fill="'+PAD+'"/>',
+     j:{face:1,head:[20,84],sh:[30,88],hip:[64,88],knee:[74,64],ankle:[96,62],toe:[100,52],el:[34,70],hand:[36,52],knee2:[76,62],ankle2:[98,72],toe2:[106,70],el2:[24,70],hand2:[14,60]},h:["abs"]},
+   pallof:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M104 10v96M10 106h100"/><rect x="100" y="44" width="8" height="10" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M102 49L44 54"/>',
+     j:{face:1,head:[40,18],sh:[38,30],hip:[36,64],knee:[38,84],ankle:[36,104],toe:[46,104],el:[44,44],hand:[48,54]},h:["oblique","abs"]},
+   bench:{s:'<rect x="30" y="66" width="72" height="8" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M40 74v30M92 74v30M14 106h94"/><rect x="30" y="20" width="14" height="6" rx="2" fill="'+MC+'"/>',
+     j:{face:1,head:[30,58],sh:[42,62],hip:[80,62],knee:[96,70],ankle:[92,104],toe:[100,104],el:[40,46],hand:[37,28]},h:["chest","tri"]},
+   incline:{s:'<path fill="'+PAD+'" d="M40 34l8-3 34 40-6 5z"/><rect x="74" y="70" width="26" height="8" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M84 78v26M14 106h94"/><rect x="28" y="12" width="14" height="6" rx="2" fill="'+MC+'"/>',
+     j:{face:1,head:[40,30],sh:[48,40],hip:[76,70],knee:[94,74],ankle:[92,104],toe:[100,104],el:[40,30],hand:[35,14]},h:["chest","delt"]},
+   chestpress:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M86 16v86M44 102h58M14 46h22"/><rect x="84" y="24" width="8" height="50" rx="3" fill="'+PAD+'"/><rect x="50" y="74" width="38" height="7" rx="3" fill="'+PAD+'"/>',
+     j:{face:-1,head:[78,20],sh:[78,34],hip:[80,72],knee:[52,72],ankle:[48,100],toe:[38,100],el:[60,44],hand:[38,46]},h:["chest","tri"]},
+   fly:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M86 16v86M44 102h58"/><rect x="84" y="24" width="8" height="50" rx="3" fill="'+PAD+'"/><rect x="50" y="74" width="38" height="7" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" d="M30 40v14"/>',
+     j:{face:-1,head:[78,20],sh:[78,34],hip:[80,72],knee:[52,72],ankle:[48,100],toe:[38,100],el:[56,40],hand:[32,46]},h:["chest"]},
+   ohpress:{s:'<rect x="70" y="72" width="30" height="7" rx="3" fill="'+PAD+'"/><path fill="'+PAD+'" d="M86 26l8 2-4 44-8-2z"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M84 79v25M14 106h94"/><rect x="64" y="6" width="6" height="12" rx="2" fill="'+MC+'"/>',
+     j:{face:-1,head:[76,24],sh:[78,36],hip:[82,72],knee:[54,72],ankle:[52,102],toe:[42,102],el:[66,28],hand:[67,12]},h:["delt","tri"]},
+   lateral:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M104 10v96M10 106h100"/><rect x="100" y="90" width="8" height="10" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M102 95L64 38"/>',
+     j:{face:-1,head:[52,18],sh:[52,30],hip:[54,64],knee:[54,84],ankle:[54,104],toe:[44,104],el:[60,36],hand:[66,40],el2:[46,44],hand2:[44,58]},h:["delt"]},
+   row:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 106h100M14 40v66"/><rect x="58" y="78" width="40" height="7" rx="3" fill="'+PAD+'"/><rect x="10" y="80" width="10" height="16" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M14 56L44 56"/><rect x="40" y="52" width="6" height="8" rx="2" fill="'+MC+'"/>',
+     j:{face:-1,head:[76,22],sh:[74,34],hip:[78,74],knee:[46,70],ankle:[24,86],toe:[20,78],el:[86,50],hand:[52,56]},h:["back","rdelt"]},
+   latpull:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 106h92M60 4v10"/><rect x="40" y="12" width="40" height="5" rx="2" fill="'+MC+'"/><rect x="48" y="76" width="40" height="7" rx="3" fill="'+PAD+'"/><rect x="34" y="62" width="22" height="6" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" d="M80 83v21"/>',
+     j:{face:-1,head:[62,32],sh:[64,44],hip:[70,78],knee:[42,74],ankle:[40,102],toe:[30,102],el:[54,46],hand:[54,28]},h:["back"]},
+   facepull:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 10v96M10 106h100"/><rect x="6" y="20" width="8" height="10" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M12 25L52 24"/>',
+     j:{face:-1,head:[60,18],sh:[62,30],hip:[64,64],knee:[64,84],ankle:[64,104],toe:[54,104],el:[76,24],hand:[56,22]},h:["rdelt","back"]},
+   revfly:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 10v96M10 106h100"/><rect x="6" y="30" width="8" height="10" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M12 35L86 34"/>',
+     j:{face:-1,head:[60,18],sh:[62,30],hip:[64,64],knee:[64,84],ankle:[64,104],toe:[54,104],el:[78,32],hand:[90,36]},h:["rdelt"]},
+   pushdown:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 10v96M10 106h100M14 14h18"/><path stroke="'+MC+'" stroke-width="1.5" d="M32 14L40 64"/>',
+     j:{face:-1,head:[52,18],sh:[54,30],hip:[56,64],knee:[56,84],ankle:[56,104],toe:[46,104],el:[54,48],hand:[42,66]},h:["tri"]},
+   pullover:{s:'<rect x="34" y="62" width="58" height="8" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M44 70v34M84 70v34M14 106h94"/><rect x="8" y="58" width="12" height="7" rx="2" fill="'+MC+'"/>',
+     j:{face:1,head:[34,54],sh:[44,58],hip:[78,60],knee:[96,68],ankle:[92,104],toe:[100,104],el:[30,52],hand:[14,58]},h:["back","chest"]},
+   wrist:{s:'<rect x="56" y="72" width="40" height="7" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M66 79v25M90 79v25M14 106h94"/><rect x="20" y="62" width="5" height="12" rx="2" fill="'+MC+'"/>',
+     j:{face:-1,head:[66,22],sh:[66,34],hip:[72,70],knee:[42,68],ankle:[40,102],toe:[30,102],el:[50,66],hand:[26,66]},h:["fore"]},
+   generic:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 106h100"/>',
+     j:{face:-1,head:[60,18],sh:[60,30],hip:[60,64],knee:[60,84],ankle:[60,104],toe:[50,104],el:[62,48],hand:[60,64]},h:[]}
+  };
+  const pick=(id,name)=>{const n=(id+" "+name).toLowerCase();
+    if(/wade|calf/.test(n))return /sitzend|90/.test(n)?"calfseat":"calfpress";
+    if(/hack/.test(n))return"hacksquat";if(/beinpresse|leg ?press/.test(n))return"legpress";
+    if(/beinbeuger.*liegend|lying/.test(n))return"legcurllie";if(/beinbeuger/.test(n))return"legcurlseat";
+    if(/beinstrecker|extension.*bein/.test(n))return"legext";if(/deadlift|kreuzheben|rdl|rum[äa]n/.test(n))return"deadlift";
+    if(/hip ?thrust|glute/.test(n))return"hipthrust";if(/crunch/.test(n))return"crunch";if(/dead ?bug/.test(n))return"deadbug";
+    if(/pallof/.test(n))return"pallof";if(/schr[äa]g|incline/.test(n))return"incline";if(/bankdr|bench/.test(n))return"bench";
+    if(/brustpresse|chest ?press/.test(n))return"chestpress";if(/fly|butterfly|pec/.test(n))return /reverse/.test(n)?"revfly":"fly";
+    if(/schulterdr|overhead|military/.test(n))return"ohpress";if(/seitheben|lateral/.test(n))return"lateral";
+    if(/face ?pull/.test(n))return"facepull";if(/latzug|pulldown|klimmz/.test(n))return"latpull";if(/rudern|ruder|row/.test(n))return"row";
+    if(/pushdown|trizeps|triceps/.test(n))return"pushdown";if(/[üu]berzug|pullover/.test(n))return"pullover";
+    if(/handgelenk|wrist|unterarm/.test(n))return"wrist";if(/kniebeuge|squat/.test(n))return"hacksquat";return"generic"};
+  function svg(id,name){const k=pick(id||"",name||""),p=P[k];let hl=p.h.slice();
+    if(k==="row"&&/maschine/.test((name||"").toLowerCase()))hl=["back"];
+    return '<svg viewBox="0 0 120 120" class="picto" aria-hidden="true">'+p.s+figure(p.j,hl)+'</svg>'}
+  return{svg,pick,keys:Object.keys(P)};
+})();
+
 // ===== Übungsbibliothek als Fenster =====
 function showLibSheet(){if(state.libOpen){closeSub();return}state.rulesOpen=false;state.libOpen=true;render();state.libQ="";state.libG="Alle";state.libSel=null;drawLib()}
 function closeLib(){closeSub()}
@@ -1162,13 +1299,19 @@ function libRows(){const ap=activePlan(),lb=lastByEx(),q=(state.libQ||"").toLowe
   if(state.mergeFrom)h+='<p class="tiny" style="color:#e2e2e2;background:var(--s2);border-radius:8px;padding:7px 9px;margin:6px 0">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'“ werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;drawLib()">Abbrechen</button></p>';
   const list=[...state.library].sort((a,b)=>a.name.localeCompare(b.name)).filter(e=>(!q||e.name.toLowerCase().includes(q))&&(G==="Alle"||((MUSCLE_MAP[e.id]||{}).p||"Sonstige")===G));
   if(!list.length)h+='<p class="tiny" style="padding:14px 0;text-align:center">Keine Übung gefunden.</p>';
-  list.forEach(e=>{const ip=inPlan(e.id),l=lb[e.id],lw=l?Math.max(...l.sets.map(x=>num(x.w))):0,pc=gr[e.id],grp=(MUSCLE_MAP[e.id]||{}).p||"Sonstige",open=state.libSel===e.id;
-    h+='<div class="lib-r" onclick="state.libSel=state.libSel===\''+e.id+'\'?null:\''+e.id+'\';state.renameId=null;drawLib()"><div class="n"><b>'+esc(e.name)+'</b><span>'+esc(grp)+' · '+esc(e.reps||"")+'</span><span class="lib-tag'+(ip.length?'':' off')+'">'+(ip.length?esc(ip.join(" · ")):'nicht im Plan')+'</span></div>'
-     +'<div class="lib-w">'+(state.mergeFrom&&state.mergeFrom!==e.id?'<button class="chip" onclick="event.stopPropagation();doMerge(\''+e.id+'\')">← hierher</button>':'<b>'+(lw>0?String(lw).replace(".",",")+' kg':'–')+'</b>'+(pc!=null&&Math.abs(pc)>=1?'<span style="color:'+(pc>0?'var(--grn)':'var(--red2)')+'">'+(pc>0?'↑ +':'↓ ')+Math.round(pc)+' %</span>':''))+'</div></div>';
+  const planEx=id=>{for(const se of ap.sessions){const x=se.exercises.find(y=>y.id===id&&y.sets>0);if(x)return x}return null};
+  list.forEach(e=>{const ip=inPlan(e.id),l=lb[e.id],lw=l?Math.max(...l.sets.map(x=>num(x.w))):0,pc=gr[e.id],grp=(MUSCLE_MAP[e.id]||{}).p||"Sonstige",open=state.libSel===e.id,px=planEx(e.id);
+    const note=(px&&px.note)||e.note||"";
+    h+='<div class="xc'+(open?' on':'')+'" onclick="state.libSel=state.libSel===\''+e.id+'\'?null:\''+e.id+'\';state.renameId=null;state.libSet=null;drawLib()">'
+     +'<div class="xc-top"><div class="xc-img">'+PICTO.svg(e.id,e.name)+'</div><div class="xc-h"><b>'+esc(e.name)+'</b><div class="xc-sub">'+esc(grp)+'</div><div class="xc-tags">'+(ip.length?ip.map(n=>'<span>'+esc(n)+'</span>').join(""):'<span class="off">nicht im Plan</span>')+'</div></div>'
+     +'<div class="xc-w">'+(state.mergeFrom&&state.mergeFrom!==e.id?'<button class="chip" onclick="event.stopPropagation();doMerge(\''+e.id+'\')">← hierher</button>':'<b>'+(lw>0?String(lw).replace(".",",")+' kg':'–')+'</b>'+(pc!=null&&Math.abs(pc)>=1?'<span style="color:'+(pc>0?'var(--grn)':'var(--red2)')+'">'+(pc>0?'↑ +':'↓ ')+Math.round(pc)+' %</span>':''))+'</div></div>'
+     +'<div class="xc-grid"><div><small>Sätze</small><b>'+(px?px.sets:'–')+'</b></div><div><small>Wdh.</small><b>'+esc((px&&px.reps)||e.reps||'–')+'</b></div><div><small>RIR</small><b>'+esc(px?String(px.scheme||'–').replace(/^RIR/,'').split(' ·')[0]:'–')+'</b></div><div><small>Pause</small><b>'+(px&&px.rest?fmtRest(px.rest):'–')+'</b></div></div>'
+     +((e.setting||note)?'<div class="xc-info">'+(e.setting?'<div><i>⚙ Einstellung</i><span>'+esc(e.setting)+'</span></div>':'')+(note?'<div><i>✎ Notiz</i><span>'+esc(note)+'</span></div>':'')+'</div>':'')
+     +'</div>';
     if(open&&!state.mergeFrom){
       if(state.renameId===e.id)h+='<div class="lib-open"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1 1 100%"><button class="chip" onclick="doRename(\''+e.id+'\')">Speichern</button><button class="chip" onclick="state.renameId=null;drawLib()">Abbrechen</button></div>';
       else if(state.libSet===e.id)h+='<div class="lib-open"><input type="text" id="ls-'+e.id+'" value="'+esc(e.setting||"")+'" placeholder="Geräteeinstellung, z.B. Sitz 4" style="flex:1 1 100%"><button class="chip" onclick="libSaveSet(\''+e.id+'\')">Speichern</button><button class="chip" onclick="state.libSet=null;drawLib()">Abbrechen</button></div>';
-      else h+='<div class="lib-open">'+(e.setting?'<p class="tiny" style="flex:1 1 100%">⚙ '+esc(e.setting)+'</p>':'')+'<button class="chip" onclick="state.renameId=\''+e.id+'\';drawLib()">✎ Umbenennen</button><button class="chip" onclick="state.libSet=\''+e.id+'\';drawLib()">⚙ Einstellung</button><button class="chip" onclick="startMerge(\''+e.id+'\')">⇄ Zusammenführen</button><button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" style="flex:1" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Wirklich löschen?":"Löschen")+'</button></div>'}
+      else h+='<div class="lib-open"><button class="chip" onclick="state.renameId=\''+e.id+'\';drawLib()">✎ Umbenennen</button><button class="chip" onclick="state.libSet=\''+e.id+'\';drawLib()">⚙ Einstellung</button><button class="chip" onclick="startMerge(\''+e.id+'\')">⇄ Zusammenführen</button><button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" style="flex:1" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Wirklich löschen?":"Löschen")+'</button></div>'}
   });
   return h}
 function libSaveSet(id){const v=($("ls-"+id)||{}).value||"";const e=state.library.find(x=>x.id===id);if(e){e.setting=v.trim();saveJ("library",state.library)}state.libSet=null;drawLib();toast("Einstellung gespeichert")}
