@@ -86,7 +86,7 @@ h2{font-size:clamp(16px,5vw,20px)}
  nav button{font-size:10px;padding:17px 1px;min-height:56px}
 }
 
-#resttimer{position:fixed;left:0;right:0;top:0;width:100%;transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;padding-top:calc(9px + env(safe-area-inset-top,0px));background:var(--s1);border-bottom:2px solid var(--red2);padding:9px 14px;display:flex;align-items:center;gap:10px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+#resttimer{position:fixed;left:0;right:0;top:0;width:100%;transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;padding-top:calc(9px + env(safe-area-inset-top,0px));background:var(--s1);border-bottom:2px solid var(--red2);padding:calc(9px + env(safe-area-inset-top,0px)) 14px 9px;display:flex;align-items:center;gap:10px;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 #resttimer.done{background:var(--red);animation:flash .5s steps(2,end) 6}
 @keyframes flash{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
 #resttimer b{font-size:19px;font-variant-numeric:tabular-nums}
@@ -205,6 +205,15 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .k-acts{grid-template-columns:repeat(6,1fr)}
 .k-home{padding:10px 12px}.k-home .k-acts{margin-top:0}.k-home .c-flow:first-child{margin-top:0}
 .h-d.sel{box-shadow:inset 0 0 0 2px var(--tx)}
+.l-scr{border:none;border-radius:99px;padding:5px 10px;font-size:12px;font-weight:700;background:var(--s2);color:var(--mut)}.l-scr.on{background:rgba(245,158,11,.16);color:var(--amb)}
+#restdark{position:fixed;inset:0;background:#000;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+#restdark .rd-ring{position:absolute;width:250px;height:250px}
+#restdark .rd-t{font-size:60px;font-weight:300;color:#3a3a3e;font-variant-numeric:tabular-nums;position:relative}
+#restdark .rd-s{font-size:13px;color:#2e2e33;position:relative;max-width:220px;text-align:center}
+#restdark .rd-h{position:absolute;bottom:calc(40px + env(safe-area-inset-bottom,0px));font-size:12px;color:#2a2a2d}
+#restdark .rd-ring2{position:absolute;width:250px;height:250px;border-radius:50%;border:8px solid #ef4444;animation:rdpulse 1s ease-in-out infinite}
+#restdark.end .rd-t{color:#f4f4f5;font-weight:600}#restdark.end .rd-s{color:#a1a1aa}#restdark.end .rd-h{color:#52525b}
+@keyframes rdpulse{0%,100%{box-shadow:0 0 12px rgba(239,68,68,.5),inset 0 0 8px rgba(239,68,68,.3);opacity:.75}50%{box-shadow:0 0 40px rgba(239,68,68,.95),inset 0 0 24px rgba(239,68,68,.6);opacity:1}}
 </style>
 </head>
 <body>
@@ -279,7 +288,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v133";
+const APP_VERSION="v134";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -671,6 +680,7 @@ function render(){
   if(state.tab==="statistik")drawCharts();
   if(state.tab==="kalender")calSwipe();
   if(state.tab==="training"&&!state.active)wkSwipe();
+  if(state.active)wakeOn();else wakeOff();
   growAll();
   initSwipe();
   updUndoBtn();
@@ -811,7 +821,7 @@ function vLogger(){
   const ciOpen=state.ciOpen!==undefined?state.ciOpen:!ciDone;
   let h='<div class="l-head'+(a.deload?" dl":"")+'"><div class="row" style="gap:8px"><b class="l-name">'+esc(a.sessionName)+'</b>'
    +(a.deload?'<span class="l-badge">Deload '+(deloadPhase().n+1)+' von '+DELOAD_RUN+'</span>':a.reentry?'<span class="l-badge" style="color:var(--sky);background:rgba(56,189,248,.14)">Wiedereinstieg</span>':'')
-   +'<button id="undobtn" class="chip" style="margin-left:auto" onclick="doUndo()">↩</button></div>'
+   +'<button class="l-scr'+(screenOn()?' on':'')+'" style="margin-left:auto" onclick="toggleScreen()">'+(screenOn()?'🔆 Bildschirm an':'🔅 Bildschirm aus')+'</button><button id="undobtn" class="chip" onclick="doUndo()">↩</button></div>'
    +'<div class="row tiny" style="margin-top:6px"><span>'+nDone+' von '+nEx+' Übungen erledigt</span><span style="margin-left:auto">'+fmtD(a.date)+' · läuft '+mins+' min</span></div>'
    +'<div class="l-pb"><i style="width:'+(nEx?Math.round(nDone/nEx*100):0)+'%"></i></div>';
   if(a.reentry)h+='<p class="tiny" style="color:var(--sky);margin-top:8px">Nach '+a.reentry.gap+' Tagen Pause: '+esc(a.reentry.txt)+'. Gewichte sind angepasst.</p>';
@@ -949,9 +959,10 @@ function startRest(sec,label){
   try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
   const end=Date.now()+sec*1000;
   const box=document.createElement("div");box.id="resttimer";
-  box.innerHTML='<b id="restval">'+fmtRest(sec)+'</b><div id="restbar"><div style="width:100%"></div></div><button class="chip" style="padding:6px 10px" onclick="stopRest()">✕</button>';
+  box.innerHTML='<b id="restval">'+fmtRest(sec)+'</b><div id="restbar"><div style="width:100%"></div></div><span id="restdk" class="tiny"></span><button class="chip" style="padding:6px 10px" onclick="stopRest()">✕</button>';
   document.body.appendChild(box);pinTimer();
-  restIv=setInterval(()=>{pinTimer();
+  restCtx={end,sec};armDark();
+  restIv=setInterval(()=>{pinTimer();updDark();
     const left=Math.max(0,Math.round((end-Date.now())/1000));
     const v=$("restval"),bar=document.querySelector("#restbar>div");
     if(v)v.textContent=left>=60?Math.floor(left/60)+":"+String(left%60).padStart(2,"0"):left+"s";
@@ -962,12 +973,36 @@ function startRest(sec,label){
       beepNodes=[];
       try{navigator.vibrate&&navigator.vibrate([300,120,300,120,300,120,500])}catch(e){}
       const b=$("resttimer");
+      if(screenOn()){showEndRing();if(b)b.remove();return}
       if(b){b.classList.add("done");const v=$("restval");if(v)v.textContent="FERTIG";
         setTimeout(()=>{if(b.isConnected&&b.classList.contains("done"))b.remove()},4000);}
       toast("Pause vorbei — "+(label||"nächster Satz"));
     }
   },500);
 }
+
+// ===== Bildschirm an (Wake Lock) + dunkler Pausenbildschirm =====
+let wakeLk=null,darkT=null,restCtx=null,darkAt=0;
+function screenOn(){return state.settings.screenOn!==false}
+function toggleScreen(){state.settings.screenOn=!screenOn();saveJ("settings",state.settings);if(!screenOn()){clearTimeout(darkT);const d=$("restdark");if(d)d.remove()}else armDark();render()}
+function wakeOn(){if(!screenOn())return wakeOff();try{if(navigator.wakeLock&&!wakeLk){wakeLk="pending";navigator.wakeLock.request("screen").then(l=>{wakeLk=l;l.addEventListener("release",()=>{wakeLk=null})}).catch(()=>{wakeLk=null})}}catch(e){wakeLk=null}}
+function wakeOff(){try{if(wakeLk&&wakeLk.release)wakeLk.release()}catch(e){}wakeLk=null}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.active){wakeLk=null;wakeOn()}});
+function nextSetInfo(){const a=state.active;if(!a)return"";
+  for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return esc(e.name)+' · Satz '+(i+1)+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')}}
+  return"Alle Sätze erledigt"}
+function restLabelNow(){const a=state.active;if(!a)return"";for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0)return esc(e.name)+' · Satz '+(i+1)+' von '+e.sets.length}return""}
+function armDark(){clearTimeout(darkT);if(!screenOn()||!restCtx)return;darkAt=Date.now()+5000;darkT=setTimeout(showDark,5000);updDark()}
+function showDark(){if(!restCtx||$("restdark"))return;const d=document.createElement("div");d.id="restdark";
+  d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+restLabelNow()+'</div><div class="rd-h">Antippen für Ansicht</div>';
+  d.onclick=()=>{d.remove();armDark()};document.body.appendChild(d);updDark()}
+function updDark(){if(!restCtx)return;const left=Math.max(0,Math.round((restCtx.end-Date.now())/1000));const t=$("rdt");if(t)t.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
+  const arc=$("rdarc");if(arc)arc.setAttribute("stroke-dashoffset",(339.3*(1-left/restCtx.sec)).toFixed(1));
+  const h=$("restdk");if(h){const r=Math.ceil((darkAt-Date.now())/1000);h.textContent=screenOn()&&r>0&&!$("restdark")?"dunkel in "+r+" s":""}}
+function showEndRing(){clearTimeout(darkT);restCtx=null;let d=$("restdark");if(d)d.remove();d=document.createElement("div");d.id="restdark";d.className="end";
+  d.innerHTML='<div class="rd-ring2"></div><div class="rd-t">0:00</div><div class="rd-s">'+nextSetInfo()+'</div><div class="rd-h">Antippen → zurück zur Übung</div>';
+  d.onclick=()=>{d.remove();const o=document.querySelector(".l-open");if(o)o.scrollIntoView({block:"center",behavior:"smooth"})};document.body.appendChild(d)}
+document.addEventListener("pointerdown",e=>{if(restCtx&&screenOn()&&!e.target.closest("#restdark"))armDark()},{passive:true});
 function pinTimer(){
   const b=$("resttimer");if(!b)return;
   const vv=window.visualViewport;
@@ -975,7 +1010,7 @@ function pinTimer(){
 }
 (function(){const vv=window.visualViewport;if(vv){vv.addEventListener("scroll",pinTimer);vv.addEventListener("resize",pinTimer)}
   window.addEventListener("scroll",pinTimer,{passive:true})})();
-function stopRest(){if(restIv){clearInterval(restIv);restIv=null}beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
+function stopRest(){if(restIv){clearInterval(restIv);restIv=null}clearTimeout(darkT);restCtx=null;const dk=$("restdark");if(dk)dk.remove();beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
   if(s.rir!==null&&num(s.r)>0){                                   // Satz abgeschlossen → Pause starten
