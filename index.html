@@ -16,13 +16,13 @@
 <style>
 :root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));min-height:100vh;min-height:100dvh}
+html{height:100%;background:var(--bg)}body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;height:100%;height:100dvh;overflow:hidden}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
-header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 10px;z-index:10}
+header{position:relative;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 10px;z-index:10}
 header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
 #hinfo{float:right;font-size:11px;color:var(--mut)}
-main{padding:16px;display:flex;flex-direction:column;gap:12px}
-nav{position:fixed;bottom:0;left:0;right:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-bottom:env(safe-area-inset-bottom,0px);transform:translateZ(0);-webkit-backface-visibility:hidden}
+main{padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}main>*{flex-shrink:0}
+nav{position:relative;flex-shrink:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-bottom:env(safe-area-inset-bottom,0px)}
 nav button:active{background:rgba(239,68,68,.15)}
 nav button{flex:1;min-width:0;min-height:60px;padding:19px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
@@ -288,7 +288,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v135";
+const APP_VERSION="v136";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -709,7 +709,7 @@ function deloadDates(){
   return new Set(list.map(x=>x.date));
 }
 function goHome(){editPlanId=null;state.calSel=null;state.wkOff=0;state.showOther=false;go("training")}
-function go(t){state.tab=t;state.confirmDel=null;render();window.scrollTo(0,0)}
+function go(t){state.tab=t;state.confirmDel=null;render();$("main").scrollTo(0,0)}
 // ================= Training Home =================
 function vHome(){
   const p=activePlan();const ll=[...state.logs].sort((a,b)=>b.date.localeCompare(a.date))[0];
@@ -768,7 +768,7 @@ function wkCenter(smooth){const el=document.getElementById("wkstrip"),td=documen
   el.scrollTo({left:td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2,behavior:smooth?"smooth":"auto"})}
 function wkScroll(days){const el=document.getElementById("wkstrip");if(!el)return;const c=el.querySelector(".h-d:not(.now)");el.scrollBy({left:days*((c?c.offsetWidth:48)+5),behavior:"smooth"})}
 function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(state.wkPos!=null){el.scrollLeft=state.wkPos;if(!state.calSel)state.wkPos=null}else wkCenter(false);
-  const kc=document.getElementById("hdaycard");if(kc&&(state.wkJump||(state.calPanel||null)!==(state._lp||null))){state.wkJump=false;state._lp=state.calPanel;const r=kc.getBoundingClientRect(),nv=document.querySelector("nav"),lim=innerHeight-(nv?nv.offsetHeight:70)-12;if(r.bottom>lim)window.scrollBy({top:Math.min(r.bottom-lim,r.top-70),behavior:"smooth"})}
+  const kc=document.getElementById("hdaycard");if(kc&&(state.wkJump||(state.calPanel||null)!==(state._lp||null))){state.wkJump=false;state._lp=state.calPanel;const mn=$("main"),r=kc.getBoundingClientRect(),mr=mn.getBoundingClientRect(),lim=mr.bottom-12;if(r.bottom>lim)mn.scrollBy({top:Math.min(r.bottom-lim,r.top-mr.top-10),behavior:"smooth"})}
   const back=document.getElementById("wkback"),td=document.getElementById("wktoday");
   el.addEventListener("scroll",()=>{if(!back||!td)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2;back.style.visibility=Math.abs(el.scrollLeft-c)>60?"visible":"hidden"},{passive:true})}
 // ================= Logger =================
@@ -982,13 +982,6 @@ function startRest(sec,label){
 }
 
 
-// iOS-Startfehler: falsche Viewport-Höhe beim ersten Öffnen → Navigation neu positionieren
-function fixNav(){try{const n=document.querySelector("nav");if(!n)return;n.style.display="none";void n.offsetHeight;n.style.display="";
-  const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}catch(e){}}
-window.addEventListener("load",()=>{setTimeout(fixNav,100);setTimeout(fixNav,500)});
-window.addEventListener("pageshow",()=>setTimeout(fixNav,100));
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(fixNav,100)});
-window.addEventListener("orientationchange",()=>setTimeout(fixNav,300));
 // ===== Bildschirm an (Wake Lock) + dunkler Pausenbildschirm =====
 let wakeLk=null,darkT=null,restCtx=null,darkAt=0;
 function screenOn(){return state.settings.screenOn!==false}
@@ -1017,7 +1010,7 @@ function pinTimer(){
   if(vv){b.style.top=Math.max(0,vv.offsetTop)+"px";b.style.width=vv.width+"px";b.style.left=vv.offsetLeft+"px"}
 }
 (function(){const vv=window.visualViewport;if(vv){vv.addEventListener("scroll",pinTimer);vv.addEventListener("resize",pinTimer)}
-  window.addEventListener("scroll",pinTimer,{passive:true})})();
+  const mn=document.getElementById("main");if(mn)mn.addEventListener("scroll",pinTimer,{passive:true})})();
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}clearTimeout(darkT);restCtx=null;const dk=$("restdark");if(dk)dk.remove();beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
@@ -1384,7 +1377,7 @@ function vStats(){
     g.perEx.forEach(e=>{const s=e.series||[];let sp="";
       if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
       const dkg=e.last-e.first;
-      h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();window.scrollTo({top:0,behavior:\'smooth\'})"><span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
+      h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();document.getElementById(\'main\').scrollTo({top:0,behavior:\'smooth\'})"><span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
     h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';
   }
   if(tab==="mehr"){
