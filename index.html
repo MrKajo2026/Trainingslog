@@ -280,6 +280,12 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .xc-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--s2)}.xc-grid div{padding:7px 4px;text-align:center;border-left:1px solid var(--s2)}.xc-grid div:first-child{border-left:none}.xc-grid small{display:block;font-size:9.5px;color:var(--mut)}.xc-grid b{font-size:13px}
 .xc-info{border-top:1px solid var(--s2);padding:8px 11px;display:flex;flex-direction:column;gap:4px;font-size:12px;color:#c8c8cc}.xc-info div{display:flex;gap:8px}.xc-info i{font-style:normal;color:var(--mut);flex:0 0 90px}
 .lib-open{margin-top:6px}
+.h-scroll .h-d{padding:4px 0 5px!important}.h-d small{font-size:9.5px}.h-d b{font-size:14px;margin-top:0}.h-d em{margin-top:2px;min-height:11px;font-size:9px}.h-d.now b{font-size:16px}
+/* Pictogramme in Listen */
+.pi{flex-shrink:0;border-radius:9px;background:radial-gradient(circle at 50% 38%,#2e2e32,#141416 72%);display:inline-grid;place-items:center;overflow:hidden}.pi svg{width:100%;height:100%;display:block}
+.pi.s32{width:32px;height:32px;border-radius:8px}.pi.s34{width:34px;height:34px;border-radius:8px}.pi.s52{width:52px;height:52px;border-radius:11px}.pi.s60{width:60px;height:60px;border-radius:12px}
+.l-row .l-rn{flex:1;min-width:0}
+main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
 </style>
 </head>
 <body>
@@ -354,7 +360,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v166";
+const APP_VERSION="v167";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -925,13 +931,13 @@ function vLogger(){
   a.entries.forEach((e,ei)=>{
     const done=exDone(e),open=isOpenEx(ei);
     if(!open){
-      h+='<button id="ex-'+ei+'" class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span><span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+'</span><span class="l-rs mono">'+exSum(e)+'</span></button>';
+      h+='<button id="ex-'+ei+'" class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span>'+pi(e.exerciseId,e.name,"s32")+'<span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+'</span><span class="l-rs mono">'+exSum(e)+'</span></button>';
       return;}
     const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
     const rec=a.deload?null:recommendFor(e);
     const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>num(x.w))):0;
     const dlW=dlBase?roundPlate(dlBase*DELOAD_LOAD):0;
-    h+='<div id="ex-'+ei+'" class="card l-open"><div class="row" style="justify-content:space-between;gap:6px"><button class="l-title" onclick="toggleEx('+ei+')">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' <span style="color:var(--sky);font-size:11px">⇄</span>':'')+'</button>'
+    h+='<div id="ex-'+ei+'" class="card l-open"><div class="row" style="justify-content:space-between;gap:10px">'+pi(e.exerciseId,e.name,"s52")+'<button style="flex:1;text-align:left" class="l-title" onclick="toggleEx('+ei+')">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' <span style="color:var(--sky);font-size:11px">⇄</span>':'')+'</button>'
      +'<span class="row" style="gap:6px"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+(e.rest?' · ⏱'+fmtRest(e.rest):'')+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
     if(e.ss&&(ei===0||a.entries[ei-1].ss!==e.ss))h+='<p class="tiny" style="color:var(--sky);margin-top:4px">Supersatz '+esc(e.ss)+': im Wechsel mit der nächsten Übung, volle Pause nach dem Durchgang</p>';
     if(e.note)h+='<p class="note-a" style="margin-top:5px">'+esc(e.note)+'</p>';
@@ -1069,8 +1075,14 @@ window.addEventListener("load",()=>{const i=document.querySelector(".hban");if(i
 // Startseite/Kalender: alles ohne Scrollen sichtbar → Ring bzw. Kalenderzeilen bei Platzmangel verkleinern
 function fitPage(){try{const m=$("main");if(!m||!m.classList.contains("fill"))return;
   const over=()=>m.scrollHeight-m.clientHeight;
-  if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r||state.calSel)return;   // Funktionsleiste offen → nicht stauchen, Seite scrollt
-    for(let i=0;i<3&&over()>0;i++){const sz=Math.max(176,r.offsetHeight-over()-2);r.style.width=r.style.height=sz+"px";if(sz===176)break}}
+  if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r)return;
+    // Platz für die Funktionsleiste unter der Tagesleiste immer einplanen → Ringgröße bleibt beim Auf-/Zuklappen gleich
+    const card=$("hdaycard"),hero=m.querySelector(".h-hero");if(card)state._barH=card.offsetHeight+12;
+    r.style.width=r.style.height="";m.classList.remove("tight");if(hero)hero.style.flex="0 0 auto";
+    const used=()=>{const lc=m.lastElementChild;return lc?lc.getBoundingClientRect().bottom-m.getBoundingClientRect().top+m.scrollTop+parseFloat(getComputedStyle(m).paddingBottom):0};
+    let D=r.offsetHeight,over0=used()-m.clientHeight+(card?0:(state._barH||89));
+    if(over0>D-180){m.classList.add("tight");if(card)state._barH=card.offsetHeight+8;D=r.offsetHeight;over0=used()-m.clientHeight+(card?0:(state._barH||85))}
+    const sz=Math.max(m.classList.contains("tight")?156:176,D-Math.max(0,over0));r.style.width=r.style.height=sz+"px";if(hero)hero.style.flex="";}
   else if(state.tab==="kalender"){const g=m.querySelector(".k-grid");if(!g)return;const rows=Math.ceil(g.querySelectorAll(".k-d,.k-e").length/7);
     for(let i=0;i<3&&over()>0;i++){const cur=parseFloat(getComputedStyle(g.querySelector(".k-d")).minHeight)||56;const nh=Math.max(40,Math.floor(cur-over()/rows)-1);
       g.querySelectorAll(".k-d,.k-e").forEach(e=>{e.style.minHeight=nh+"px"});if(nh===40)break}}
@@ -1162,6 +1174,7 @@ function drawRules(){const ap=activePlan();
    +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>';
   if(state.tab==="plaene")anchorSub()}
 // ===== Übungs-Pictogramme (eigene Vektorzeichnungen) =====
+const pi=(id,n,c)=>'<span class="pi '+c+'">'+PICTO.svg(id,n)+'</span>';
 const PICTO=(()=>{
   const R="#e0473c",SK="#c9c9ce",SKD="#8e8e94",MC="#6e6e74",PAD="#3b3b40";
   const f=n=>n.toFixed(1);
@@ -1353,7 +1366,7 @@ function vPlans(){
       const mm=MUSCLE_MAP[ex.id];const isF=mm&&ms.focus.includes(mm.p)&&!/Prehab|BW|Core|3s/i.test(ex.scheme||"");
       const xtra=isF?mesoExtraFor(ex.id,ms.add):0;
       const paused=!(ex.sets>0);
-      h+='<div class="p-ex'+(paused?" off":"")+'"><div class="p-n"><b>'+esc(ex.name)+(ex.ss?' <span class="l-ss">SS '+esc(ex.ss)+'</span>':'')+'</b>'
+      h+='<div class="p-ex'+(paused?" off":"")+'">'+pi(ex.id,ex.name,"s60")+'<div class="p-n"><b>'+esc(ex.name)+(ex.ss?' <span class="l-ss">SS '+esc(ex.ss)+'</span>':'')+'</b>'
        +'<span>'+(paused?'pausiert':ex.sets+' × '+esc(ex.reps)+' · '+esc(ex.scheme)+(ex.rest?' · '+fmtRest(ex.rest):'')+(xtra?' · <b style="color:var(--grn)">+'+xtra+' Meso</b>':''))+'</span>'
        +(ex.note?'<span class="p-note">'+esc(ex.note)+'</span>':'')+'</div>'
        +'<div class="p-w">'+(()=>{const lb=lastByEx()[ex.id];const lw=lb?Math.max(...lb.sets.map(x=>num(x.w))):0;
@@ -1637,7 +1650,7 @@ function vStats(){
     g.perEx.forEach(e=>{const s=e.series||[];let sp="";
       if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
       const dkg=e.last-e.first;
-      h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();document.getElementById(\'main\').scrollTo({top:0,behavior:\'smooth\'})"><span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
+      h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();document.getElementById(\'main\').scrollTo({top:0,behavior:\'smooth\'})">'+pi(e.id,e.name,"s34")+'<span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
     h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';
   }
   if(tab==="mehr"){
