@@ -288,7 +288,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v134";
+const APP_VERSION="v135";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -981,6 +981,14 @@ function startRest(sec,label){
   },500);
 }
 
+
+// iOS-Startfehler: falsche Viewport-Höhe beim ersten Öffnen → Navigation neu positionieren
+function fixNav(){try{const n=document.querySelector("nav");if(!n)return;n.style.display="none";void n.offsetHeight;n.style.display="";
+  const y=window.scrollY;window.scrollTo(0,y+1);window.scrollTo(0,y)}catch(e){}}
+window.addEventListener("load",()=>{setTimeout(fixNav,100);setTimeout(fixNav,500)});
+window.addEventListener("pageshow",()=>setTimeout(fixNav,100));
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(fixNav,100)});
+window.addEventListener("orientationchange",()=>setTimeout(fixNav,300));
 // ===== Bildschirm an (Wake Lock) + dunkler Pausenbildschirm =====
 let wakeLk=null,darkT=null,restCtx=null,darkAt=0;
 function screenOn(){return state.settings.screenOn!==false}
