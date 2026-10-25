@@ -256,6 +256,16 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-d.now,.h-d.now.plan,.h-d.now.plan.dl{background:var(--chrome);border-color:#e6e6e6;color:#0b0b0b}
 .h-d.now small,.h-d.now em,.h-d.now.plan em,.h-d.now.plan.dl em{color:#2a2a2a;-webkit-text-fill-color:#2a2a2a;background:none}
 .h-d.now{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #d8d8d8,0 6px 16px rgba(255,255,255,.12)}
+.p-sel{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--tx);font-size:20px;font-weight:800;padding:0}
+.p-sel i{font-style:normal;font-size:11px;color:var(--mut);border:1px solid var(--s2);border-radius:6px;padding:2px 6px}
+.lib-sheet{max-height:86vh;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
+.lib-chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;padding-bottom:2px}.lib-chips span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--s2);color:var(--mut);white-space:nowrap;cursor:pointer}.lib-chips span.on{background:var(--chrome);color:#0b0b0b}
+.lib-r{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--s2);cursor:pointer}.lib-r .n{flex:1;min-width:0}.lib-r .n b{display:block;font-size:14px}.lib-r .n span{font-size:11px;color:var(--mut)}
+.lib-tag{font-size:10px!important;font-weight:700;border-radius:5px;padding:2px 6px;background:rgba(220,220,220,.12);color:#dcdcdc!important;margin-left:4px;white-space:nowrap}.lib-tag.off{background:none;border:1px dashed var(--s3);color:var(--mut)!important}
+.lib-w{text-align:right;flex-shrink:0}.lib-w b{font-size:14px;display:block}.lib-w span{font-size:10px}
+.lib-open{background:var(--s2);border-radius:10px;padding:10px;margin:2px 0 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.lib-open .chip{flex:1;text-align:center;padding:8px;background:var(--s1)}
+.h-tiles.t4{grid-template-columns:repeat(4,1fr);gap:6px}.h-tiles.t4 .h-t{padding:9px 8px}.h-tiles.t4 .h-t b{font-size:17px}.h-tiles.t4 .h-t span{font-size:10.5px}
+.k-d.now b{background:var(--chrome)!important;color:#0b0b0b!important}
 </style>
 </head>
 <body>
@@ -330,7 +340,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v155";
+const APP_VERSION="v156";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -730,6 +740,7 @@ function render(){
   fitPage();
   if(state.tab==="training"&&!state.active)wkSwipe();
   if(state.active)wakeOn();else wakeOff();
+  if(state.libOpen&&state.tab==="plaene")drawLib();
   growAll();
   initSwipe();
   updUndoBtn();
@@ -1120,7 +1131,37 @@ function doSwap(ei,libId){pushUndo();const lib=state.library.find(l=>l.id===libI
   draftSave();closeSwap();render()}
 function showRules(){const ap=activePlan();
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="$(\'overlay\').innerHTML=\'\'">✕</button></div>'
-   +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")+'</div></div>'}
+   +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
+   +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")
+   +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>'}
+// ===== Übungsbibliothek als Fenster =====
+function showLibSheet(){state.libOpen=true;state.libQ="";state.libG="Alle";state.libSel=null;drawLib()}
+function closeLib(){state.libOpen=false;state.mergeFrom=null;state.renameId=null;$("overlay").innerHTML=""}
+function libRows(){const ap=activePlan(),lb=lastByEx(),q=(state.libQ||"").toLowerCase(),G=state.libG||"Alle";
+  const gr={};growth(state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)),state.library).perEx.forEach(e=>gr[e.id]=e.pct);
+  const inPlan=id=>ap.sessions.filter(se=>se.exercises.some(x=>x.id===id&&x.sets>0)).map(se=>se.name);
+  let h='';
+  if(state.mergeFrom)h+='<p class="tiny" style="color:#e2e2e2;background:var(--s2);border-radius:8px;padding:7px 9px;margin:6px 0">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'“ werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;drawLib()">Abbrechen</button></p>';
+  const list=[...state.library].sort((a,b)=>a.name.localeCompare(b.name)).filter(e=>(!q||e.name.toLowerCase().includes(q))&&(G==="Alle"||((MUSCLE_MAP[e.id]||{}).p||"Sonstige")===G));
+  if(!list.length)h+='<p class="tiny" style="padding:14px 0;text-align:center">Keine Übung gefunden.</p>';
+  list.forEach(e=>{const ip=inPlan(e.id),l=lb[e.id],lw=l?Math.max(...l.sets.map(x=>num(x.w))):0,pc=gr[e.id],grp=(MUSCLE_MAP[e.id]||{}).p||"Sonstige",open=state.libSel===e.id;
+    h+='<div class="lib-r" onclick="state.libSel=state.libSel===\''+e.id+'\'?null:\''+e.id+'\';state.renameId=null;drawLib()"><div class="n"><b>'+esc(e.name)+'</b><span>'+esc(grp)+' · '+esc(e.reps||"")+'</span><span class="lib-tag'+(ip.length?'':' off')+'">'+(ip.length?esc(ip.join(" · ")):'nicht im Plan')+'</span></div>'
+     +'<div class="lib-w">'+(state.mergeFrom&&state.mergeFrom!==e.id?'<button class="chip" onclick="event.stopPropagation();doMerge(\''+e.id+'\')">← hierher</button>':'<b>'+(lw>0?String(lw).replace(".",",")+' kg':'–')+'</b>'+(pc!=null&&Math.abs(pc)>=1?'<span style="color:'+(pc>0?'var(--grn)':'var(--red2)')+'">'+(pc>0?'↑ +':'↓ ')+Math.round(pc)+' %</span>':''))+'</div></div>';
+    if(open&&!state.mergeFrom){
+      if(state.renameId===e.id)h+='<div class="lib-open"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1 1 100%"><button class="chip" onclick="doRename(\''+e.id+'\')">Speichern</button><button class="chip" onclick="state.renameId=null;drawLib()">Abbrechen</button></div>';
+      else if(state.libSet===e.id)h+='<div class="lib-open"><input type="text" id="ls-'+e.id+'" value="'+esc(e.setting||"")+'" placeholder="Geräteeinstellung, z.B. Sitz 4" style="flex:1 1 100%"><button class="chip" onclick="libSaveSet(\''+e.id+'\')">Speichern</button><button class="chip" onclick="state.libSet=null;drawLib()">Abbrechen</button></div>';
+      else h+='<div class="lib-open">'+(e.setting?'<p class="tiny" style="flex:1 1 100%">⚙ '+esc(e.setting)+'</p>':'')+'<button class="chip" onclick="state.renameId=\''+e.id+'\';drawLib()">✎ Umbenennen</button><button class="chip" onclick="state.libSet=\''+e.id+'\';drawLib()">⚙ Einstellung</button><button class="chip" onclick="startMerge(\''+e.id+'\')">⇄ Zusammenführen</button><button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" style="flex:1" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Wirklich löschen?":"Löschen")+'</button></div>'}
+  });
+  return h}
+function libSaveSet(id){const v=($("ls-"+id)||{}).value||"";const e=state.library.find(x=>x.id===id);if(e){e.setting=v.trim();saveJ("library",state.library)}state.libSet=null;drawLib();toast("Einstellung gespeichert")}
+function drawLib(){if(!state.libOpen)return;
+  const groups=["Alle"].concat([...new Set(state.library.map(e=>(MUSCLE_MAP[e.id]||{}).p||"Sonstige"))].sort((a,b)=>(MUSCLE_ORDER.indexOf(a)+1||99)-(MUSCLE_ORDER.indexOf(b)+1||99)));
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)closeLib()"><div class="sheet lib-sheet"><div class="s-h"><b style="font-size:17px">Übungsbibliothek</b><span class="row" style="gap:6px"><button class="chip" style="color:#e2e2e2" onclick="state.libNew=!state.libNew;drawLib()">'+(state.libNew?'✕ Neu':'+ Neu')+'</button><button class="c-x" onclick="closeLib()">✕</button></span></div>'
+   +(state.libNew?'<div class="lib-open" style="margin:4px 0 8px"><input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)" style="flex:1 1 100%"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"><button class="chip" style="flex:1 1 100%;padding:10px" onclick="addLib();state.libNew=false;drawLib()">+ In Bibliothek aufnehmen</button></div>':'')
+   +'<input type="text" placeholder="Übung suchen …" value="'+esc(state.libQ||"")+'" oninput="state.libQ=this.value;$(\'libList\').innerHTML=libRows()">'
+   +'<div class="lib-chips">'+groups.map(g=>'<span class="'+((state.libG||"Alle")===g?"on":"")+'" onclick="state.libG=\''+g+'\';drawLib()">'+esc(g)+(g==="Alle"?' '+state.library.length:'')+'</span>').join("")+'</div>'
+   +'<div id="libList">'+libRows()+'</div></div></div>'}
+
 function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
 // ================= Pläne =================
 let editPlanId=null,showLib=false,showNewPlan=false;
@@ -1131,9 +1172,16 @@ function vPlans(){
   const older=sorted.filter(p=>p.id!==ap.id);
   if(!state.planSes||!ap.sessions.some(s=>s.id===state.planSes))state.planSes=(ap.sessions[0]||{}).id;
   const ms=mesoState();
-  let h='<div class="s-card"><div class="s-h"><b style="font-size:18px">'+esc(ap.name.split(" · ")[0])+'</b><span class="row" style="gap:6px"><button class="chip" onclick="showRules()">Regeln</button><button class="chip" style="color:var(--red2)" onclick="editPlan(\''+ap.id+'\')">Bearbeiten</button></span></div>'
-   +'<p class="tiny">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv · '+ap.sessions.length+' Einheiten · seit '+fmtD(ap.createdAt)+'</p>'
-   +(ap.versions&&ap.versions.length?'<details style="margin-top:6px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div>';
+  const pcard=p=>'<div class="s-row" style="align-items:center"><span style="flex:1;min-width:0"><b style="font-size:13px;color:var(--tx)">'+esc(p.name)+'</b><br><span class="tiny">seit '+fmtD(p.createdAt)+(p.id===ap.id?' · aktiv':'')+'</span></span><span class="row" style="gap:4px">'
+    +(p.id===ap.id?'<span style="font-size:12px;font-weight:700;color:#e2e2e2">✓ aktiv</span>':'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button><button class="chip" onclick="editPlan(\''+p.id+'\')">✎</button>'
+    +'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Sicher?":"✕")+'</button>')+'</span></div>';
+  let h='<div class="s-card"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip" onclick="showLibSheet()">Übungen</button><button class="chip" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎ Bearbeiten</button></span></div>';
+  if(state.planList){const ord=[ap].concat(sorted.filter(p=>p.id!==ap.id));const shown=state.planAll?ord:ord.slice(0,4);
+    h+='<div style="margin-top:10px;border-top:1px solid var(--s2)">'+shown.map(pcard).join("")+'</div>'
+     +(sorted.length>4&&!state.planAll?'<button class="chip" style="width:100%;padding:8px;margin-top:6px;background:none" onclick="state.planAll=true;render()">+ '+(sorted.length-4)+' ältere Versionen</button>':'')
+     +(showNewPlan?'<div class="row" style="margin-top:8px"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
+       :'<button class="chip" style="width:100%;padding:10px;margin-top:8px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>')}
+  h+='</div>';
   h+='<div class="p-tabs">'+ap.sessions.map(s=>'<button class="'+(s.id===state.planSes?"on":"")+'" onclick="state.planSes=\''+s.id+'\';render()">'+esc(s.name)+'</button>').join("")+'</div>';
   const se=ap.sessions.find(s=>s.id===state.planSes);
   if(se){
@@ -1149,25 +1197,6 @@ function vPlans(){
           return lw>0?String(lw).replace(".",",")+' kg<small>zuletzt</small>':num(ex.start)>0?String(ex.start).replace(".",",")+' kg<small>Start</small>':'<span style="color:var(--amb)">neu</span>'})()+'</div></div>'});
     h+='</div>';
   }
-  // Bibliothek
-  h+='<details class="s-card p-det"'+(showLib?' open':'')+' ontoggle="showLib=this.open"><summary><b>Übungsbibliothek</b><span>'+state.library.length+' ▾</span></summary><div style="margin-top:10px;max-height:300px;overflow-y:auto">';
-  if(state.mergeFrom)h+='<p class="tiny" style="color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:8px;padding:6px 9px;margin-bottom:6px">Ziel wählen — Daten von „'+esc((state.library.find(x=>x.id===state.mergeFrom)||{}).name||"")+'“ werden übertragen. <button class="chip" style="padding:2px 8px" onclick="state.mergeFrom=null;render()">Abbrechen</button></p>';
-  [...state.library].sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
-    const isSrc=state.mergeFrom===e.id;const cnt=state.logs.reduce((a,l)=>a+l.entries.filter(x=>x.exerciseId===e.id).length,0);
-    if(state.renameId===e.id){h+='<div class="row" style="gap:5px;background:rgba(56,189,248,.12);border-radius:8px;padding:7px 9px;margin-bottom:5px"><input type="text" id="rn-'+e.id+'" value="'+esc(e.name)+'" style="flex:1;font-size:13px"><button class="chip" style="padding:7px 10px" onclick="doRename(\''+e.id+'\')">OK</button><button class="chip" style="padding:7px 9px" onclick="state.renameId=null;render()">✕</button></div>';return}
-    h+='<div class="row" style="justify-content:space-between;background:'+(isSrc?"rgba(56,189,248,.15)":"rgba(63,63,70,.35)")+';border-radius:8px;padding:7px 9px;margin-bottom:5px"><span style="font-size:13px;flex:1">'+esc(e.name)+' <span class="tiny">'+esc(e.reps)+(cnt?' · '+cnt+'× geloggt':'')+(e.setting?' · ⚙ '+esc(e.setting):'')+'</span></span><span class="row" style="gap:4px">'
-     +(state.mergeFrom&&!isSrc?'<button class="chip" style="padding:3px 9px;color:var(--sky)" onclick="doMerge(\''+e.id+'\')">← hierher</button>':'<button class="chip" style="padding:3px 7px;font-size:11px" onclick="state.renameId=\''+e.id+'\';render()">✎</button><button class="chip" style="padding:3px 7px;font-size:11px" onclick="startMerge(\''+e.id+'\')">⇄</button>')
-     +'<button class="del'+(state.confirmDel==="l:"+e.id?" sure":"")+'" onclick="delLib(\''+e.id+'\')">'+(state.confirmDel==="l:"+e.id?"Sicher?":"✕")+'</button></span></div>'});
-  h+='</div><div style="border-top:1px solid var(--s2);padding-top:10px;margin-top:6px;display:flex;flex-direction:column;gap:6px"><p class="tiny">Neue Übung</p>'
-   +'<input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)">'
-   +'<div class="row"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"></div>'
-   +'<button class="chip" style="padding:10px" onclick="addLib()">+ In Bibliothek aufnehmen</button></div></details>';
-  // Ältere Versionen + neuer Plan
-  const card=p=>'<div class="s-row" style="align-items:center"><span style="flex:1"><b style="font-size:13px;color:var(--tx)">'+esc(p.name)+'</b><br><span class="tiny">seit '+fmtD(p.createdAt)+'</span></span><span class="row" style="gap:4px"><button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button><button class="chip" onclick="editPlan(\''+p.id+'\')">✎</button>'
-    +'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Sicher?":"✕")+'</button></span></div>';
-  h+='<details class="s-card p-det"><summary><b>Trainingspläne</b><span>'+older.length+' ▾</span></summary><div style="margin-top:6px">'+older.map(card).join("")+'</div>'
-   +(showNewPlan?'<div class="row" style="margin-top:8px"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
-     :'<button class="chip" style="width:100%;padding:10px;margin-top:8px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>')+'</details>';
   return h;
 }
 function activatePlan(id){
@@ -1411,7 +1440,8 @@ function vStats(){
   if(tab==="ueberblick"){
     h+='<div class="s-card"><div class="s-h s-hb"><b>Kraft</b><span class="s-hv s-chr">'+(g.overall==null?"–":sg(g.overall)+" %")+'</span></div><div id="kchart"></div></div>';
     const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
-    h+='<div class="h-tiles"><div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
+    const li0=loadIndex();
+    h+='<div class="h-tiles t4"><div class="h-t"><b>'+(li0?fx(li0.acwr,2):"–")+'</b><span>Wochenlast</span></div><div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
      +'<div class="h-t"><b>'+(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div>'
      +'<div class="h-t"><b style="color:'+(inT>=7?"var(--grn)":"var(--amb)")+'">'+inT+' / '+MUSCLE_ORDER.length+'</b><span>Muskeln im Ziel</span></div></div>';
     if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
