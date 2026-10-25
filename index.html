@@ -270,6 +270,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-scroll{scroll-snap-type:x mandatory!important;padding:10px 0 10px!important;scroll-padding:0}
 .h-scroll .h-d,.h-scroll .h-d.now{flex:0 0 calc((100% - 30px)/7)!important;scroll-snap-align:start!important}
 .h-d.now{transform:translateY(-3px)}
+.h-t.f-t{align-items:center;text-align:center;justify-content:space-between;gap:6px;padding:9px 4px 11px!important}.h-t.f-t span{font-size:11px!important;color:var(--mut);font-weight:600}.h-t.f-t b{font-size:19px!important}.h-t.f-t b small{font-size:11px}
 </style>
 </head>
 <body>
@@ -344,7 +345,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v161";
+const APP_VERSION="v162";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1459,9 +1460,8 @@ function vStats(){
     h+='<div class="s-card"><div class="s-h s-hb"><b>Kraft</b><span class="s-hv s-chr">'+(g.overall==null?"–":sg(g.overall)+" %")+'</span></div><div id="kchart"></div></div>';
     const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
     const li0=loadIndex();
-    h+='<div class="h-tiles t4"><div class="h-t"><b>'+(li0?fx(li0.acwr,2):"–")+'</b><span>Wochenlast</span></div><div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
-     +'<div class="h-t"><b>'+(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div>'
-     +'<div class="h-t"><b style="color:'+(inT>=7?"var(--grn)":"var(--amb)")+'">'+inT+' / '+MUSCLE_ORDER.length+'</b><span>Muskeln im Ziel</span></div></div>';
+    const tl=(t,v)=>'<div class="h-t f-t"><span>'+t+'</span><b>'+v+'</b></div>';
+    h+='<div class="h-tiles t4">'+tl("Wochenlast",li0?fx(li0.acwr,2):"–")+tl("Einheiten",pl.length)+tl("Gewicht",(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'<small> kg</small>')+tl("Muskeln",inT+'/'+MUSCLE_ORDER.length)+'</div>';
     if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
       h+='<div class="s-card"><div class="s-h s-hb"><b>Körpergewicht</b><span class="s-hv s-chr">'+(diff>0?"+":"")+fx(diff)+' kg</span></div><div id="wchart"></div></div>'}
     else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
