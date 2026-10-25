@@ -16,13 +16,13 @@
 <style>
 :root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%;background:var(--bg)}body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;height:100%;height:100dvh;overflow:hidden}
+html{height:100%;background:var(--bg)}body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;display:flex;flex-direction:column;height:100vh;height:var(--app-h,100vh);overflow:hidden}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
 header{position:relative;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 10px;z-index:10}
 header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
 #hinfo{float:right;font-size:11px;color:var(--mut)}
 main{padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}main>*{flex-shrink:0}
-nav{position:relative;flex-shrink:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav{position:relative;flex-shrink:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-bottom:max(calc(env(safe-area-inset-bottom,0px) - 12px),4px)}
 nav button:active{background:rgba(239,68,68,.15)}
 nav button{flex:1;min-width:0;min-height:60px;padding:19px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
@@ -97,7 +97,7 @@ textarea.grow{overflow:hidden;line-height:1.45;transition:height .08s linear}
 textarea{resize:none}
 
 button{color:inherit;font-family:inherit}
-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-transform:none!important;font-weight:600!important;padding:8px 2px!important;font-size:11px!important}
+nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-transform:none!important;font-weight:600!important;padding:6px 2px 4px!important;font-size:11px!important;min-height:0!important}
 nav button i{font-style:normal;font-size:19px;filter:grayscale(1);opacity:.55}nav button.on i{filter:none;opacity:1}
 nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .h-tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -288,7 +288,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v136";
+const APP_VERSION="v137";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -982,6 +982,10 @@ function startRest(sec,label){
 }
 
 
+// App-Höhe = echte Fensterhöhe (iOS meldet 100dvh im Home-Bildschirm-Modus zu klein)
+function setAppH(){try{const h=Math.max(window.innerHeight,document.documentElement.clientHeight);document.documentElement.style.setProperty("--app-h",h+"px")}catch(e){}}
+setAppH();window.addEventListener("resize",setAppH);window.addEventListener("orientationchange",()=>setTimeout(setAppH,300));window.addEventListener("pageshow",setAppH);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(setAppH,100)});setTimeout(setAppH,300);setTimeout(setAppH,1000);
 // ===== Bildschirm an (Wake Lock) + dunkler Pausenbildschirm =====
 let wakeLk=null,darkT=null,restCtx=null,darkAt=0;
 function screenOn(){return state.settings.screenOn!==false}
