@@ -258,7 +258,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-d.now{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #d8d8d8,0 6px 16px rgba(255,255,255,.12)}
 .p-sel{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--tx);font-size:20px;font-weight:800;padding:0}
 .p-sel i{font-style:normal;font-size:11px;color:var(--mut);border:1px solid var(--s2);border-radius:6px;padding:2px 6px}
-.lib-sheet{height:86vh;max-height:86vh;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
+.lib-sheet{height:86vh;max-height:86vh;overflow:hidden!important;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
 .lib-chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;padding-bottom:2px}.lib-chips span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--s2);color:var(--mut);white-space:nowrap;cursor:pointer}.lib-chips span.on{background:var(--chrome);color:#0b0b0b}
 .lib-r{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--s2);cursor:pointer}.lib-r .n{flex:1;min-width:0}.lib-r .n b{display:block;font-size:14px}.lib-r .n span{font-size:11px;color:var(--mut)}
 .lib-tag{font-size:10px!important;font-weight:700;border-radius:5px;padding:2px 6px;background:rgba(220,220,220,.12);color:#dcdcdc!important;margin-left:4px;white-space:nowrap}.lib-tag.off{background:none;border:1px dashed var(--s3);color:var(--mut)!important}
@@ -340,7 +340,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v158";
+const APP_VERSION="v159";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -741,6 +741,8 @@ function render(){
   if(state.tab==="training"&&!state.active)wkSwipe();
   if(state.active)wakeOn();else wakeOff();
   if(state.libOpen&&state.tab==="plaene")drawLib();
+  else if(state.rulesOpen&&state.tab==="plaene")drawRules();
+  if(state.tab!=="plaene"&&(state.libOpen||state.rulesOpen)){state.libOpen=state.rulesOpen=false;$("overlay").innerHTML=""}
   growAll();
   initSwipe();
   updUndoBtn();
@@ -1129,14 +1131,23 @@ function doSwap(ei,libId){pushUndo();const lib=state.library.find(l=>l.id===libI
   state.active.entries[ei]={exerciseId:lib.id,name:lib.name,reps:lib.reps,scheme:lib.scheme,note:lib.note||"",exNote:"",swapped:true,
     sets:Array.from({length:n},(_,i)=>({w:last&&last.sets[i]?last.sets[i].w:lib.start,r:"",rir:null}))};
   draftSave();closeSwap();render()}
-function showRules(){const ap=activePlan();
-  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="$(\'overlay\').innerHTML=\'\'">✕</button></div>'
+function showRules(){if(state.tab==="plaene"&&state.rulesOpen&&$("overlay").innerHTML){closeSub();return}
+  state.libOpen=false;state.rulesOpen=state.tab==="plaene";drawRules();if(state.tab==="plaene")render()}
+function closeSub(){state.libOpen=false;state.rulesOpen=false;state.mergeFrom=null;state.renameId=null;$("overlay").innerHTML="";if(state.tab==="plaene")render()}
+// Untermenü der Plan-Karte: Fenster beginnt unter der Karte, Knöpfe bleiben sichtbar
+function anchorSub(){const pc=$("pcard"),bg=document.querySelector("#overlay .sheet-bg"),sh=document.querySelector("#overlay .sheet");
+  if(!bg||!sh)return;const hd=document.querySelector("header");
+  const top=state.tab==="plaene"&&pc?Math.round(pc.getBoundingClientRect().bottom+6):hd?Math.round(hd.getBoundingClientRect().bottom):0;
+  const nv=document.querySelector("nav");bg.style.top=top+"px";bg.style.bottom=(nv?nv.offsetHeight:0)+"px";sh.style.height="100%";sh.style.borderRadius="18px";sh.style.maxHeight="none";sh.style.overflowY="auto";bg.onclick=e=>{if(e.target===bg)closeSub()}}
+function drawRules(){const ap=activePlan();
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="closeSub()">✕</button></div>'
    +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
    +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")
-   +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>'}
+   +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>';
+  if(state.tab==="plaene")anchorSub()}
 // ===== Übungsbibliothek als Fenster =====
-function showLibSheet(){state.libOpen=true;state.libQ="";state.libG="Alle";state.libSel=null;drawLib()}
-function closeLib(){state.libOpen=false;state.mergeFrom=null;state.renameId=null;$("overlay").innerHTML=""}
+function showLibSheet(){if(state.libOpen){closeSub();return}state.rulesOpen=false;state.libOpen=true;render();state.libQ="";state.libG="Alle";state.libSel=null;drawLib()}
+function closeLib(){closeSub()}
 function libRows(){const ap=activePlan(),lb=lastByEx(),q=(state.libQ||"").toLowerCase(),G=state.libG||"Alle";
   const gr={};growth(state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)),state.library).perEx.forEach(e=>gr[e.id]=e.pct);
   const inPlan=id=>ap.sessions.filter(se=>se.exercises.some(x=>x.id===id&&x.sets>0)).map(se=>se.name);
@@ -1161,8 +1172,7 @@ function drawLib(){if(!state.libOpen)return;
    +'<input type="text" placeholder="Übung suchen …" value="'+esc(state.libQ||"")+'" oninput="state.libQ=this.value;$(\'libList\').innerHTML=libRows()">'
    +'<div class="lib-chips">'+groups.map(g=>'<span class="'+((state.libG||"Alle")===g?"on":"")+'" onclick="state.libG=\''+g+'\';drawLib()">'+esc(g)+(g==="Alle"?' '+state.library.length:'')+'</span>').join("")+'</div>'
    +'<div id="libList">'+libRows()+'</div></div></div>';
-  const hd=document.querySelector("header"),bg=document.querySelector("#overlay .sheet-bg"),sh=document.querySelector("#overlay .lib-sheet");
-  if(hd&&bg&&sh){const top=Math.round(hd.getBoundingClientRect().bottom);bg.style.top=top+"px";sh.style.height="100%";sh.style.maxHeight="none"}
+  anchorSub();
   const ch=document.querySelector("#overlay .lib-chips .on");if(ch)ch.scrollIntoView({block:"nearest",inline:"center"})}
 
 function closeSwap(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").innerHTML=""}
@@ -1178,7 +1188,7 @@ function vPlans(){
   const pcard=p=>'<div class="s-row" style="align-items:center"><span style="flex:1;min-width:0"><b style="font-size:13px;color:var(--tx)">'+esc(p.name)+'</b><br><span class="tiny">seit '+fmtD(p.createdAt)+(p.id===ap.id?' · aktiv':'')+'</span></span><span class="row" style="gap:4px">'
     +(p.id===ap.id?'<span style="font-size:12px;font-weight:700;color:#e2e2e2">✓ aktiv</span>':'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button><button class="chip" onclick="editPlan(\''+p.id+'\')">✎</button>'
     +'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Sicher?":"✕")+'</button>')+'</span></div>';
-  let h='<div class="s-card"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip" onclick="showLibSheet()">Übungen</button><button class="chip" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎ Bearbeiten</button></span></div>';
+  let h='<div class="s-card" id="pcard"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip'+(state.libOpen?' on-r':'')+'" onclick="showLibSheet()">Übungen</button><button class="chip'+(state.rulesOpen?' on-r':'')+'" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎ Bearbeiten</button></span></div>';
   if(state.planList){const ord=[ap].concat(sorted.filter(p=>p.id!==ap.id));const shown=state.planAll?ord:ord.slice(0,4);
     h+='<div style="margin-top:10px;border-top:1px solid var(--s2)">'+shown.map(pcard).join("")+'</div>'
      +(sorted.length>4&&!state.planAll?'<button class="chip" style="width:100%;padding:8px;margin-top:6px;background:none" onclick="state.planAll=true;render()">+ '+(sorted.length-4)+' ältere Versionen</button>':'')
