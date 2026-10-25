@@ -220,6 +220,7 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .k-lab.tr{color:var(--red2)}.k-lab.dl{color:var(--amb)}.k-lab.pl,.k-lab.pdl{color:var(--mut)}.k-lab.ab{color:var(--sky)}.c-leg .k-lab{font-size:12px;font-weight:600}
 .k-d.now{background:none;color:var(--tx)}.k-d.now b{background:var(--amb);color:#111;border-radius:8px;padding:0 6px;font-weight:800}
 .k-d.sel{box-shadow:none;background:var(--s1);border-radius:10px}
+.k-abs summary{list-style:none;cursor:pointer}.k-abs summary::-webkit-details-marker{display:none}.k-abs[open] summary span{color:var(--tx)}
 </style>
 </head>
 <body>
@@ -294,7 +295,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v139";
+const APP_VERSION="v140";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -2022,16 +2023,14 @@ function vCal(){
   {const tot=startDow+days,fill=(7-tot%7)%7;for(let i=0;i<fill;i++)h+='<span class="k-e"></span>';}
   h+='</div>';
   h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">krank/Urlaub</span></div>';
-  if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' — danach automatisch neuer Zyklus</p>';
-  else if(pdIso)h+='<p class="tiny" style="text-align:center;color:var(--amb)">'+(pdIso<=today?'Deload fällig seit '+fmtD(pdIso):'Deload geplant ab '+fmtD(pdIso))+'</p>';
   // Tageskarte
   if(state.calSel)h+=dayCard(state.calSel);
   // Pausen
   const absList=(state.settings.absences||[]).slice().sort((a,b)=>a.from.localeCompare(b.from)).filter(a=>a.to>=todayISO());
   if(absList.length){
-    h+='<div class="s-card"><div class="s-h"><b>Pausen</b><span>'+absList.length+'</span></div>';
+    h+='<details class="s-card k-abs"'+(state.absOpen?' open':'')+' ontoggle="state.absOpen=this.open"><summary class="s-h" style="margin:0"><b>Anstehende Pausen</b><span>'+absList.length+' ▾</span></summary><div style="margin-top:8px">';
     absList.forEach(a=>{h+='<div class="s-row"><span style="color:'+(a.kind==="krank"?"var(--sky)":"var(--sky)")+'">'+absIcon(a)+' '+absName(a)+'</span><span class="mono">'+fmtD(a.from)+' – '+fmtD(a.to)+' <button class="del" style="margin-left:6px" onclick="delAbs(\''+a.from+'\')">✕</button></span></div>'});
-    h+='</div>';
+    h+='</div></details>';
   }
   return h;
 }
