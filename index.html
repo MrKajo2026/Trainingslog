@@ -221,6 +221,10 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .k-d.now{background:none;color:var(--tx)}.k-d.now b{background:var(--amb);color:#111;border-radius:8px;padding:0 6px;font-weight:800}
 .k-d.sel{box-shadow:none;background:var(--s1);border-radius:10px}
 .k-abs summary{list-style:none;cursor:pointer}.k-abs summary::-webkit-details-marker{display:none}.k-abs[open] summary span{color:var(--tx)}
+main.fill .h-hero{flex:1 1 auto;justify-content:center;gap:4px}
+main.fill .h-ring{width:clamp(196px,30vh,250px);height:clamp(196px,30vh,250px)}
+main.fill .k-grid{flex:1 1 auto;grid-auto-rows:1fr;grid-template-rows:auto}
+main.fill .k-d{height:auto;min-height:56px;justify-content:center;padding-top:0}main.fill .k-e{min-height:56px}
 </style>
 </head>
 <body>
@@ -244,7 +248,7 @@ sessions:[
  {id:"seawzsex",name:"Calf Extension (gestreckt)",sets:3,reps:"8-12",scheme:"1/1/0",start:110,rest:90,note:"Knie ~170° · Gastrocnemius · volle Dehnung · Satz 1 bei 12 beenden"},
  {id:"crunch-maschine",name:"Crunch-Maschine",sets:3,reps:"10-15",scheme:"1/1/0",start:"",rest:90,note:"Ohne Greifen: Griffe nur locker anlegen bzw. Arme verschränkt · Rumpf einrollen, Hüfte fest · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ersetzt Kabel-Crunch (Seilhalten → Spannung Unterarm innen rechts)"},
  {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,note:"Reha: sehr leicht, NIE ans Limit"},
- {id:"g2hmzr1v",name:"Handgelenks-Flexion (PAUSIERT)",sets:0,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Pausiert wegen Ellenbogen-Innenseite — erst wieder nach Beschwerdefreiheit"}]},
+ {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
 {id:"v2-ok-a",name:"OK A",sub:"Push",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],exercises:[
  {id:"schraegbank",name:"Schrägbankdrücken KH",sets:4,reps:"8-12",scheme:"2/2/0",start:28,rest:150,note:"Gewicht halten bis Ellenbogen beschwerdefrei · Hantel locker greifen, Handgelenk gerade"},
  {id:"schulterdruecken",name:"Schulterdrücken KH neutral",sets:3,reps:"8-12",scheme:"2/2/1",start:18,rest:150,note:"sitzend, Lehne 80-85° · locker greifen, Handgelenk gerade (Ellenbogen)"},
@@ -260,7 +264,7 @@ sessions:[
  {id:"wadenheben-beinpresse",name:"Wadenheben Beinpresse (gestreckt)",sets:3,reps:"12-15",scheme:"1/1/0",start:"",rest:90,note:"Knie gestreckt, nicht gesperrt · Fußballen an Plattenunterkante · 2s Pause in tiefster Dehnung · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ⇄ Calf Extension wenn belegt · ersetzt Wadenpresse sitzend (Studie: 90° kaum Gastrocnemius-Wachstum)"},
  {id:"crunch-maschine",name:"Crunch-Maschine",sets:3,reps:"10-15",scheme:"1/1/0",start:"",rest:90,note:"Ohne Greifen: Griffe nur locker anlegen bzw. Arme verschränkt · Rumpf einrollen, Hüfte fest · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ersetzt Kabel-Crunch (Seilhalten → Spannung Unterarm innen rechts)"},
  {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,note:"Reha: sehr leicht, NIE ans Limit"},
- {id:"g2hmzr1v",name:"Handgelenks-Flexion (PAUSIERT)",sets:0,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Pausiert wegen Ellenbogen-Innenseite — erst wieder nach Beschwerdefreiheit"}]},
+ {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
 {id:"v2-ok-b",name:"OK B",sub:"Pull + Drück-Aufbau",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],exercises:[
  {id:"rudern-kabel",name:"Rudern Kabel eng (Straps)",sets:3,reps:"6-10",scheme:"2/2/0",start:90,rest:180,note:"Rücken spüren, nicht Griff"},
  {id:"latzug",name:"Latzug Neutralgriff (Straps)",sets:4,reps:"8-12",scheme:"2/2/0",start:75,rest:150},
@@ -295,7 +299,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v140";
+const APP_VERSION="v141";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -408,6 +412,11 @@ function boot(){
   {let ch=false;state.logs.forEach(l=>{if(!l.altGym&&/anderes gym|fremdes gym|fitness turm/i.test(l.note||"")){l.altGym=true;ch=true}});
    if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
+  // Einmalig 25.10.: Handgelenks-Flexion wieder aktivieren
+  if(!state.settings.flexOn1025){let ch=false;const ex0=PLAN_V2.sessions[0].exercises.find(x=>x.id==="g2hmzr1v");
+    state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.id==="g2hmzr1v"&&!(x.sets>0)){Object.assign(x,{name:ex0.name,sets:ex0.sets,note:ex0.note});ch=true}})));
+    (state.library||[]).forEach(x=>{if(x.id==="g2hmzr1v"&&/PAUSIERT/i.test(x.name||"")){x.name=ex0.name;x.note=ex0.note;ch=true}});
+    if(ch){saveJ("plans",state.plans);saveJ("library",state.library)}state.settings.flexOn1025=true;saveJ("settings",state.settings)}
   // Neueste Planversion automatisch aktiv (nur innerhalb der Aufbau-Linie, Zyklus bleibt erhalten)
   if(ensureNewestPlan())setTimeout(()=>toast("Plan automatisch auf "+PLAN_V2.name.split(" ·")[0]+" aktualisiert"),2400);
   const zfix=repairZeroWeights();
@@ -686,6 +695,7 @@ function render(){
   else if(state.tab==="deload")m.innerHTML=vDeload();
   if(state.tab==="statistik")drawCharts();
   if(state.tab==="kalender")calSwipe();
+  m.classList.toggle("fill",(state.tab==="training"&&!state.active)||(state.tab==="kalender"&&!state.calSel));
   if(state.tab==="training"&&!state.active)wkSwipe();
   if(state.active)wakeOn();else wakeOff();
   growAll();
