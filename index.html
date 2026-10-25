@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0c0c0e">
@@ -16,9 +16,9 @@
 <style>
 :root{--bg:#0c0c0e;--s1:#18181b;--s2:#27272a;--s3:#3f3f46;--tx:#f4f4f5;--mut:#71717a;--dim:#52525b;--red:#dc2626;--red2:#ef4444;--grn:#34d399;--grn2:#10b981;--amb:#f59e0b;--sky:#38bdf8}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:96px;min-height:100vh;min-height:100dvh}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,system-ui,sans-serif;font-size:15px;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));min-height:100vh;min-height:100dvh}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
-header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:16px 16px 10px;z-index:10}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 10px;z-index:10}
 header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
 #hinfo{float:right;font-size:11px;color:var(--mut)}
 main{padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -56,9 +56,9 @@ details>summary::-webkit-details-marker{display:none}
 .stat3 .card{text-align:center;padding:12px 6px}
 .stat3 b{font-size:18px}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:40;display:flex;align-items:flex-end}
-.sheet{width:100%;background:var(--s1);border-top:1px solid var(--s3);border-radius:18px 18px 0 0;padding:16px;max-height:70vh;overflow-y:auto}
+.sheet{width:100%;background:var(--s1);border-top:1px solid var(--s3);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:70vh;overflow-y:auto}
 .libitem{display:block;width:100%;text-align:left;background:var(--s2);border:1px solid var(--s3);border-radius:9px;padding:10px;margin-top:6px;color:var(--tx);font-size:13px}
-.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--grn2);color:#fff;padding:9px 16px;border-radius:99px;font-size:13px;font-weight:700;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--grn2);color:#fff;padding:9px 16px;border-radius:99px;font-size:13px;font-weight:700;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 .swap{color:var(--sky);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:7px;padding:3px 9px;font-size:13px;font-weight:800}
 svg text{font-family:ui-monospace,Menlo,monospace}
 input[type=range]{width:100%;accent-color:var(--red2)}
@@ -279,7 +279,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v132";
+const APP_VERSION="v133";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
