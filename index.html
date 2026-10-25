@@ -246,6 +246,9 @@ header .htxt{position:relative;width:78%;margin:0 auto;cursor:pointer}header .hb
 .chip.on-r,.p-tabs button.on{background:var(--chrome)!important;color:#0b0b0b!important;border-color:#cfcfcf!important}
 input:focus,textarea:focus{border-color:#cfcfcf!important}
 button.chip[style*="--red2"]{color:#e2e2e2!important}
+.s-hb b{font-size:16px}.s-h .s-hv{font-size:20px!important;font-weight:800;color:var(--tx)}
+.k-lab.tr,.c-leg .k-lab.tr{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.s-h .s-chr{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent!important}
 </style>
 </head>
 <body>
@@ -320,7 +323,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v152";
+const APP_VERSION="v153";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1359,6 +1362,17 @@ function rangeFilter(ls,r){
   return ls.filter(l=>l.date>=cut);
 }
 // Kraftverlauf über die Zeit: Ø-Zuwachs aller Übungen (gleiche Metrik wie growth)
+// Kraft je Einheit: Ø-Zuwachs der in dieser Einheit trainierten Übungen ggü. ihrem ersten Wert
+function sessionStrength(pl,allEx){
+  pl=pl.filter(l=>!l.deload&&!l.altGym);const first={},useE={};
+  allEx.forEach(ex=>{if(!(MUSCLE_MAP[ex.id]||{}).p)return;const ents=pl.map(l=>l.entries.find(x=>x.exerciseId===ex.id)).filter(Boolean);if(ents.length<2)return;
+    const validE=ents.filter(e=>e.sets.some(s=>e1rm(s.w,s.r,s.rir)>0)).length;useE[ex.id]=validE>=Math.ceil(ents.length*0.6)});
+  const val=(id,e)=>useE[id]?e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r,s.rir)),0):volLoad(e.sets);
+  const out=[];pl.forEach(l=>{const a=[];l.entries.forEach(e=>{if(!(e.exerciseId in useE))return;const v=val(e.exerciseId,e);if(!(v>0))return;
+    if(first[e.exerciseId]==null){first[e.exerciseId]=v;return}a.push((v/first[e.exerciseId]-1)*100)});
+    if(a.length){a.sort((x,y)=>x-y);const m=a.length>>1;out.push({d:l.date,v:a.length%2?a[m]:(a[m-1]+a[m])/2})}});  // Median: einzelne Ausreißer-Übungen verzerren nicht
+  return out;
+}
 function strengthSeries(pl,allEx){
   pl=pl.filter(l=>!l.deload&&!l.altGym);
   const per={};
@@ -1387,18 +1401,13 @@ function vStats(){
    +'<div class="s-rng">'+Object.keys(RANGES).map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
   const sw=setsPerWeek(8);
   if(tab==="ueberblick"){
-    const ss=strengthSeries(pl,allEx);let sp="";
-    if(ss.length>=2){const vs=ss.map(x=>x.v),mn=Math.min(0,...vs),mx=Math.max(...vs,1);
-      sp='<svg viewBox="0 0 320 54" style="width:100%;margin-top:6px"><polyline fill="none" stroke="var(--grn)" stroke-width="2.5" points="'+ss.map((x,i)=>(i/(ss.length-1)*316+2).toFixed(1)+','+(50-(x.v-mn)/((mx-mn)||1)*44).toFixed(1)).join(" ")+'"/></svg>'
-       +'<div class="row tiny"><span>'+fmtD(ss[0].d)+'</span><span style="margin-left:auto">'+fmtD(ss[ss.length-1].d)+'</span></div>'}
-    h+='<div class="s-card"><p class="tiny">Kraft · alle Pläne zusammen</p><div class="row" style="align-items:flex-end;gap:10px"><b class="s-kpi" style="color:'+(g.overall==null?"var(--tx)":col(g.overall))+'">'+(g.overall==null?"–":sg(g.overall)+" %")+'</b><span class="tiny" style="padding-bottom:9px">Ø aller Übungen (e1RM)</span></div>'+sp+'</div>';
+    h+='<div class="s-card"><div class="s-h s-hb"><b>Kraft</b><span class="s-hv s-chr">'+(g.overall==null?"–":sg(g.overall)+" %")+'</span></div><div id="kchart"></div></div>';
     const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
     h+='<div class="h-tiles"><div class="h-t"><b>'+pl.length+'</b><span>Einheiten · '+fx(wk)+'/Wo</span></div>'
      +'<div class="h-t"><b>'+(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'</b><span>kg Ø'+(wt?' · '+(wt.delta>=0?"+":"")+fx(wt.delta)+'/Wo':'')+'</span></div>'
      +'<div class="h-t"><b style="color:'+(inT>=7?"var(--grn)":"var(--amb)")+'">'+inT+' / '+MUSCLE_ORDER.length+'</b><span>Muskeln im Ziel</span></div></div>';
     if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
-      h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b><span>'+(diff>0?"+":"")+fx(diff)+' kg im Zeitraum</span></div><div id="wchart"></div>'
-       +'<div class="s-leg"><span><i style="background:var(--sky)"></i>Messung</span><span><i style="background:var(--tx)"></i>Ø 7 Tage</span><span>Ziel max. +0,5 kg/Woche</span></div></div>'}
+      h+='<div class="s-card"><div class="s-h s-hb"><b>Körpergewicht</b><span class="s-hv s-chr">'+(diff>0?"+":"")+fx(diff)+' kg</span></div><div id="wchart"></div></div>'}
     else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
     const top=g.perEx.filter(e=>e.pct>1).slice(0,3),att=g.perEx.slice().sort((a,b)=>a.pct-b.pct).filter(e=>e.pct<=1).slice(0,3);
     const row=e=>'<button class="s-ex" onclick="state.statTab=\'uebungen\';state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span><b class="mono" style="color:'+col(Math.abs(e.pct)<1?0:e.pct)+'">'+(Math.abs(e.pct)<1?"±0 %":sg(e.pct)+" %")+'</b></button>';
@@ -1521,6 +1530,18 @@ function drawCharts(){
     }
   }
   // Koerpergewicht-Chart
+  const kc=$("kchart");
+  if(kc){const ss=sessionStrength(pl,gEx),ov=strengthSeries(pl,gEx);
+    if(ss.length>=2){const W=320,H=105,P=30;const vals=ss.map(x=>x.v).concat(ov.map(x=>x.v));const mn=Math.min(...vals)-1,mx=Math.max(...vals)+1;
+      const t0=new Date(ss[0].d).getTime(),t1=new Date(ss[ss.length-1].d).getTime()||t0+1;
+      const X=d=>P+(new Date(d).getTime()-t0)/((t1-t0)||1)*(W-P-8),Y=v=>H-18-(v-mn)/(mx-mn||1)*(H-34);
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      [0,.5,1].forEach(f=>{const v=mn+(mx-mn)*f;svg+='<line x1="'+P+'" y1="'+Y(v)+'" x2="'+W+'" y2="'+Y(v)+'" stroke="#27272a" stroke-dasharray="3 3"/><text x="0" y="'+(Y(v)+3)+'" fill="#52525b" font-size="9">'+(v>0?"+":"")+Math.round(v)+'%</text>'});
+      svg+='<polyline fill="none" stroke="#38bdf8" stroke-width="1.4" opacity=".55" points="'+ss.map(x=>X(x.d)+","+Y(x.v)).join(" ")+'"/>';
+      svg+=ss.map(x=>'<circle cx="'+X(x.d)+'" cy="'+Y(x.v)+'" r="2.2" fill="#38bdf8"/>').join("");
+      svg+='<polyline fill="none" stroke="#f4f4f5" stroke-width="2.4" points="'+ov.filter(x=>x.d>=ss[0].d).map(x=>X(x.d)+","+Y(x.v)).join(" ")+'"/>';
+      let lx=-99;const lastX=X(ss[ss.length-1].d);ss.forEach((x,i)=>{const xx=X(x.d);const last=i===ss.length-1;if((xx-lx>=48&&(last||lastX-xx>=48))||last){svg+='<text x="'+Math.min(xx,W-16)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+fmtD(x.d)+'</text>';lx=xx}});
+      kc.innerHTML=svg+'</svg>'}}
   const wc=$("wchart");
   if(wc){
     const ws=rangeFilter((state.weights||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)),state.statRange||"all");
