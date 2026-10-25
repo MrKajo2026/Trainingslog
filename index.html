@@ -266,6 +266,10 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .lib-open{background:var(--s2);border-radius:10px;padding:10px;margin:2px 0 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.lib-open .chip{flex:1;text-align:center;padding:8px;background:var(--s1)}
 .h-tiles.t4{grid-template-columns:repeat(4,1fr);gap:6px}.h-tiles.t4 .h-t{padding:9px 8px}.h-tiles.t4 .h-t b{font-size:17px}.h-tiles.t4 .h-t span{font-size:10.5px}
 .k-d.now b{background:var(--chrome)!important;color:#0b0b0b!important}
+/* Tagesleiste: immer 7 ganze Tage sichtbar, kein Anschnitt */
+.h-scroll{scroll-snap-type:x mandatory!important;padding:10px 0 10px!important;scroll-padding:0}
+.h-scroll .h-d,.h-scroll .h-d.now{flex:0 0 calc((100% - 30px)/7)!important;scroll-snap-align:start!important}
+.h-d.now{transform:translateY(-3px)}
 </style>
 </head>
 <body>
@@ -340,7 +344,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v160";
+const APP_VERSION="v161";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
