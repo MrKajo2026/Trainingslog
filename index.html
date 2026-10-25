@@ -340,7 +340,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v159";
+const APP_VERSION="v160";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1137,8 +1137,9 @@ function closeSub(){state.libOpen=false;state.rulesOpen=false;state.mergeFrom=nu
 // Untermenü der Plan-Karte: Fenster beginnt unter der Karte, Knöpfe bleiben sichtbar
 function anchorSub(){const pc=$("pcard"),bg=document.querySelector("#overlay .sheet-bg"),sh=document.querySelector("#overlay .sheet");
   if(!bg||!sh)return;const hd=document.querySelector("header");
-  const top=state.tab==="plaene"&&pc?Math.round(pc.getBoundingClientRect().bottom+6):hd?Math.round(hd.getBoundingClientRect().bottom):0;
-  const nv=document.querySelector("nav");bg.style.top=top+"px";bg.style.bottom=(nv?nv.offsetHeight:0)+"px";sh.style.height="100%";sh.style.borderRadius="18px";sh.style.maxHeight="none";sh.style.overflowY="auto";bg.onclick=e=>{if(e.target===bg)closeSub()}}
+  const top=state.tab==="plaene"&&pc?Math.round(pc.getBoundingClientRect().bottom+12):hd?Math.round(hd.getBoundingClientRect().bottom):0;
+  const nv=document.querySelector("nav"),mr=$("main").getBoundingClientRect();bg.style.left=mr.left+"px";bg.style.right=(innerWidth-mr.right)+"px";bg.style.background="var(--bg)";bg.style.padding="0 16px 12px";bg.style.alignItems="stretch";
+  const nv2=0;bg.style.top=top+"px";bg.style.bottom=(nv?nv.offsetHeight:0)+"px";sh.style.border="1px solid var(--s2)";sh.style.padding="14px";sh.style.height="100%";sh.style.borderRadius="18px";sh.style.maxHeight="none";sh.style.overflowY="auto";bg.onclick=e=>{if(e.target===bg)closeSub()}}
 function drawRules(){const ap=activePlan();
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="closeSub()">✕</button></div>'
    +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
