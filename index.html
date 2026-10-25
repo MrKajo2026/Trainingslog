@@ -227,6 +227,7 @@ main.fill .k-grid{flex:1 1 auto;grid-auto-rows:1fr;grid-template-rows:auto}
 main.fill .k-d{height:auto;min-height:56px;justify-content:center;padding-top:0}main.fill .k-e{min-height:56px}
 .r-li{font-size:13.5px;line-height:1.5;padding:9px 0;border-top:1px solid var(--s2)}.r-li:first-of-type{border-top:none}
 .k-grid>.c-wd{border-bottom:1px solid var(--s2);padding-bottom:6px}
+header{border-bottom:none!important}header h1{font-size:clamp(19px,5.6vw,23px)!important}header h1 img{height:32px!important;vertical-align:-9px!important}
 </style>
 </head>
 <body>
@@ -301,7 +302,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v143";
+const APP_VERSION="v144";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
