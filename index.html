@@ -25,7 +25,7 @@ main{padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px;flex:1 1
 nav{position:relative;flex-shrink:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-top:4px;padding-bottom:max(calc(env(safe-area-inset-bottom,0px) - 14px),6px)}
 nav button:active{background:rgba(239,68,68,.15)}
 nav button{flex:1;min-width:0;min-height:60px;padding:19px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-nav button.on{color:var(--red2);border-top:2px solid var(--red2);margin-top:-1px}
+nav button.on{color:var(--red2);border-top:2px solid #dcdcdc;margin-top:-1px}
 .card{background:var(--s1);border:1px solid var(--s2);border-radius:14px;padding:14px}
 .card.hl{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.45)}
 .card.warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.4)}
@@ -99,7 +99,7 @@ textarea{resize:none}
 button{color:inherit;font-family:inherit}
 nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-transform:none!important;font-weight:600!important;padding:6px 2px 2px!important;font-size:11px!important;min-height:0!important}
 nav button i{font-style:normal;font-size:19px;filter:grayscale(1);opacity:.55}nav button.on i{filter:none;opacity:1}
-nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
+nav button.on{color:var(--tx)!important;border-top:2px solid #dcdcdc}
 .h-tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .h-t{background:var(--s1);border:1px solid var(--s2);border-radius:16px;padding:11px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
 .h-t b{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}.h-t span{font-size:11px;color:var(--mut);line-height:1.3}
@@ -239,6 +239,13 @@ header .htxt{position:relative;width:78%;margin:0 auto;cursor:pointer}header .hb
 #hinfo{position:absolute!important;left:0;right:0;bottom:-5px;display:flex!important;justify-content:center;gap:17%;margin:0!important;font-size:10px!important;line-height:12px;color:var(--mut)}
 #hinfo span:first-child{flex:1;text-align:right}#hinfo span:last-child{flex:1;text-align:left}
 #hinfo{top:78%!important;bottom:auto!important;transform:translateY(-50%);left:-13%!important;right:-13%!important;justify-content:space-between!important;gap:0!important}#hinfo span{flex:none!important;text-align:center!important}
+/* Chrom-Ton aus dem Logo für Werte und aktive Funktionen */
+:root{--chrome:linear-gradient(180deg,#f6f6f6 0%,#d4d4d4 45%,#9d9d9d 56%,#ededed 100%)}
+.h-t b{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.btn.red{background:var(--chrome)!important;color:#0b0b0b!important;box-shadow:inset 0 1px 0 #fff}
+.chip.on-r,.p-tabs button.on{background:var(--chrome)!important;color:#0b0b0b!important;border-color:#cfcfcf!important}
+input:focus,textarea:focus{border-color:#cfcfcf!important}
+button.chip[style*="--red2"]{color:#e2e2e2!important}
 </style>
 </head>
 <body>
@@ -313,7 +320,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v151";
+const APP_VERSION="v152";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
