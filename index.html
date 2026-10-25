@@ -345,7 +345,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v163";
+const APP_VERSION="v164";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -655,6 +655,7 @@ function calcTimes(l){
     if(l.startedAt&&l.startedAt<=pts[0].t){
       r.pre=Math.round((pts[0].t-l.startedAt)/60000);
       r.brutto=Math.round((pts[pts.length-1].t-l.startedAt)/60000)+1;
+      r.netto+=Math.min(r.pre,10);          // Aufwärmen vor dem 1. Satz zählt mit, max. 10 min
     }
   }
   return r;
