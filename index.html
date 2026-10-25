@@ -249,6 +249,13 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .s-hb b{font-size:16px}.s-h .s-hv{font-size:20px!important;font-weight:800;color:var(--tx)}
 .k-lab.tr,.c-leg .k-lab.tr{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent!important}
 .s-h .s-chr{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+/* Tagesleiste in Logofarben */
+.h-d.done{border-color:rgba(220,220,220,.45)}
+.h-d.done em{background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-d.plan{border-color:rgba(200,200,200,.35)}.h-d.plan em{color:var(--mut)}
+.h-d.now,.h-d.now.plan,.h-d.now.plan.dl{background:var(--chrome);border-color:#e6e6e6;color:#0b0b0b}
+.h-d.now small,.h-d.now em,.h-d.now.plan em,.h-d.now.plan.dl em{color:#2a2a2a;-webkit-text-fill-color:#2a2a2a;background:none}
+.h-d.now{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #d8d8d8,0 6px 16px rgba(255,255,255,.12)}
 </style>
 </head>
 <body>
@@ -323,7 +330,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v153";
+const APP_VERSION="v154";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
