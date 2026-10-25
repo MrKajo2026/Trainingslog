@@ -203,6 +203,8 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 .k-pill.dl{background:rgba(245,158,11,.16);color:var(--amb)}.k-pill.plan{background:none;border:1px dashed rgba(239,68,68,.6)}.k-pill.plan.dl{border-color:var(--amb)}.k-pill.ab{background:rgba(56,189,248,.14);color:var(--sky)}
 .k-notes{margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.08)}.k-notes p{font-size:12px;color:var(--amb);line-height:1.5}
 .k-acts{grid-template-columns:repeat(6,1fr)}
+.k-home{padding:10px 12px}.k-home .k-acts{margin-top:0}.k-home .c-flow:first-child{margin-top:0}
+.h-d.sel{box-shadow:inset 0 0 0 2px var(--tx)}
 </style>
 </head>
 <body>
@@ -277,7 +279,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v130";
+const APP_VERSION="v131";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -738,7 +740,7 @@ function vHome(){
   const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];const dlSet=deloadDates();
   const tl=new Date(t).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
   h+='<div class="h-wk"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
-   +'<button class="h-kw" onclick="wkCenter(true)"><b style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:block;color:var(--amb);visibility:hidden">↺ zu heute</span></button>'
+   +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:block;color:var(--amb);visibility:hidden">↺ zu heute</span></button>'
    +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
   for(let i=-28;i<=35;i++){const d=addDays(t,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
@@ -747,15 +749,16 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
     const first=d.slice(8)==="01";
-    h+='<button class="h-d '+cls+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="state.tab=\'kalender\';state.calMonth=\''+d.slice(0,7)+'\';state.calSel=\''+d+'\';render()"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)+'</em></button>'}
+    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)+'</em></button>'}
   h+='</div></div>';
-  h+='<details class="h-rules"><summary>Regeln ('+p.rules.length+')</summary>'+p.rules.map(r=>'<p class="tiny" style="line-height:1.6">· '+esc(r)+'</p>').join("")+'</details>';
+  if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
   return h;
 }
 function wkCenter(smooth){const el=document.getElementById("wkstrip"),td=document.getElementById("wktoday");if(!el||!td)return;
   el.scrollTo({left:td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2,behavior:smooth?"smooth":"auto"})}
 function wkScroll(days){const el=document.getElementById("wkstrip");if(!el)return;const c=el.querySelector(".h-d:not(.now)");el.scrollBy({left:days*((c?c.offsetWidth:48)+5),behavior:"smooth"})}
-function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;wkCenter(false);
+function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(state.calSel&&state.wkPos!=null)el.scrollLeft=state.wkPos;else wkCenter(false);
+  const kc=document.getElementById("hdaycard");if(kc&&(state.wkJump||(state.calPanel||null)!==(state._lp||null))){state.wkJump=false;state._lp=state.calPanel;const r=kc.getBoundingClientRect(),nv=document.querySelector("nav"),lim=innerHeight-(nv?nv.offsetHeight:70)-12;if(r.bottom>lim)window.scrollBy({top:Math.min(r.bottom-lim,r.top-70),behavior:"smooth"})}
   const back=document.getElementById("wkback"),td=document.getElementById("wktoday");
   el.addEventListener("scroll",()=>{if(!back||!td)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2;back.style.visibility=Math.abs(el.scrollLeft-c)>60?"visible":"hidden"},{passive:true})}
 // ================= Logger =================
@@ -1882,6 +1885,62 @@ function moveSession(fromIso,toIso){
   state.moveFrom=null;render();toast("Verschoben auf "+fmtD(toIso)+" — Folgetermine angepasst");
 }
 // ================= Kalender =================
+function dayCard(iso,home){
+  autoPlanDeload();const today=todayISO();
+  const byDate={};state.logs.forEach(l=>{(byDate[l.date]=byDate[l.date]||[]).push(l)});
+  const planByDate={};buildSchedule().forEach(x=>{planByDate[x.date]=x});
+  const sesName=id=>(activePlan().sessions.find(x=>x.id===id)||{}).name||"";const dlSet=deloadDates();
+  let h="";
+  {
+    const ls=byDate[iso]||[],hasSess=ls.length;
+    const ab=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
+    const pl=!hasSess?planByDate[iso]:null;
+    const aEntry=(state.acts||[]).find(a=>a.date===iso),wEntry=(state.weights||[]).find(w=>w.date===iso);
+    const dn=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
+    h+='<div class="k-sheet'+(home?' k-home':'')+'">'+(home?'':'<div class="k-grab"></div>');const h0=h.length;h+='<div class="row" style="gap:8px;flex-wrap:wrap"><b style="font-size:18px">'+dn+'</b>';
+    ls.forEach(l=>{h+='<span class="k-pill'+(l.deload?" dl":"")+'">'+esc(l.sessionName)+(l.deload?' · Deload':'')+(l.reentry?' · Wiedereinstieg':'')+(l.altGym?' · anderes Studio':'')+'</span>'});
+    if(pl)h+='<span class="k-pill plan'+(dlSet.has(iso)?" dl":"")+'">'+esc(sesName(pl.sessionId))+' geplant'+(dlSet.has(iso)?' · Deload':'')+'</span>';
+    if(ab)h+='<span class="k-pill ab">'+absIcon(ab)+' '+absName(ab)+'</span>';
+    h+='<button class="c-x" style="margin-left:auto" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></div>';
+    const info=[];
+    ls.forEach(l=>{const c=l.checkin||{};
+      info.push([l.nettoMin?'⏱ '+l.nettoMin+' min netto':''].concat(ls.length===1&&wEntry?['⚖ '+String(wEntry.kg).replace('.',',')+' kg']:[]).filter(Boolean).join(' · '));info.push([c.gefuehl?'Gefühl '+c.gefuehl:'',c.schlaf?'Schlaf '+c.schlaf:'',c.essen?'Essen '+c.essen:'',c.befinden!=null?'Befinden '+c.befinden:''].filter(Boolean).join(' · '))});
+    if(aEntry)info.push(((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+' · Belastung '+actLoad(aEntry)+' Pkt');
+    if(wEntry&&ls.length!==1)info.push('⚖ '+String(wEntry.kg).replace(".",",")+' kg');
+    if(info.filter(Boolean).length)h+='<p class="tiny" style="margin-top:5px">'+info.filter(Boolean).map(esc).join('<br>')+'</p>';
+    if(!hasSess&&!pl&&!ab&&!aEntry&&!wEntry)h+='<p class="tiny" style="margin-top:5px">Kein Eintrag an diesem Tag.</p>';
+    const notes=[];ls.forEach(l=>{l.entries.forEach(e=>{if(e.exNote)notes.push(e.name+': '+e.exNote)});if(l.note)notes.push(l.note)});
+    if(notes.length)h+='<div class="k-notes">'+notes.map(n=>'<p>✎ '+esc(n)+'</p>').join("")+'</div>';
+    if(home)h=h.slice(0,h0);
+    if(state.absTmp){
+      h+='<div class="c-flow"><p class="tiny">'+(state.absKind==="krank"?"🤒 Krank":"🏖 Urlaub")+' ab '+fmtD(state.absTmp)+' — jetzt den letzten Tag antippen (gleicher Tag = nur dieser Tag)</p>'
+       +'<button class="btn red" style="margin-top:8px" onclick="finishAbs(\''+iso+'\')">'+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.absTmp=null;render()">Abbrechen</button></div>';
+    }else if(state.moveFrom&&state.moveFrom!==iso){
+      h+='<div class="c-flow"><button class="btn red" onclick="moveSession(\''+state.moveFrom+'\',\''+iso+'\')">Training vom '+fmtD(state.moveFrom)+' hierhin</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveFrom=null;render()">Abbrechen</button></div>';
+    }else if(state.moveLog){
+      const ml=state.logs.find(x=>x.id===state.moveLog);
+      h+='<div class="c-flow"><button class="btn red" onclick="moveLogTo(\''+iso+'\')">'+esc(ml?ml.sessionName:"")+' vom '+(ml?fmtD(ml.date):"")+' hierher</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
+    }else{
+      const mv=hasSess?'startMoveLog(\''+ls[0].id+'\');toast(\'Neuen Tag antippen\')':pl?'state.moveFrom=\''+iso+'\';render();toast(\'Neuen Tag antippen\')':'';
+      h+='<div class="c-acts k-acts">'
+       +'<button '+(mv?'onclick="'+mv+'"':'disabled')+'><b>↔</b>Datum</button>'
+       +(ab?'<button onclick="delAbs(\''+ab.from+'\')"><b>'+absIcon(ab)+'</b>entfernen</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()"><b>🤒</b>Krank</button>')
+       +(ab?'<button disabled><b>🏖</b>Urlaub</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()"><b>🏖</b>Urlaub</button>')
+       +'<button class="'+(state.calPanel==="act"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'act\'?null:\'act\';render()"><b>🚴</b>Sport</button>'
+       +'<button class="'+(state.calPanel==="w"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'w\'?null:\'w\';render()"><b>⚖️</b>Gewicht</button>'
+       +'<button class="'+(state.calPanel==="more"?"on":"")+'" '+(hasSess?'':'disabled')+' onclick="state.calPanel=state.calPanel===\'more\'?null:\'more\';render()"><b>⋯</b>mehr</button></div>';
+      if(state.calPanel==="act"){
+        h+='<div class="c-flow"><div class="row" style="gap:4px;margin-bottom:6px">'+Object.keys(ACT_TYPES).map(k=>'<button class="chip'+((state.actType===k||(aEntry&&aEntry.type===k&&!state.actType))?" on-n":"")+'" style="flex:1;padding:9px 2px;font-size:15px" onclick="state.actType=\''+k+'\';render()">'+ACT_TYPES[k].i+'</button>').join("")+'</div>'
+         +'<div class="row" style="gap:4px"><input type="text" inputmode="numeric" id="actMin" placeholder="Min" value="'+(aEntry?aEntry.min:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="decimal" id="actKm" placeholder="km" value="'+(aEntry&&aEntry.km?aEntry.km:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="numeric" id="actRpe" placeholder="RPE" value="'+(aEntry?aEntry.rpe:"")+'" style="flex:.8;text-align:center" class="mono"></div>'
+         +'<div class="row" style="gap:5px;margin-top:6px"><button class="chip" style="flex:1;padding:10px" onclick="saveAct(\''+iso+'\')">Speichern</button>'+(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div></div>';
+      }
+      if(state.calPanel==="w")h+='<div class="c-flow"><div class="row" style="gap:5px"><input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono"><button class="chip" style="padding:10px 14px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'+(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
+      if(state.calPanel==="more")h+='<div class="c-flow">'+ls.map(l=>'<div class="row" style="gap:6px;padding:4px 0"><span class="tiny" style="flex:1">'+esc(l.sessionName)+'</span>'+(ls.length>1?'<button class="chip" onclick="startMoveLog(\''+l.id+'\');toast(\'Neuen Tag antippen\')">Datum</button>':'')+'<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Einheit löschen")+'</button></div>').join("")+'</div>';
+    }
+    h+='</div>';
+  }
+  return h;
+}
 function vCal(){
   if(!state.calMonth)state.calMonth=todayISO().slice(0,7);
   const[Y,M]=state.calMonth.split("-").map(Number);
@@ -1916,53 +1975,7 @@ function vCal(){
   if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' — danach automatisch neuer Zyklus</p>';
   else if(pdIso)h+='<p class="tiny" style="text-align:center;color:var(--amb)">'+(pdIso<=today?'Deload fällig seit '+fmtD(pdIso):'Deload geplant ab '+fmtD(pdIso))+'</p>';
   // Tageskarte
-  if(state.calSel){
-    const iso=state.calSel,ls=byDate[iso]||[],hasSess=ls.length;
-    const ab=(state.settings.absences||[]).find(a=>a.from<=iso&&a.to>=iso);
-    const pl=!hasSess?planByDate[iso]:null;
-    const aEntry=(state.acts||[]).find(a=>a.date===iso),wEntry=(state.weights||[]).find(w=>w.date===iso);
-    const dn=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
-    h+='<div class="k-sheet"><div class="k-grab"></div><div class="row" style="gap:8px;flex-wrap:wrap"><b style="font-size:18px">'+dn+'</b>';
-    ls.forEach(l=>{h+='<span class="k-pill'+(l.deload?" dl":"")+'">'+esc(l.sessionName)+(l.deload?' · Deload':'')+(l.reentry?' · Wiedereinstieg':'')+(l.altGym?' · anderes Studio':'')+'</span>'});
-    if(pl)h+='<span class="k-pill plan'+(dlSet.has(iso)?" dl":"")+'">'+esc(sesName(pl.sessionId))+' geplant'+(dlSet.has(iso)?' · Deload':'')+'</span>';
-    if(ab)h+='<span class="k-pill ab">'+absIcon(ab)+' '+absName(ab)+'</span>';
-    h+='<button class="c-x" style="margin-left:auto" onclick="state.calSel=null;state.absTmp=null;state.moveFrom=null;state.moveLog=null;state.calPanel=null;render()">✕</button></div>';
-    const info=[];
-    ls.forEach(l=>{const c=l.checkin||{};
-      info.push([l.nettoMin?'⏱ '+l.nettoMin+' min netto':'',c.gefuehl?'Gefühl '+c.gefuehl:'',c.schlaf?'Schlaf '+c.schlaf:'',c.essen?'Essen '+c.essen:'',c.befinden!=null?'Befinden '+c.befinden:''].filter(Boolean).join(' · '))});
-    if(aEntry)info.push(((ACT_TYPES[aEntry.type]||{}).i||"")+' '+((ACT_TYPES[aEntry.type]||{}).n||"")+' '+aEntry.min+' min'+(aEntry.km?' · '+aEntry.km+' km':'')+' · RPE '+aEntry.rpe+' · Belastung '+actLoad(aEntry)+' Pkt');
-    if(wEntry)info.push('⚖ '+String(wEntry.kg).replace(".",",")+' kg');
-    if(info.filter(Boolean).length)h+='<p class="tiny" style="margin-top:5px">'+info.filter(Boolean).map(esc).join('<br>')+'</p>';
-    if(!hasSess&&!pl&&!ab&&!aEntry&&!wEntry)h+='<p class="tiny" style="margin-top:5px">Kein Eintrag an diesem Tag.</p>';
-    const notes=[];ls.forEach(l=>{l.entries.forEach(e=>{if(e.exNote)notes.push(e.name+': '+e.exNote)});if(l.note)notes.push(l.note)});
-    if(notes.length)h+='<div class="k-notes">'+notes.map(n=>'<p>✎ '+esc(n)+'</p>').join("")+'</div>';
-    if(state.absTmp){
-      h+='<div class="c-flow"><p class="tiny">'+(state.absKind==="krank"?"🤒 Krank":"🏖 Urlaub")+' ab '+fmtD(state.absTmp)+' — jetzt den letzten Tag antippen (gleicher Tag = nur dieser Tag)</p>'
-       +'<button class="btn red" style="margin-top:8px" onclick="finishAbs(\''+iso+'\')">'+fmtD(state.absTmp)+' – '+fmtD(iso)+' speichern</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.absTmp=null;render()">Abbrechen</button></div>';
-    }else if(state.moveFrom&&state.moveFrom!==iso){
-      h+='<div class="c-flow"><button class="btn red" onclick="moveSession(\''+state.moveFrom+'\',\''+iso+'\')">Training vom '+fmtD(state.moveFrom)+' hierhin</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveFrom=null;render()">Abbrechen</button></div>';
-    }else if(state.moveLog){
-      const ml=state.logs.find(x=>x.id===state.moveLog);
-      h+='<div class="c-flow"><button class="btn red" onclick="moveLogTo(\''+iso+'\')">'+esc(ml?ml.sessionName:"")+' vom '+(ml?fmtD(ml.date):"")+' hierher</button><button class="chip" style="width:100%;padding:9px;margin-top:6px" onclick="state.moveLog=null;render()">Abbrechen</button></div>';
-    }else{
-      const mv=hasSess?'startMoveLog(\''+ls[0].id+'\');toast(\'Neuen Tag antippen\')':pl?'state.moveFrom=\''+iso+'\';render();toast(\'Neuen Tag antippen\')':'';
-      h+='<div class="c-acts k-acts">'
-       +'<button '+(mv?'onclick="'+mv+'"':'disabled')+'><b>↔</b>Datum</button>'
-       +(ab?'<button onclick="delAbs(\''+ab.from+'\')"><b>'+absIcon(ab)+'</b>entfernen</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'krank\';render()"><b>🤒</b>Krank</button>')
-       +(ab?'<button disabled><b>🏖</b>Urlaub</button>':'<button onclick="state.absTmp=\''+iso+'\';state.absKind=\'urlaub\';render()"><b>🏖</b>Urlaub</button>')
-       +'<button class="'+(state.calPanel==="act"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'act\'?null:\'act\';render()"><b>🚴</b>Sport</button>'
-       +'<button class="'+(state.calPanel==="w"?"on":"")+'" onclick="state.calPanel=state.calPanel===\'w\'?null:\'w\';render()"><b>⚖️</b>Gewicht</button>'
-       +'<button class="'+(state.calPanel==="more"?"on":"")+'" '+(hasSess?'':'disabled')+' onclick="state.calPanel=state.calPanel===\'more\'?null:\'more\';render()"><b>⋯</b>mehr</button></div>';
-      if(state.calPanel==="act"){
-        h+='<div class="c-flow"><div class="row" style="gap:4px;margin-bottom:6px">'+Object.keys(ACT_TYPES).map(k=>'<button class="chip'+((state.actType===k||(aEntry&&aEntry.type===k&&!state.actType))?" on-n":"")+'" style="flex:1;padding:9px 2px;font-size:15px" onclick="state.actType=\''+k+'\';render()">'+ACT_TYPES[k].i+'</button>').join("")+'</div>'
-         +'<div class="row" style="gap:4px"><input type="text" inputmode="numeric" id="actMin" placeholder="Min" value="'+(aEntry?aEntry.min:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="decimal" id="actKm" placeholder="km" value="'+(aEntry&&aEntry.km?aEntry.km:"")+'" style="flex:1;text-align:center" class="mono"><input type="text" inputmode="numeric" id="actRpe" placeholder="RPE" value="'+(aEntry?aEntry.rpe:"")+'" style="flex:.8;text-align:center" class="mono"></div>'
-         +'<div class="row" style="gap:5px;margin-top:6px"><button class="chip" style="flex:1;padding:10px" onclick="saveAct(\''+iso+'\')">Speichern</button>'+(aEntry?'<button class="del" onclick="delAct(\''+iso+'\')">✕</button>':'')+'</div></div>';
-      }
-      if(state.calPanel==="w")h+='<div class="c-flow"><div class="row" style="gap:5px"><input type="text" inputmode="decimal" id="bwin" value="'+(wEntry?wEntry.kg:"")+'" placeholder="kg" style="flex:1;text-align:center" class="mono"><button class="chip" style="padding:10px 14px" onclick="saveWeight(\''+iso+'\')">Speichern</button>'+(wEntry?'<button class="del" onclick="delWeight(\''+iso+'\')">✕</button>':'')+'</div></div>';
-      if(state.calPanel==="more")h+='<div class="c-flow">'+ls.map(l=>'<div class="row" style="gap:6px;padding:4px 0"><span class="tiny" style="flex:1">'+esc(l.sessionName)+'</span>'+(ls.length>1?'<button class="chip" onclick="startMoveLog(\''+l.id+'\');toast(\'Neuen Tag antippen\')">Datum</button>':'')+'<button class="del'+(state.confirmDel==="h:"+l.id?" sure":"")+'" onclick="delLog(\''+l.id+'\')">'+(state.confirmDel==="h:"+l.id?"Wirklich löschen?":"Einheit löschen")+'</button></div>').join("")+'</div>';
-    }
-    h+='</div>';
-  }
+  if(state.calSel)h+=dayCard(state.calSel);
   // Pausen
   const absList=(state.settings.absences||[]).slice().sort((a,b)=>a.from.localeCompare(b.from)).filter(a=>a.to>=todayISO());
   if(absList.length){
@@ -2007,7 +2020,7 @@ function moveLogTo(iso){
   buildSchedule(true);autoPlanDeload();render();
   toast("Einheit von "+fmtD(old)+" auf "+fmtD(iso)+" verschoben");
 }
-function calPick(iso){if(!state.absTmp&&!state.moveFrom&&!state.moveLog){state.calSel=state.calSel===iso?null:iso;state.calPanel=null}else state.calSel=iso;render()}
+function calPick(iso){const ws=document.getElementById("wkstrip");if(ws){state.wkPos=ws.scrollLeft;state.wkJump=true}if(!state.absTmp&&!state.moveFrom&&!state.moveLog){state.calSel=state.calSel===iso?null:iso;state.calPanel=null}else state.calSel=iso;render()}
 function addAbs(){const f=$("absfrom").value,t=$("absto").value;if(!f||!t){toast("Von- und Bis-Datum wählen");return}
   if(t<f){toast("Bis-Datum liegt vor Von-Datum");return}
   state.settings.absences=[...(state.settings.absences||[]),{from:f,to:t,note:($("absnote").value||"").trim()}];
