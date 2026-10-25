@@ -308,8 +308,8 @@ sessions:[
  {id:"beinbeuger-liegend",name:"Beinbeuger liegend",sets:3,reps:"8-12",scheme:"1/1/0",start:25,rest:120,note:"Satz 1 bei 12 beenden, nicht weiter · 2 min Pause (Satz 3 brach ein: 8 bzw. 7 Wdh)"},
  {id:"seawzsex",name:"Calf Extension (gestreckt)",sets:3,reps:"8-12",scheme:"1/1/0",start:110,rest:90,note:"Knie ~170° · Gastrocnemius · volle Dehnung · Satz 1 bei 12 beenden"},
  {id:"crunch-maschine",name:"Crunch-Maschine",sets:3,reps:"10-15",scheme:"1/1/0",start:"",rest:90,note:"Ohne Greifen: Griffe nur locker anlegen bzw. Arme verschränkt · Rumpf einrollen, Hüfte fest · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ersetzt Kabel-Crunch (Seilhalten → Spannung Unterarm innen rechts)"},
- {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,note:"Reha: sehr leicht, NIE ans Limit"},
- {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
+ {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,ss:"H",note:"Reha: sehr leicht, NIE ans Limit"},
+ {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,ss:"H",note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
 {id:"v2-ok-a",name:"OK A",sub:"Push",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Face Pull leicht x15","Außenrotation x15"],exercises:[
  {id:"schraegbank",name:"Schrägbankdrücken KH",sets:4,reps:"8-12",scheme:"2/2/0",start:28,rest:150,note:"Gewicht halten bis Ellenbogen beschwerdefrei · Hantel locker greifen, Handgelenk gerade"},
  {id:"schulterdruecken",name:"Schulterdrücken KH neutral",sets:3,reps:"8-12",scheme:"2/2/1",start:18,rest:150,note:"sitzend, Lehne 80-85° · locker greifen, Handgelenk gerade (Ellenbogen)"},
@@ -324,8 +324,8 @@ sessions:[
  {id:"beinstrecker",name:"Beinstrecker slow",sets:2,reps:"10-15",scheme:"1/0",start:47.5,rest:90,note:"slow nicht opfern"},
  {id:"wadenheben-beinpresse",name:"Wadenheben Beinpresse (gestreckt)",sets:3,reps:"12-15",scheme:"1/1/0",start:"",rest:90,note:"Knie gestreckt, nicht gesperrt · Fußballen an Plattenunterkante · 2s Pause in tiefster Dehnung · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ⇄ Calf Extension wenn belegt · ersetzt Wadenpresse sitzend (Studie: 90° kaum Gastrocnemius-Wachstum)"},
  {id:"crunch-maschine",name:"Crunch-Maschine",sets:3,reps:"10-15",scheme:"1/1/0",start:"",rest:90,note:"Ohne Greifen: Griffe nur locker anlegen bzw. Arme verschränkt · Rumpf einrollen, Hüfte fest · 1. Einheit: Gewicht ermitteln (Satz 1 RIR2) · ersetzt Kabel-Crunch (Seilhalten → Spannung Unterarm innen rechts)"},
- {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,note:"Reha: sehr leicht, NIE ans Limit"},
- {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
+ {id:"ellenbogen",name:"Handgelenks-Extension",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:5,rest:45,ss:"H",note:"Reha: sehr leicht, NIE ans Limit"},
+ {id:"g2hmzr1v",name:"Handgelenks-Flexion",sets:3,reps:"15-20",scheme:"RIR3-4 · 3s ablassen",start:2,rest:45,ss:"H",note:"Reha, wieder aktiv seit 25.10.: sehr leicht, NIE ans Limit · bei Ziehen an der Ellenbogen-Innenseite sofort abbrechen"}]},
 {id:"v2-ok-b",name:"OK B",sub:"Pull + Drück-Aufbau",warmup:["Foam Roll BWS x10","Thoracic Rot 8/Seite","Band Pull-Aparts x15"],exercises:[
  {id:"rudern-kabel",name:"Rudern Kabel eng (Straps)",sets:3,reps:"6-10",scheme:"2/2/0",start:90,rest:180,note:"Rücken spüren, nicht Griff"},
  {id:"latzug",name:"Latzug Neutralgriff (Straps)",sets:4,reps:"8-12",scheme:"2/2/0",start:75,rest:150},
@@ -360,7 +360,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v167";
+const APP_VERSION="v168";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -473,6 +473,12 @@ function boot(){
   {let ch=false;state.logs.forEach(l=>{if(!l.altGym&&/anderes gym|fremdes gym|fitness turm/i.test(l.note||"")){l.altGym=true;ch=true}});
    if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
+  // Einmalig 25.10.: Handgelenks-Extension + -Flexion als Supersatz
+  if(!state.settings.wristSS1025){let ch=false;state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>p.sessions.forEach(se=>{const ids=se.exercises.map(x=>x.id);if(ids.includes("ellenbogen")&&ids.includes("g2hmzr1v")){
+      se.exercises.forEach(x=>{if((x.id==="ellenbogen"||x.id==="g2hmzr1v")&&x.ss!=="H"){x.ss="H";ch=true}});
+      const i=se.exercises.findIndex(x=>x.id==="ellenbogen"),j=se.exercises.findIndex(x=>x.id==="g2hmzr1v");if(j!==i+1){const fl=se.exercises.splice(j,1)[0];se.exercises.splice(se.exercises.findIndex(x=>x.id==="ellenbogen")+1,0,fl);ch=true}}}));
+    if(ch){const ap=state.plans.find(p=>p.id===PLAN_V2.id);if(ap){ap.versions=ap.versions||[];ap.version=(ap.version||1)+1;ap.versions.push({v:ap.version,date:todayISO(),comment:"Handgelenks-Extension + Flexion als Supersatz H"})}saveJ("plans",state.plans)}
+    state.settings.wristSS1025=true;saveJ("settings",state.settings)}
   // Einmalig 25.10.: Handgelenks-Flexion wieder aktivieren
   if(!state.settings.flexOn1025){let ch=false;const ex0=PLAN_V2.sessions[0].exercises.find(x=>x.id==="g2hmzr1v");
     state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.id==="g2hmzr1v"&&!(x.sets>0)){Object.assign(x,{name:ex0.name,sets:ex0.sets,note:ex0.note});ch=true}})));
