@@ -312,7 +312,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v147";
+const APP_VERSION="v148";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -679,7 +679,7 @@ function toast(msg){$("toastbox").innerHTML='<div class="toast">'+esc(msg)+'</di
 function banner(msg){$("hbanner").innerHTML='<div class="card warn" style="margin-top:8px;padding:9px 12px;font-size:12px;color:var(--amb)">'+esc(msg)+'</div>'}
 function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===0}}
 function render(){
-  $("hinfo").innerHTML="<span>"+APP_VERSION+"</span><span>Plan "+esc(activePlan().name.split(" ·")[0])+"</span>";
+  $("hinfo").innerHTML="<span>"+APP_VERSION+"</span><span>"+esc(activePlan().name.split(" ·")[0])+"</span>";
   const dl=deloadDue();
   let bn="";
   const AMB='style="width:100%;text-align:left;margin-top:6px;padding:6px 10px;font-size:12px;background:rgba(245,158,11,.14);color:var(--amb);font-weight:700;border:1px solid rgba(245,158,11,.45);border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"';
