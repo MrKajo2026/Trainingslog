@@ -214,6 +214,12 @@ nav button.on{color:var(--tx)!important;border-top:2px solid var(--red2)}
 #restdark .rd-ring2{position:absolute;width:250px;height:250px;border-radius:50%;border:8px solid #ef4444;animation:rdpulse 1s ease-in-out infinite}
 #restdark.end .rd-t{color:#f4f4f5;font-weight:600}#restdark.end .rd-s{color:#a1a1aa}#restdark.end .rd-h{color:#52525b}
 @keyframes rdpulse{0%,100%{box-shadow:0 0 12px rgba(239,68,68,.5),inset 0 0 8px rgba(239,68,68,.3);opacity:.75}50%{box-shadow:0 0 40px rgba(239,68,68,.95),inset 0 0 24px rgba(239,68,68,.6);opacity:1}}
+.k-grid{gap:0}.k-d{height:56px;border-radius:0;border-bottom:1px solid var(--s2);justify-content:flex-start;padding-top:7px;gap:4px}.k-e{border-bottom:1px solid var(--s2)}
+.k-grid>*:nth-last-child(-n+7){border-bottom:none}
+.k-lab{display:block;font-style:normal;font-size:9.5px;font-weight:700;white-space:nowrap;min-height:12px}
+.k-lab.tr{color:var(--red2)}.k-lab.dl{color:var(--amb)}.k-lab.pl,.k-lab.pdl{color:var(--mut)}.k-lab.ab{color:var(--sky)}.c-leg .k-lab{font-size:12px;font-weight:600}
+.k-d.now{background:none;color:var(--tx)}.k-d.now b{background:var(--amb);color:#111;border-radius:8px;padding:0 6px;font-weight:800}
+.k-d.sel{box-shadow:none;background:var(--s1);border-radius:10px}
 </style>
 </head>
 <body>
@@ -288,7 +294,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v137";
+const APP_VERSION="v138";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1997,7 +2003,7 @@ function vCal(){
   let h='<div class="row" style="justify-content:space-between"><button class="h-a" onclick="calShift(-1)">‹</button><b style="font-size:17px">'+monthName+'</b><button class="h-a" onclick="calShift(1)">›</button></div>';
   h+='<div id="calgrid" class="k-grid">';
   ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>h+='<span class="c-wd">'+d+'</span>');
-  for(let i=0;i<startDow;i++)h+='<span></span>';
+  for(let i=0;i<startDow;i++)h+='<span class="k-e"></span>';
   for(let d=1;d<=days;d++){
     const iso=Y+"-"+String(M).padStart(2,"0")+"-"+String(d).padStart(2,"0");
     const sess=byDate[iso]||[];
@@ -2008,10 +2014,12 @@ function vCal(){
     else if(ab)dot="ab";
     else if(pln)dot=dlSet.has(iso)?"pdl":"pl";
     const extra=((state.acts||[]).some(a=>a.date===iso)?"🚴":"");
-    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><i class="k-dot '+dot+'"></i>'+(extra?'<small>'+extra+'</small>':'')+'</button>';
+    const lab=sess.length?sess.map(l=>l.sessionName).join("+"):ab?(ab.kind==="krank"?"krank":"Urlaub"):pln?sesName(pln.sessionId):"";
+    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em class="k-lab '+dot+'">'+esc(lab)+'</em>'+(extra?'<small>'+extra+'</small>':'')+'</button>';
   }
+  {const tot=startDow+days,fill=(7-tot%7)%7;for(let i=0;i<fill;i++)h+='<span class="k-e"></span>';}
   h+='</div>';
-  h+='<div class="c-leg"><span><i class="k-dot tr"></i>Training</span><span><i class="k-dot dl"></i>Deload</span><span><i class="k-dot pl"></i>geplant</span><span><i class="k-dot ab"></i>krank/Urlaub</span></div>';
+  h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">krank/Urlaub</span></div>';
   if(dp.active)h+='<p class="tiny" style="text-align:center;color:var(--amb)">Deload läuft: '+dp.n+' von '+DELOAD_RUN+' — danach automatisch neuer Zyklus</p>';
   else if(pdIso)h+='<p class="tiny" style="text-align:center;color:var(--amb)">'+(pdIso<=today?'Deload fällig seit '+fmtD(pdIso):'Deload geplant ab '+fmtD(pdIso))+'</p>';
   // Tageskarte
