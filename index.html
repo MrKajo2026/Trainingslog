@@ -258,7 +258,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-d.now{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #d8d8d8,0 6px 16px rgba(255,255,255,.12)}
 .p-sel{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--tx);font-size:20px;font-weight:800;padding:0}
 .p-sel i{font-style:normal;font-size:11px;color:var(--mut);border:1px solid var(--s2);border-radius:6px;padding:2px 6px}
-.lib-sheet{max-height:86vh;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
+.lib-sheet{height:86vh;max-height:86vh;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
 .lib-chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;padding-bottom:2px}.lib-chips span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--s2);color:var(--mut);white-space:nowrap;cursor:pointer}.lib-chips span.on{background:var(--chrome);color:#0b0b0b}
 .lib-r{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--s2);cursor:pointer}.lib-r .n{flex:1;min-width:0}.lib-r .n b{display:block;font-size:14px}.lib-r .n span{font-size:11px;color:var(--mut)}
 .lib-tag{font-size:10px!important;font-weight:700;border-radius:5px;padding:2px 6px;background:rgba(220,220,220,.12);color:#dcdcdc!important;margin-left:4px;white-space:nowrap}.lib-tag.off{background:none;border:1px dashed var(--s3);color:var(--mut)!important}
@@ -340,7 +340,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v156";
+const APP_VERSION="v157";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1478,16 +1478,8 @@ function vStats(){
     h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';
   }
   if(tab==="mehr"){
-    if(g.overall!==null&&ws.length>=2){const dkg=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;let msg,c;
-      if(dkg>0.8&&g.overall<1){msg="Gewicht steigt, Kraft kaum — Überschuss zu hoch, Kalorien zurücknehmen.";c="var(--amb)"}
-      else if(dkg>0.3&&g.overall>=1){msg="Gewicht und Kraft steigen — Überschuss passt.";c="var(--grn)"}
-      else if(dkg<-0.3&&g.overall>=0){msg="Gewicht fällt, Kraft hält — im Aufbau zu wenig gegessen.";c="var(--amb)"}
-      else if(dkg<-0.3&&g.overall<0){msg="Gewicht und Kraft fallen — klares Kaloriendefizit.";c="var(--red2)"}
-      else{msg="Gewicht und Kraft weitgehend stabil.";c="var(--mut)"}
-      h+='<div class="s-card"><div class="s-h"><b>Kraft & Körpergewicht</b><span class="mono">'+(dkg>0?"+":"")+fx(dkg)+' kg · '+sg(g.overall)+' %</span></div><p class="tiny" style="color:'+c+'">'+msg+'</p></div>'}
     const li=loadIndex();
-    if(li){const st=li.acwr>1.2?{c:"var(--amb)",t:"höher als üblich"}:li.acwr<0.8?{c:"var(--sky)",t:"niedriger als üblich"}:{c:"var(--grn)",t:"im üblichen Rahmen"};
-      h+='<div class="s-card"><div class="s-h"><b>Wochenlast</b><span class="mono" style="color:'+st.c+';font-weight:800;font-size:15px">'+fx(li.acwr,2)+'</span></div><p class="tiny">Letzte volle Woche <b>'+li.cur+'</b> · Ø 4 Wochen davor <b>'+li.chronic+'</b> — '+st.t+'.</p><p class="s-foot">Sätze × Anstrengung (10−RIR) + Sport. Nur Orientierung, feste Risikogrenzen sind nicht belegt.</p></div>'}
+    if(li)h+='<div class="s-card"><div class="s-h s-hb"><b>Wochenlast</b><span class="s-hv s-chr">'+fx(li.acwr,2)+'</span></div><div id="lchart"></div></div>';
     const tmode=state.tonMode||"woche";
     h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
      +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
@@ -1568,6 +1560,19 @@ function drawCharts(){
     }
   }
   // Koerpergewicht-Chart
+  const lc=$("lchart");
+  if(lc){const li=loadIndex();const rf=rangeFilter((li&&li.series||[]).map(x=>({date:x.d,v:x.v})),state.statRange||"all");
+    if(rf.length>=2){const all=li.series;const W=320,H=105,P=30;
+      const avg=rf.map(x=>{const i=all.findIndex(y=>y.d===x.date);const pr=all.slice(Math.max(0,i-4),i);return pr.length?pr.reduce((a,y)=>a+y.v,0)/pr.length:x.v});
+      const vals=rf.map(x=>x.v).concat(avg);const mn=Math.max(0,Math.min(...vals)-10),mx=Math.max(...vals)+10;
+      const X=i=>P+i/(rf.length-1)*(W-P-8),Y=v=>H-18-(v-mn)/(mx-mn||1)*(H-34);
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
+      [0,.5,1].forEach(f=>{const v=mn+(mx-mn)*f;svg+='<line x1="'+P+'" y1="'+Y(v)+'" x2="'+W+'" y2="'+Y(v)+'" stroke="#27272a" stroke-dasharray="3 3"/><text x="0" y="'+(Y(v)+3)+'" fill="#52525b" font-size="9">'+Math.round(v)+'</text>'});
+      svg+='<polyline fill="none" stroke="#38bdf8" stroke-width="1.4" opacity=".55" points="'+rf.map((x,i)=>X(i)+","+Y(x.v)).join(" ")+'"/>';
+      svg+=rf.map((x,i)=>'<circle cx="'+X(i)+'" cy="'+Y(x.v)+'" r="2.4" fill="#38bdf8"/>').join("");
+      svg+='<polyline fill="none" stroke="#f4f4f5" stroke-width="2.4" points="'+avg.map((v,i)=>X(i)+","+Y(v)).join(" ")+'"/>';
+      let lx=-99;rf.forEach((x,i)=>{const xx=X(i),last=i===rf.length-1;if((xx-lx>=48&&(last||X(rf.length-1)-xx>=48))||last){svg+='<text x="'+Math.min(xx,W-16)+'" y="'+(H-4)+'" fill="#52525b" font-size="8" text-anchor="middle">'+fmtD(x.date)+'</text>';lx=xx}});
+      lc.innerHTML=svg+'</svg>'}}
   const kc=$("kchart");
   if(kc){const ss=sessionStrength(pl,gEx),ov=strengthSeries(pl,gEx);
     if(ss.length>=2){const W=320,H=105,P=30;const vals=ss.map(x=>x.v).concat(ov.map(x=>x.v));const mn=Math.min(...vals)-1,mx=Math.max(...vals)+1;
