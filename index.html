@@ -330,7 +330,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v154";
+const APP_VERSION="v155";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1391,6 +1391,7 @@ function strengthSeries(pl,allEx){
   return out;
 }
 function vStats(){
+  if(!["all","year","month"].includes(state.statRange))state.statRange="all";
   const rng=state.statRange||"all",tab=state.statTab||"ueberblick";
   const p=activePlan();
   const pl=rangeFilter(state.logs.slice().sort((a,b)=>a.date.localeCompare(b.date)),rng);
@@ -1405,7 +1406,7 @@ function vStats(){
   const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)):0;
   const T=[["ueberblick","Überblick"],["muskeln","Muskeln"],["uebungen","Übungen"],["mehr","Mehr"]];
   let h='<div class="s-seg">'+T.map(([k,l])=>'<button class="'+(tab===k?"on":"")+'" onclick="state.statTab=\''+k+'\';render()">'+l+'</button>').join("")+'</div>'
-   +'<div class="s-rng">'+Object.keys(RANGES).map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
+   +'<div class="s-rng">'+["all","year","month"].map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
   const sw=setsPerWeek(8);
   if(tab==="ueberblick"){
     h+='<div class="s-card"><div class="s-h s-hb"><b>Kraft</b><span class="s-hv s-chr">'+(g.overall==null?"–":sg(g.overall)+" %")+'</span></div><div id="kchart"></div></div>';
