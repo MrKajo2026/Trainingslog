@@ -293,6 +293,7 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tigh
 .k-d{gap:3px}.k-d .k-lab{min-height:11px}
 .l-pb i{background:var(--chrome)!important}
 .h-tiles:not(.t4) .h-t.f-t{gap:2px;padding:7px 4px 8px!important}.h-tiles:not(.t4) .h-t.f-t b{font-size:18px!important}
+.h-kw{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:36px}
 </style>
 </head>
 <body>
@@ -367,7 +368,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v171";
+const APP_VERSION="v172";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -846,7 +847,7 @@ function vHome(){
   const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];const dlSet=deloadDates();
   const tl=new Date(t).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
   h+='<div class="h-wk"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
-   +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:block;color:var(--amb);visibility:hidden">↺ zu heute</span></button>'
+   +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b id="wktitle" style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:none;color:var(--amb)">↺ zurück zu heute</span></button>'
    +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
   const WSET=new Set((state.weights||[]).map(w=>w.date));
   for(let i=-28;i<=35;i++){const d=addDays(t,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
@@ -867,7 +868,14 @@ function wkScroll(days){const el=document.getElementById("wkstrip");if(!el)retur
 function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(state.wkPos!=null){el.scrollLeft=state.wkPos;if(!state.calSel)state.wkPos=null}else wkCenter(false);
   const kc=document.getElementById("hdaycard");if(kc&&(state.wkJump||(state.calPanel||null)!==(state._lp||null))){state.wkJump=false;state._lp=state.calPanel;const mn=$("main"),r=kc.getBoundingClientRect(),mr=mn.getBoundingClientRect(),lim=mr.bottom-12;if(r.bottom>lim)mn.scrollBy({top:Math.min(r.bottom-lim,r.top-mr.top-10),behavior:"smooth"})}
   const back=document.getElementById("wkback"),td=document.getElementById("wktoday");
-  el.addEventListener("scroll",()=>{if(!back||!td)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2;back.style.visibility=Math.abs(el.scrollLeft-c)>60?"visible":"hidden"},{passive:true})}
+  const tt=document.getElementById("wktitle"),t0=tt?tt.textContent:"";
+  const upd=()=>{if(!back||!td||!tt)return;const c=td.offsetLeft-el.offsetLeft-(el.clientWidth-td.offsetWidth)/2,away=Math.abs(el.scrollLeft-c)>60;
+    back.style.display=away?"block":"none";
+    if(!away){tt.textContent=t0;return}
+    const mid=el.scrollLeft+el.clientWidth/2;let best=null,bd=1e9;el.querySelectorAll(".h-d").forEach(d=>{const x=d.offsetLeft-el.offsetLeft+d.offsetWidth/2,dd=Math.abs(x-mid);if(dd<bd){bd=dd;best=d}});
+    const iso=best&&((best.getAttribute("onclick")||"").match(/\d{4}-\d{2}-\d{2}/)||[])[0];
+    if(iso)tt.textContent=new Date(iso).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"})};
+  el.addEventListener("scroll",upd,{passive:true});upd()}
 // ================= Logger =================
 const exDone=e=>e.sets.length>0&&e.sets.every(s=>num(s.r)>0);
 function exSum(e){const ws=e.sets.map(s=>num(s.w)),rs=e.sets.map(s=>num(s.r)).filter(Boolean);
