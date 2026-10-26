@@ -368,7 +368,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v172";
+const APP_VERSION="v173";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -830,15 +830,19 @@ function vHome(){
   if(wt&&wt.delta>0.5)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +0,5 kg/Woche) — ca. 200 kcal/Tag weniger.</p>';
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
+  // Ist heute laut Plan Training? (Rhythmus jeden 2. Tag) – sonst Ruhetag mit nächstem Termin
+  const scNext=buildSchedule().find(x=>x.date>=t),trainedToday=state.logs.some(l=>l.date===t);
+  const rest=!trainedToday&&scNext&&scNext.date>t;
+  const nd=rest?new Date(scNext.date).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"}):"";
   const frac=Math.min(n/N,1),dlFrac=dp.active?dp.n/DELOAD_RUN:0;
   const status=dlNow?'<span style="color:var(--amb)">Deload '+(dp.n+1)+' von '+DELOAD_RUN+'</span>':re?'<span style="color:var(--sky)">Wiedereinstieg</span>':'<span style="color:var(--mut)">Aufbau</span>';
   h+='<div class="h-hero"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
    +'<circle cx="98" cy="98" r="84" stroke="var(--s2)"/>'
    +(frac>0?'<circle cx="98" cy="98" r="84" stroke="url(#chrRing)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +(dlNow?'<circle cx="98" cy="98" r="84" stroke="var(--amb)" stroke-dasharray="'+(C*Math.max(dlFrac,0.03)).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
-   +'</g></svg><div class="h-mid"><span class="tiny">Heute dran</span><b>'+esc(ns.name)+'</b><span class="h-st">'+status+'</span><span class="tiny">Zyklus '+n+' von '+N+'</span></div></div>'
-   +'<p class="tiny" style="text-align:center;margin-top:6px">'+(dlNow?'Halbe Sätze, 10 % leichter, 3–4 Wdh. Reserve':re?esc(re.txt):esc(ns.sub||"")+' · '+ns.exercises.filter(e=>e.sets>0).length+' Übungen')+'</p>'
-   +'<button class="btn red h-go" onclick="startSession(\''+ns.id+'\')">Training starten</button>'
+   +'</g></svg><div class="h-mid"><span class="tiny">'+(rest?'Nächste · '+nd:'Heute dran')+'</span><b>'+esc(ns.name)+'</b><span class="h-st">'+status+'</span><span class="tiny">Zyklus '+n+' von '+N+'</span></div></div>'
+   +'<p class="tiny" style="text-align:center;margin-top:6px">'+(rest?'<b style="color:var(--tx)">Heute Ruhetag</b> · Rhythmus jeden 2. Tag':dlNow?'Halbe Sätze, 10 % leichter, 3–4 Wdh. Reserve':re?esc(re.txt):esc(ns.sub||"")+' · '+ns.exercises.filter(e=>e.sets>0).length+' Übungen')+'</p>'
+   +'<button class="btn red h-go" onclick="startSession(\''+ns.id+'\')">'+(rest?'Trotzdem heute trainieren':'Training starten')+'</button>'
    +'<button class="h-other" onclick="state.showOther=!state.showOther;render()">Andere Einheit '+(state.showOther?"▴":"▾")+'</button>';
   if(state.showOther)h+='<div class="h-olist">'+p.sessions.filter(s=>s.id!==ns.id).map(s=>'<button onclick="state.showOther=false;startSession(\''+s.id+'\')"><b>'+esc(s.name)+'</b> <span class="tiny">'+esc(s.sub||"")+'</span></button>').join("")+'</div>';
   h+='</div>';
@@ -855,7 +859,7 @@ function vHome(){
     if(lg.length){cls=lg.some(l=>l.deload)?"dl-done":"done";lab=lg.map(l=>l.sessionName).join("+")}
     else if(ab){cls=ab.kind==="krank"?"sick":"vac";lab=ab.kind==="krank"?"krank":"Urlaub"}
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
-    if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
+    if(d===t){cls+=" now"}
     const first=d.slice(8)==="01";
     h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':(d===t?'<i class="wg no">G</i>':'');return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
   h+='</div></div>';
