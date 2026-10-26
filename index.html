@@ -296,6 +296,16 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-wk.wcard{padding:6px 8px 4px}m
 .h-kw{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:36px}
 .h-wk.wcard{background:var(--s1);border:1px solid var(--s2);border-radius:22px;padding:10px 10px 6px}
 .h-wk.wcard #hdaycard{margin-top:4px}.h-wk.wcard .k-sheet.k-home{background:none;border:none;border-top:1px solid var(--s2);border-radius:0;padding:10px 0 4px}
+/* Startseite kompakt: alles etwas kleiner, damit Ring + Funktionsleiste ohne Scrollen passen */
+main.fill:has(.h-hero){gap:8px;padding-top:8px}
+body:has(main.fill .h-hero) header .htxt{width:70%}body:has(main.fill .h-hero) header{padding-bottom:0!important}
+main.fill .h-hero{padding:10px 14px 8px}
+main.fill .h-go{height:46px;margin-top:8px;font-size:16px}
+main.fill .h-other{margin-top:4px;padding:2px}
+main.fill .h-wk.wcard{padding:6px 8px 4px}main.fill .h-wk.wcard .h-a{height:30px;width:38px}
+main.fill .h-wk.wcard .h-kw{min-height:30px}
+main.fill .h-tiles .h-t.f-t{padding:6px 4px 7px!important}
+main.fill .k-sheet.k-home{padding-top:8px}
 </style>
 </head>
 <body>
@@ -370,7 +380,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v175";
+const APP_VERSION="v176";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1106,7 +1116,7 @@ function fitPage(){try{const m=$("main");if(!m||!m.classList.contains("fill"))re
   const over=()=>m.scrollHeight-m.clientHeight;
   if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r)return;
     // Platz für die Funktionsleiste unter der Tagesleiste immer einplanen → Ringgröße bleibt beim Auf-/Zuklappen gleich
-    const card=$("hdaycard"),hero=m.querySelector(".h-hero"),R=0;   // Funktionsleiste nicht einplanen: Ring nutzt den ganzen Platz, beim Aufklappen rutscht die Seite hoch
+    const card=$("hdaycard"),hero=m.querySelector(".h-hero"),R=74;   // Platz der Funktionsleiste immer einplanen → kein Verlängern/Scrollen beim Aufklappen
     r.style.width=r.style.height="";m.classList.remove("tight");if(hero)hero.style.flex="0 0 auto";
     const used=()=>{const lc=m.lastElementChild;return lc?lc.getBoundingClientRect().bottom-m.getBoundingClientRect().top+m.scrollTop+parseFloat(getComputedStyle(m).paddingBottom):0};
     const ol=m.querySelector(".h-olist"),over=()=>used()-m.clientHeight-(card?card.offsetHeight+4:0)-(ol?ol.offsetHeight+8:0)+R;   // "Andere Einheit"-Liste nicht einrechnen → Ring bleibt gleich, Seite darf scrollen
