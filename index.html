@@ -291,6 +291,7 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tigh
 .h-d.now .wg{color:#3a3a3a}.h-d.now .wg.no{color:#b45309}.h-d.now .wsep{color:#777}
 .k-wg{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:var(--mut);line-height:1.1}.k-wg.no{color:var(--amb)}
 .k-d{gap:3px}.k-d .k-lab{min-height:11px}
+.l-pb i{background:var(--chrome)!important}
 </style>
 </head>
 <body>
@@ -365,7 +366,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v169";
+const APP_VERSION="v170";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -821,17 +822,17 @@ function vHome(){
   const wkPlan=wkDone+(state.settings.schedule||[]).filter(x=>x.date>=t&&x.date<=sun&&!state.logs.some(l=>l.date===x.date)).length;
   const fx=v=>String(v).replace(".",",");
   let h='<div class="h-tiles">'
-   +'<button class="h-t" onclick="go(\'statistik\')"><b style="color:'+(g.overall==null?"var(--tx)":g.overall>=0?"var(--grn)":"var(--red2)")+'">'+(g.overall==null?"–":(g.overall>=0?"+":"")+fx(Math.round(g.overall))+" %")+'</b><span>Kraft seit Start</span></button>'
-   +'<button class="h-t" onclick="go(\'statistik\')"><b style="color:'+(!wt?"var(--tx)":wt.delta>0.5?"var(--amb)":wt.delta<-0.3?"var(--sky)":"var(--grn)")+'">'+(wt?(wt.delta>=0?"+":"")+fx(wt.delta):"–")+'</b><span>kg/Woche'+(wt?" · Ø "+fx(wt.cur):"")+'</span></button>'
-   +'<button class="h-t" onclick="go(\'kalender\')"><b>'+wkDone+' / '+Math.max(wkPlan,wkDone)+'</b><span>Einheiten Woche</span></button></div>';
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft</span><em>seit Start</em><b>'+(g.overall==null?"–":(g.overall>=0?"+":"")+fx(Math.round(g.overall))+" %")+'</b></button>'
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Gewicht</span><em>'+(wt?(wt.delta>=0?"+":"")+fx(wt.delta)+" kg/Wo":"Ø 7 Tage")+'</em><b>'+(wt?fx(wt.cur):"–")+'<small> kg</small></b></button>'
+   +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><em>7 Tage zu Ø</em><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
   if(wt&&wt.delta>0.5)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +0,5 kg/Woche) — ca. 200 kcal/Tag weniger.</p>';
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
   const frac=Math.min(n/N,1),dlFrac=dp.active?dp.n/DELOAD_RUN:0;
   const status=dlNow?'<span style="color:var(--amb)">Deload '+(dp.n+1)+' von '+DELOAD_RUN+'</span>':re?'<span style="color:var(--sky)">Wiedereinstieg</span>':'<span style="color:var(--mut)">Aufbau</span>';
-  h+='<div class="h-hero"><div class="h-ring"><svg viewBox="0 0 196 196"><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
+  h+='<div class="h-hero"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
    +'<circle cx="98" cy="98" r="84" stroke="var(--s2)"/>'
-   +(frac>0?'<circle cx="98" cy="98" r="84" stroke="var(--red)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
+   +(frac>0?'<circle cx="98" cy="98" r="84" stroke="url(#chrRing)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +(dlNow?'<circle cx="98" cy="98" r="84" stroke="var(--amb)" stroke-dasharray="'+(C*Math.max(dlFrac,0.03)).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +'</g></svg><div class="h-mid"><span class="tiny">Heute dran</span><b>'+esc(ns.name)+'</b><span class="h-st">'+status+'</span><span class="tiny">Zyklus '+n+' von '+N+'</span></div></div>'
    +'<p class="tiny" style="text-align:center;margin-top:6px">'+(dlNow?'Halbe Sätze, 10 % leichter, 3–4 Wdh. Reserve':re?esc(re.txt):esc(ns.sub||"")+' · '+ns.exercises.filter(e=>e.sets>0).length+' Übungen')+'</p>'
@@ -2136,6 +2137,12 @@ function setsPerWeek(nSessions){
   return{sets:acc,weeks:Math.round(weeks*10)/10,n:ls.length};
 }
 // Belastungsindex: Sätze × Anstrengung (10−RIR); ACWR = aktuelle Woche / Ø 4 Wochen
+// Belastung der letzten 7 Tage im Verhältnis zum Wochenschnitt der 4 Wochen davor (100 % = üblich)
+function fatigueLoad(){const t=todayISO(),a7=addDays(t,-6),a35=addDays(t,-34);
+  const ld=l=>{let v=0;l.entries.forEach(e=>e.sets.forEach(x=>{if(num(x.r)>0)v+=(10-(x.rir==null?1:Math.min(x.rir,5)))*(l.deload?0.6:1)}));return v};
+  let cur=0,prev=0;state.logs.forEach(l=>{if(l.date>=a7&&l.date<=t)cur+=ld(l);else if(l.date>=a35&&l.date<a7)prev+=ld(l)});
+  (state.acts||[]).forEach(x=>{if(x.date>=a7&&x.date<=t)cur+=actLoad(x);else if(x.date>=a35&&x.date<a7)prev+=actLoad(x)});
+  const chronic=prev/4;if(!(chronic>0))return null;return{pct:Math.round(cur/chronic*100),cur:Math.round(cur),chronic:Math.round(chronic)}}
 function loadIndex(){
   const wk={};
   state.logs.filter(l=>!l.deload).forEach(l=>{
