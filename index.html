@@ -306,6 +306,7 @@ main.fill .h-wk.wcard{padding:6px 8px 4px}main.fill .h-wk.wcard .h-a{height:30px
 main.fill .h-wk.wcard .h-kw{min-height:30px}
 main.fill .h-tiles .h-t.f-t{padding:6px 4px 7px!important}
 main.fill .k-sheet.k-home{padding-top:8px}
+.l-tt{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:3px}.l-tn{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}.l-tm{font-size:12px;color:var(--mut);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -380,7 +381,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v177";
+const APP_VERSION="v178";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -975,8 +976,8 @@ function vLogger(){
     const rec=a.deload?null:recommendFor(e);
     const dlBase=a.deload&&lastSets.length?Math.max(...lastSets.map(x=>num(x.w))):0;
     const dlW=dlBase?roundPlate(dlBase*DELOAD_LOAD):0;
-    h+='<div id="ex-'+ei+'" class="card l-open"><div class="row" style="justify-content:space-between;gap:10px">'+pi(e.exerciseId,e.name,"s52")+'<button style="flex:1;text-align:left" class="l-title" onclick="toggleEx('+ei+')">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' <span style="color:var(--sky);font-size:11px">⇄</span>':'')+'</button>'
-     +'<span class="row" style="gap:6px"><span class="tiny mono">'+esc(e.reps)+' · '+esc(e.scheme)+(e.rest?' · ⏱'+fmtRest(e.rest):'')+'</span><button class="swap" onclick="openSwap('+ei+')">⇄</button></span></div>';
+    h+='<div id="ex-'+ei+'" class="card l-open"><div class="row" style="justify-content:space-between;gap:10px">'+pi(e.exerciseId,e.name,"s52")+'<button class="l-title l-tt" onclick="toggleEx('+ei+')"><span class="l-tn">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="l-tm">'+((e.name.match(/\(([^)]*)\)\s*$/)||[])[1]?esc(e.name.match(/\(([^)]*)\)\s*$/)[1])+' · ':'')+esc(e.reps)+' Wdh · '+esc(e.scheme)+(e.rest?' · ⏱ '+fmtRest(e.rest):'')+(e.ss?' · <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(e.swapped?' · <span style="color:var(--sky)">getauscht</span>':'')+'</span></button>'
+     +'<button class="swap" onclick="openSwap('+ei+')">⇄</button></div>';
     if(e.ss&&(ei===0||a.entries[ei-1].ss!==e.ss))h+='<p class="tiny" style="color:var(--sky);margin-top:4px">Supersatz '+esc(e.ss)+': im Wechsel mit der nächsten Übung, volle Pause nach dem Durchgang</p>';
     if(e.note)h+='<p class="note-a" style="margin-top:5px">'+esc(e.note)+'</p>';
     // Geräteeinstellung + Notiz kompakt sichtbar
