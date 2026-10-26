@@ -286,6 +286,11 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .pi.s32{width:32px;height:32px;border-radius:8px}.pi.s34{width:34px;height:34px;border-radius:8px}.pi.s52{width:52px;height:52px;border-radius:11px}.pi.s60{width:60px;height:60px;border-radius:12px}
 .l-row .l-rn{flex:1;min-width:0}
 main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
+#wkstrip .h-d em{display:flex;justify-content:center;align-items:center;gap:3px;overflow:visible;text-overflow:clip}
+.wg{font-style:normal;font-weight:400;font-size:9.5px;color:var(--mut)}.wg.no{color:var(--amb);font-weight:600}.wsep{color:var(--s3);font-weight:400}
+.h-d.now .wg{color:#3a3a3a}.h-d.now .wg.no{color:#b45309}.h-d.now .wsep{color:#777}
+.k-wg{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:var(--mut);line-height:1.1}.k-wg.no{color:var(--amb)}
+.k-d{gap:3px}.k-d .k-lab{min-height:11px}
 </style>
 </head>
 <body>
@@ -360,7 +365,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v168";
+const APP_VERSION="v169";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -841,6 +846,7 @@ function vHome(){
   h+='<div class="h-wk"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
    +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:block;color:var(--amb);visibility:hidden">↺ zu heute</span></button>'
    +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
+  const WSET=new Set((state.weights||[]).map(w=>w.date));
   for(let i=-28;i<=35;i++){const d=addDays(t,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
     if(lg.length){cls=lg.some(l=>l.deload)?"dl-done":"done";lab=lg.map(l=>l.sessionName).join("+")}
@@ -848,7 +854,7 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now";if(!lab&&!ab)lab=ns.name}
     const first=d.slice(8)==="01";
-    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)+'</em></button>'}
+    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':(d===t?'<i class="wg no">G</i>':'');return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
   h+='</div></div>';
   if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
   return h;
@@ -2273,7 +2279,8 @@ function dayCard(iso,home){
   }
   return h;
 }
-function vCal(){
+let wDates=null;
+function vCal(){wDates=null;
   if(!state.calMonth)state.calMonth=todayISO().slice(0,7);
   const[Y,M]=state.calMonth.split("-").map(Number);
   const first=new Date(Y,M-1,1);const days=new Date(Y,M,0).getDate();
@@ -2299,13 +2306,13 @@ function vCal(){
     if(sess.length)dot=sess.some(l=>l.deload)?"dl":"tr";
     else if(ab)dot="ab";
     else if(pln)dot=dlSet.has(iso)?"pdl":"pl";
-    const extra=((state.acts||[]).some(a=>a.date===iso)?"🚴":"");
+    const extra=((state.acts||[]).some(a=>a.date===iso)?"🚴":"");if(!wDates)wDates=new Set((state.weights||[]).map(w=>w.date));
     const lab=sess.length?sess.map(l=>l.sessionName).join("+"):ab?(ab.kind==="krank"?"krank":"Urlaub"):pln?sesName(pln.sessionId):"";
-    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em class="k-lab '+dot+'">'+esc(lab)+'</em>'+(extra?'<small>'+extra+'</small>':'')+'</button>';
+    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em class="k-lab '+dot+'">'+esc(lab)+'</em>'+(wDates.has(iso)?'<em class="k-wg">G</em>':iso===today?'<em class="k-wg no">G</em>':'')+(extra?'<small>'+extra+'</small>':'')+'</button>';
   }
   {const tot=startDow+days,fill=(7-tot%7)%7;for(let i=0;i<fill;i++)h+='<span class="k-e"></span>';}
   h+='</div>';
-  h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">krank/Urlaub</span></div>';
+  h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">krank/Urlaub</span><span class="k-wg" style="display:inline;font-size:12px;font-weight:600">G = Gewicht</span></div>';
   // Tageskarte
   if(state.calSel)h+=dayCard(state.calSel);
   // Pausen
