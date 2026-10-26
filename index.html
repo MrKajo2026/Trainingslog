@@ -380,7 +380,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v176";
+const APP_VERSION="v177";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -853,8 +853,7 @@ function vHome(){
    +(frac>0?'<circle cx="98" cy="98" r="84" stroke="url(#chrRing)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +(dlNow?'<circle cx="98" cy="98" r="84" stroke="var(--amb)" stroke-dasharray="'+(C*Math.max(dlFrac,0.03)).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +'</g></svg><div class="h-mid"><span class="tiny">'+(rest?'Nächste · '+nd:'Heute dran')+'</span><b>'+esc(ns.name)+'</b><span class="h-st">'+status+'</span><span class="tiny">Zyklus '+n+' von '+N+'</span></div></div>'
-   +'<p class="tiny" style="text-align:center;margin-top:6px">'+(rest?'<b style="color:var(--tx)">Heute Ruhetag</b> · Rhythmus jeden 2. Tag':dlNow?'Halbe Sätze, 10 % leichter, 3–4 Wdh. Reserve':re?esc(re.txt):esc(ns.sub||"")+' · '+ns.exercises.filter(e=>e.sets>0).length+' Übungen')+'</p>'
-   +'<button class="btn red h-go" onclick="startSession(\''+ns.id+'\')">'+(rest?'Trotzdem heute trainieren':'Training starten')+'</button>'
+   +'<button class="btn red h-go" onclick="startSession(\''+ns.id+'\')">Training starten</button>'
    +'<button class="h-other" onclick="state.showOther=!state.showOther;render()">Andere Einheit '+(state.showOther?"▴":"▾")+'</button>';
   if(state.showOther)h+='<div class="h-olist">'+p.sessions.filter(s=>s.id!==ns.id).map(s=>'<button onclick="state.showOther=false;startSession(\''+s.id+'\')"><b>'+esc(s.name)+'</b> <span class="tiny">'+esc(s.sub||"")+'</span></button>').join("")+'</div>';
   h+='</div>';
