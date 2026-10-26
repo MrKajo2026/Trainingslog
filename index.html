@@ -381,7 +381,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v179";
+const APP_VERSION="v180";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1112,7 +1112,8 @@ setAppH();window.addEventListener("resize",setAppH);window.addEventListener("ori
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(setAppH,100)});setTimeout(setAppH,300);setTimeout(setAppH,1000);
 window.addEventListener("load",()=>{const i=document.querySelector(".hban");if(i&&!i.complete)i.addEventListener("load",()=>render());setTimeout(()=>{try{fitPage()}catch(e){}},300)});
 // Startseite/Kalender: alles ohne Scrollen sichtbar → Ring bzw. Kalenderzeilen bei Platzmangel verkleinern
-function fitPage(){try{const m=$("main");if(!m||!m.classList.contains("fill"))return;
+let fitRAF=0;function fitPage(){if(fitRAF)return;fitRAF=requestAnimationFrame(()=>{fitRAF=0;fitPageNow()})}
+function fitPageNow(){try{const m=$("main");if(!m||!m.classList.contains("fill"))return;
   const over=()=>m.scrollHeight-m.clientHeight;
   if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r)return;
     // Platz für die Funktionsleiste unter der Tagesleiste immer einplanen → Ringgröße bleibt beim Auf-/Zuklappen gleich
@@ -2493,13 +2494,15 @@ boot();
 // Auto-Update: neue Version auf GitHub erkennen und laden (iOS-Homescreen hält sonst die alte Datei im Cache)
 function checkUpdate(){
   if(state.active||!navigator.onLine||location.protocol==="file:")return;
-  fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
-    const m=t.match(/APP_VERSION="v(\d+)"/);if(!m)return;
+  const base=location.pathname.replace(/[^/]*$/,"");
+  fetch(base+"version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject()).catch(()=>fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"")).then(t=>{
+    const m=String(t||"").match(/APP_VERSION="v(\d+)"/)||String(t||"").match(/"version":"v(\d+)"/);if(!m)return;
     const cur=+APP_VERSION.slice(1),neu=+m[1];
     if(neu>cur){toast("Update auf v"+neu+" wird geladen …");setTimeout(()=>location.replace(location.pathname+"?v="+neu),900)}
   }).catch(()=>{});
 }
 setTimeout(checkUpdate,1500);
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 </script>
 </body>
