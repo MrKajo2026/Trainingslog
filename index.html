@@ -292,6 +292,7 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tigh
 .k-wg{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:var(--mut);line-height:1.1}.k-wg.no{color:var(--amb)}
 .k-d{gap:3px}.k-d .k-lab{min-height:11px}
 .l-pb i{background:var(--chrome)!important}
+.h-tiles:not(.t4) .h-t.f-t{gap:2px;padding:7px 4px 8px!important}.h-tiles:not(.t4) .h-t.f-t b{font-size:18px!important}
 </style>
 </head>
 <body>
@@ -366,7 +367,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v170";
+const APP_VERSION="v171";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -822,9 +823,9 @@ function vHome(){
   const wkPlan=wkDone+(state.settings.schedule||[]).filter(x=>x.date>=t&&x.date<=sun&&!state.logs.some(l=>l.date===x.date)).length;
   const fx=v=>String(v).replace(".",",");
   let h='<div class="h-tiles">'
-   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft</span><em>seit Start</em><b>'+(g.overall==null?"–":(g.overall>=0?"+":"")+fx(Math.round(g.overall))+" %")+'</b></button>'
-   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Gewicht</span><em>'+(wt?(wt.delta>=0?"+":"")+fx(wt.delta)+" kg/Wo":"Ø 7 Tage")+'</em><b>'+(wt?fx(wt.cur):"–")+'<small> kg</small></b></button>'
-   +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><em>7 Tage zu Ø</em><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft</span><b>'+(g.overall==null?"–":(g.overall>=0?"+":"")+fx(Math.round(g.overall))+" %")+'</b></button>'
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Gewicht</span><b>'+(wt?fx(wt.cur):"–")+'<small> kg</small></b></button>'
+   +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
   if(wt&&wt.delta>0.5)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +0,5 kg/Woche) — ca. 200 kcal/Tag weniger.</p>';
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
