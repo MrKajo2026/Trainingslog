@@ -298,7 +298,7 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-wk.wcard{padding:6px 8px 4px}m
 .h-wk.wcard #hdaycard{margin-top:4px}.h-wk.wcard .k-sheet.k-home{background:none;border:none;border-top:1px solid var(--s2);border-radius:0;padding:10px 0 4px}
 /* Startseite kompakt: alles etwas kleiner, damit Ring + Funktionsleiste ohne Scrollen passen */
 main.fill:has(.h-hero){gap:8px;padding-top:8px}
-body:has(main.fill .h-hero) header .htxt{width:70%}body:has(main.fill .h-hero) header{padding-bottom:0!important}
+header .htxt{width:70%!important}header{padding-bottom:0!important}
 main.fill .h-hero{padding:10px 14px 8px}
 main.fill .h-go{height:46px;margin-top:8px;font-size:16px}
 main.fill .h-other{margin-top:4px;padding:2px}
@@ -381,7 +381,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v178";
+const APP_VERSION="v179";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
