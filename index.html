@@ -285,7 +285,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .pi{flex-shrink:0;border-radius:9px;background:radial-gradient(circle at 50% 38%,#2e2e32,#141416 72%);display:inline-grid;place-items:center;overflow:hidden}.pi svg{width:100%;height:100%;display:block}
 .pi.s32{width:32px;height:32px;border-radius:8px}.pi.s34{width:34px;height:34px;border-radius:8px}.pi.s52{width:52px;height:52px;border-radius:11px}.pi.s60{width:60px;height:60px;border-radius:12px}
 .l-row .l-rn{flex:1;min-width:0}
-main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
+main.tight{gap:8px;padding-top:10px}main.tight .h-wk.wcard{padding:6px 8px 4px}main.tight .h-wk.wcard .h-a{height:30px}main.tight .h-hero{gap:2px}main.tight .h-mid b{font-size:30px}main.tight .h-mid .tiny{font-size:10.5px}main.tight .h-st{font-size:12px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
 #wkstrip .h-d em{display:flex;justify-content:center;align-items:center;gap:3px;overflow:visible;text-overflow:clip}
 .wg{font-style:normal;font-weight:400;font-size:9.5px;color:var(--mut)}.wg.no{color:var(--amb);font-weight:600}.wsep{color:var(--s3);font-weight:400}
 .h-d.now .wg{color:#3a3a3a}.h-d.now .wg.no{color:#b45309}.h-d.now .wsep{color:#777}
@@ -294,6 +294,8 @@ main.tight{gap:8px;padding-top:10px}main.tight .h-mid b{font-size:34px}main.tigh
 .l-pb i{background:var(--chrome)!important}
 .h-tiles:not(.t4) .h-t.f-t{gap:2px;padding:7px 4px 8px!important}.h-tiles:not(.t4) .h-t.f-t b{font-size:18px!important}
 .h-kw{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:36px}
+.h-wk.wcard{background:var(--s1);border:1px solid var(--s2);border-radius:22px;padding:10px 10px 6px}
+.h-wk.wcard #hdaycard{margin-top:4px}.h-wk.wcard .k-sheet.k-home{background:none;border:none;border-top:1px solid var(--s2);border-radius:0;padding:10px 0 4px}
 </style>
 </head>
 <body>
@@ -368,7 +370,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v173";
+const APP_VERSION="v174";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -850,7 +852,7 @@ function vHome(){
   const plan={};(state.settings.schedule||[]).forEach(x=>plan[x.date]=x);
   const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];const dlSet=deloadDates();
   const tl=new Date(t).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short"});
-  h+='<div class="h-wk"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
+  h+='<div class="h-wk wcard"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
    +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b id="wktitle" style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:none;color:var(--amb)">↺ zurück zu heute</span></button>'
    +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
   const WSET=new Set((state.weights||[]).map(w=>w.date));
@@ -862,8 +864,9 @@ function vHome(){
     if(d===t){cls+=" now"}
     const first=d.slice(8)==="01";
     h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':(d===t?'<i class="wg no">G</i>':'');return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
-  h+='</div></div>';
+  h+='</div>';
   if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
+  h+='</div>';
   return h;
 }
 function wkCenter(smooth){const el=document.getElementById("wkstrip"),td=document.getElementById("wktoday");if(!el||!td)return;
@@ -1103,12 +1106,13 @@ function fitPage(){try{const m=$("main");if(!m||!m.classList.contains("fill"))re
   const over=()=>m.scrollHeight-m.clientHeight;
   if(state.tab==="training"){const r=m.querySelector(".h-ring");if(!r)return;
     // Platz für die Funktionsleiste unter der Tagesleiste immer einplanen → Ringgröße bleibt beim Auf-/Zuklappen gleich
-    const card=$("hdaycard"),hero=m.querySelector(".h-hero");if(card)state._barH=card.offsetHeight+12;
+    const card=$("hdaycard"),hero=m.querySelector(".h-hero"),R=74;   // R = Platz der Funktionsleiste, immer eingeplant
     r.style.width=r.style.height="";m.classList.remove("tight");if(hero)hero.style.flex="0 0 auto";
     const used=()=>{const lc=m.lastElementChild;return lc?lc.getBoundingClientRect().bottom-m.getBoundingClientRect().top+m.scrollTop+parseFloat(getComputedStyle(m).paddingBottom):0};
-    let D=r.offsetHeight,over0=used()-m.clientHeight+(card?0:(state._barH||89));
-    if(over0>D-180){m.classList.add("tight");if(card)state._barH=card.offsetHeight+8;D=r.offsetHeight;over0=used()-m.clientHeight+(card?0:(state._barH||85))}
-    const sz=Math.max(m.classList.contains("tight")?156:176,D-Math.max(0,over0));r.style.width=r.style.height=sz+"px";if(hero)hero.style.flex="";}
+    const over=()=>used()-m.clientHeight-(card?card.offsetHeight+4:0)+R;
+    let D=r.offsetHeight,o=over();
+    if(o>D-180){m.classList.add("tight");D=r.offsetHeight;o=over()}
+    const sz=Math.max(m.classList.contains("tight")?136:176,D-Math.max(0,o));r.style.width=r.style.height=sz+"px";if(hero)hero.style.flex="";}
   else if(state.tab==="kalender"){const g=m.querySelector(".k-grid");if(!g)return;const rows=Math.ceil(g.querySelectorAll(".k-d,.k-e").length/7);
     for(let i=0;i<3&&over()>0;i++){const cur=parseFloat(getComputedStyle(g.querySelector(".k-d")).minHeight)||56;const nh=Math.max(40,Math.floor(cur-over()/rows)-1);
       g.querySelectorAll(".k-d,.k-e").forEach(e=>{e.style.minHeight=nh+"px"});if(nh===40)break}}
