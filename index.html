@@ -307,6 +307,7 @@ main.fill .h-wk.wcard .h-kw{min-height:30px}
 main.fill .h-tiles .h-t.f-t{padding:6px 4px 7px!important}
 main.fill .k-sheet.k-home{padding-top:8px}
 .l-tt{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:3px}.l-tn{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}.l-tm{font-size:12px;color:var(--mut);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#restdark .rd-s{display:flex;flex-direction:column;align-items:center;gap:3px;max-width:190px}#restdark .rd-n{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-m{font-size:12px;opacity:.85;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -381,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v180";
+const APP_VERSION="v181";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1136,9 +1137,9 @@ function wakeOn(){if(!screenOn())return wakeOff();try{if(navigator.wakeLock&&!wa
 function wakeOff(){try{if(wakeLk&&wakeLk.release)wakeLk.release()}catch(e){}wakeLk=null}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.active){wakeLk=null;wakeOn()}});
 function nextSetInfo(){const a=state.active;if(!a)return"";
-  for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return esc(e.name)+' · Satz '+(i+1)+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')}}
+  for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}
   return"Alle Sätze erledigt"}
-function restLabelNow(){const a=state.active;if(!a)return"";for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0)return esc(e.name)+' · Satz '+(i+1)+' von '+e.sets.length}return""}
+function restLabelNow(){const a=state.active;if(!a)return"";for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}return""}
 function armDark(){clearTimeout(darkT);if(!screenOn()||!restCtx)return;darkAt=Date.now()+5000;darkT=setTimeout(showDark,5000);updDark()}
 function showDark(){if(!restCtx||$("restdark"))return;const d=document.createElement("div");d.id="restdark";
   d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+restLabelNow()+'</div><div class="rd-h">Antippen für Ansicht</div>';
