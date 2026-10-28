@@ -382,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v184";
+const APP_VERSION="v185";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -843,7 +843,7 @@ function vHome(){
   const wkPlan=wkDone+(state.settings.schedule||[]).filter(x=>x.date>=t&&x.date<=sun&&!state.logs.some(l=>l.date===x.date)).length;
   const fx=v=>String(v).replace(".",",");
   let h='<div class="h-tiles">'
-   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft</span><b>'+(g.overall==null?"–":(g.overall>=0?"+":"")+fx(Math.round(g.overall))+" %")+'</b></button>'
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Gewicht</span><b>'+(wt?fx(wt.cur):"–")+'<small> kg</small></b></button>'
    +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
   if(wt&&wt.delta>0.5)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +0,5 kg/Woche) — ca. 200 kcal/Tag weniger.</p>';
@@ -1632,6 +1632,15 @@ function sessionStrength(pl,allEx){
     if(a.length){a.sort((x,y)=>x-y);const m=a.length>>1;out.push({d:l.date,v:a.length%2?a[m]:(a[m-1]+a[m])/2})}});  // Median: einzelne Ausreißer-Übungen verzerren nicht
   return out;
 }
+// Kraftzuwachs im aktuellen Zyklus: je Übung Ø der letzten bis zu 3 Einheiten im Zyklus vs. Ø der letzten bis zu 3 Einheiten davor (ohne Deload/Wiedereinstieg/anderes Studio), Median über alle Übungen
+function cycleGrowth(){const cs=state.settings.cycleStart;if(!cs)return null;
+  const ls=state.logs.filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>a.date.localeCompare(b.date));
+  const val=e=>{const v=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r,s.rir)),0);return v>0?v:volLoad(e.sets)};
+  const ids=new Set();ls.forEach(l=>l.entries.forEach(e=>{if((MUSCLE_MAP[e.exerciseId]||{}).p)ids.add(e.exerciseId)}));
+  const out=[];ids.forEach(id=>{const pts=ls.map(l=>({d:l.date,e:l.entries.find(x=>x.exerciseId===id)})).filter(x=>x.e).map(x=>({d:x.d,v:val(x.e)})).filter(x=>x.v>0);
+    const cur=pts.filter(x=>x.d>=cs).slice(-3),prev=pts.filter(x=>x.d<cs).slice(-3);if(!cur.length||!prev.length)return;
+    const av=a=>a.reduce((s,x)=>s+x.v,0)/a.length;out.push((av(cur)/av(prev)-1)*100)});
+  if(!out.length)return null;out.sort((a,b)=>a-b);const m=out.length>>1;return out.length%2?out[m]:(out[m-1]+out[m])/2}
 function strengthSeries(pl,allEx){
   pl=pl.filter(l=>!l.deload&&!l.altGym);
   const per={};
