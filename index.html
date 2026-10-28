@@ -382,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v183";
+const APP_VERSION="v184";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -879,7 +879,7 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now"}
     const first=d.slice(8)==="01";
-    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':(d===t?'<i class="wg no">G</i>':'');return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
+    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':'';return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
   h+='</div>';
   if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
   h+='</div>';
@@ -2350,7 +2350,7 @@ function vCal(){wDates=null;
     else if(pln)dot=dlSet.has(iso)?"pdl":"pl";
     const extra=((state.acts||[]).some(a=>a.date===iso)?"🚴":"");if(!wDates)wDates=new Set((state.weights||[]).map(w=>w.date));
     const lab=sess.length?sess.map(l=>l.sessionName).join("+"):ab?(ab.kind==="krank"?"krank":"Urlaub"):pln?sesName(pln.sessionId):"";
-    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em class="k-lab '+dot+'">'+esc(lab)+'</em>'+(wDates.has(iso)?'<em class="k-wg">G</em>':iso===today?'<em class="k-wg no">G</em>':'')+(extra?'<small>'+extra+'</small>':'')+'</button>';
+    h+='<button class="k-d'+(iso===today?" now":"")+(state.calSel===iso?" sel":"")+'" onclick="calPick(\''+iso+'\')"><b>'+d+'</b><em class="k-lab '+dot+'">'+esc(lab)+'</em>'+(wDates.has(iso)?'<em class="k-wg">G</em>':'')+(extra?'<small>'+extra+'</small>':'')+'</button>';
   }
   {const tot=startDow+days,fill=(7-tot%7)%7;for(let i=0;i<fill;i++)h+='<span class="k-e"></span>';}
   h+='</div>';
