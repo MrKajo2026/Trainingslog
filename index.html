@@ -382,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v181";
+const APP_VERSION="v182";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1965,6 +1965,7 @@ function shortExport(n){
   if(ws.length)t+="\nGewicht: "+ws.map(w=>fmtD(w.date)+" "+w.kg+"kg").join(" · ")+"\n";
   {const from=ls.length?ls[0].date:todayISO();const kr=(state.settings.absences||[]).filter(a=>a.kind==="krank"&&a.to>=from);
    if(kr.length)t+="Krank: "+kr.map(a=>fmtD(a.from)+(a.to!==a.from?"–"+fmtD(a.to):"")).join(" · ")+"\n";}
+  try{const bt=JSON.parse(localStorage.getItem("tl_boot")||"[]");if(bt.length)t+="\nStartzeiten: "+bt.slice(-5).map(x=>x.ms+"ms"+(x.sw?"":"(ohne Cache)")).join(" · ")}catch(e){}
   {const wt=weightTrend();if(wt)t+="Gewicht Ø7T: "+String(wt.cur).replace(".",",")+" kg ("+(wt.delta>=0?"+":"")+String(wt.delta).replace(".",",")+" kg zur Vorwoche)\n";}
   if(ac.length)t+="Sport: "+ac.map(a=>fmtD(a.date)+" "+((ACT_TYPES[a.type]||{}).n||a.type)+" "+a.min+"min"+(a.km?" "+a.km+"km":"")+" RPE"+a.rpe).join(" · ")+"\n";
   return t;
@@ -2492,6 +2493,7 @@ function autoPlanDeload(){
 // Start
 try{document.getElementById("favicon").href=document.getElementById("touchicon").href}catch(e){}
 boot();
+try{const ms=Math.round(performance.now());const bt=JSON.parse(localStorage.getItem("tl_boot")||"[]");bt.push({d:new Date().toISOString().slice(0,16),ms,sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller)});localStorage.setItem("tl_boot",JSON.stringify(bt.slice(-10)))}catch(e){}
 // Auto-Update: neue Version auf GitHub erkennen und laden (iOS-Homescreen hält sonst die alte Datei im Cache)
 function checkUpdate(){
   if(state.active||!navigator.onLine||location.protocol==="file:")return;
@@ -2499,10 +2501,17 @@ function checkUpdate(){
   fetch(base+"version.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject()).catch(()=>fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"")).then(t=>{
     const m=String(t||"").match(/APP_VERSION="v(\d+)"/)||String(t||"").match(/"version":"v(\d+)"/);if(!m)return;
     const cur=+APP_VERSION.slice(1),neu=+m[1];
-    if(neu>cur){toast("Update auf v"+neu+" wird geladen …");setTimeout(()=>location.replace(location.pathname+"?v="+neu),900)}
+    if(neu>cur){let tried={};try{tried=JSON.parse(localStorage.getItem("tl_updTry")||"{}")}catch(e){}
+      if(tried.v===neu&&Date.now()-tried.t<10*60000)return;          // gleiche Version schon versucht (CDN noch alt) → nicht erneut laden
+      try{localStorage.setItem("tl_updTry",JSON.stringify({v:neu,t:Date.now()}))}catch(e){}
+      toast("Update auf v"+neu+" …");
+      const go=()=>location.replace(location.pathname);
+      if(window.caches)fetch(location.pathname+"?nocache="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.clone().text().then(t=>{if(!/APP_VERSION="v/.test(t))throw 0;return caches.open("tl-app").then(c=>c.put("./",r))}):0).then(go,go);
+      else go()}
   }).catch(()=>{});
 }
-setTimeout(checkUpdate,1500);
+setTimeout(checkUpdate,300);
+if(location.search)try{history.replaceState(null,"",location.pathname)}catch(e){}   // ?v=… entfernen, damit der nächste Start aus dem Cache kommt
 if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate()});
 </script>
