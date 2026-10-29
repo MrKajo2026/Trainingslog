@@ -21,7 +21,7 @@ html{height:100%;background:var(--bg)}body{background:var(--bg);color:var(--tx);
 header{position:relative;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--s2);padding:calc(16px + env(safe-area-inset-top,0px)) 16px 10px;z-index:10}
 header h1{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;display:inline}
 #hinfo{float:right;font-size:11px;color:var(--mut)}
-main{padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}main>*{flex-shrink:0}
+main{padding:16px 16px 24px;display:flex;flex-direction:column;gap:12px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior-y:contain}main>*{flex-shrink:0}
 nav{position:relative;flex-shrink:0;width:100%;display:flex;background:var(--s1);border-top:1px solid var(--s2);z-index:30;padding-top:4px;padding-bottom:max(calc(env(safe-area-inset-bottom,0px) - 14px),6px)}
 nav button:active{background:rgba(239,68,68,.15)}
 nav button{flex:1;min-width:0;min-height:60px;padding:19px 2px;background:none;border:none;color:var(--mut);font-size:clamp(9px,2.7vw,12px);font-weight:700;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -39,7 +39,7 @@ button{font-family:inherit;cursor:pointer}
 .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
 .chip{padding:6px 10px;border-radius:8px;border:none;background:var(--s2);color:var(--mut);font-size:12px;font-weight:700}
 .chip.on-g{background:var(--grn2);color:#fff}.chip.on-n{background:var(--s3);color:#fff}.chip.on-r{background:var(--red);color:#fff}.chip.on-a{background:var(--amb);color:#111}
-input[type=text],textarea,select{background:var(--s2);border:1px solid var(--s3);border-radius:9px;color:var(--tx);padding:9px 10px;font-size:14px;width:100%;font-family:inherit;-webkit-appearance:none}
+input[type=text],textarea,select{background:var(--s2);border:1px solid var(--s3);border-radius:9px;color:var(--tx);padding:9px 10px;font-size:16px;width:100%;font-family:inherit;-webkit-appearance:none}
 input:focus,textarea:focus{outline:none;border-color:var(--red2)}
 .win{width:100%;text-align:center;font-size:15px;padding:9px 2px}.winr{width:100%;text-align:center;font-size:15px;padding:9px 2px}
 .setrow{display:flex;align-items:center;gap:4px;background:rgba(63,63,70,.22);border-radius:10px;padding:5px 6px}
@@ -382,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v185";
+const APP_VERSION="v186";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1111,11 +1111,20 @@ function startRest(sec,label){
 
 
 // App-Höhe = echte Fensterhöhe (iOS meldet 100dvh im Home-Bildschirm-Modus zu klein)
-function setAppH(){setTimeout(()=>{try{fitPage()}catch(e){}},50);try{let h=Math.max(window.innerHeight,document.documentElement.clientHeight);
+function setAppH(){const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;setTimeout(()=>{try{fitPage()}catch(e){}},50);try{let h=Math.max(window.innerHeight,document.documentElement.clientHeight);
   if(navigator.standalone===true){const por=window.innerHeight>=window.innerWidth,sh=por?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);if(sh>h)h=sh}  // iOS Home-Bildschirm: innerHeight ohne Statusleiste → volle Bildschirmhöhe
   document.documentElement.style.setProperty("--app-h",h+"px")}catch(e){}}
 setAppH();window.addEventListener("resize",setAppH);window.addEventListener("orientationchange",()=>setTimeout(setAppH,300));window.addEventListener("pageshow",setAppH);
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(setAppH,100)});setTimeout(setAppH,300);setTimeout(setAppH,1000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(setAppH,100)});
+// iOS-Tastatur: App-Höhe an den sichtbaren Bereich anpassen, Fenster nicht verschieben lassen → Cursor bleibt im Eingabefeld
+(function(){const vv=window.visualViewport;if(!vv)return;
+  const isInp=el=>el&&/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+  const fit=()=>{const a=document.activeElement;if(!isInp(a))return;document.documentElement.style.setProperty("--app-h",Math.round(vv.height)+"px");if(window.scrollY)window.scrollTo(0,0);
+    const m=$("main");if(m&&m.contains(a)){const r=a.getBoundingClientRect(),mr=m.getBoundingClientRect();if(r.bottom>mr.bottom-12||r.top<mr.top+8)m.scrollTop+=r.top-mr.top-mr.height/2+r.height/2}};
+  vv.addEventListener("resize",fit);vv.addEventListener("scroll",()=>{if(isInp(document.activeElement)&&window.scrollY)window.scrollTo(0,0)});
+  document.addEventListener("focusin",e=>{if(isInp(e.target))setTimeout(fit,320)});
+  document.addEventListener("focusout",()=>setTimeout(()=>{if(!isInp(document.activeElement)){setAppH();if(window.scrollY)window.scrollTo(0,0)}},120));
+})();setTimeout(setAppH,300);setTimeout(setAppH,1000);
 window.addEventListener("load",()=>{const i=document.querySelector(".hban");if(i&&!i.complete)i.addEventListener("load",()=>render());setTimeout(()=>{try{fitPage()}catch(e){}},300)});
 // Startseite/Kalender: alles ohne Scrollen sichtbar → Ring bzw. Kalenderzeilen bei Platzmangel verkleinern
 let fitRAF=0;function fitPage(){if(fitRAF)return;fitRAF=requestAnimationFrame(()=>{fitRAF=0;fitPageNow()})}
