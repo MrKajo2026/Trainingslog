@@ -286,7 +286,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .pi.s32{width:32px;height:32px;border-radius:8px}.pi.s34{width:34px;height:34px;border-radius:8px}.pi.s52{width:52px;height:52px;border-radius:11px}.pi.s60{width:60px;height:60px;border-radius:12px}
 .l-row .l-rn{flex:1;min-width:0}
 main.tight{gap:8px;padding-top:10px}main.tight .h-wk.wcard{padding:6px 8px 4px}main.tight .h-wk.wcard .h-a{height:30px}main.tight .h-hero{gap:2px}main.tight .h-mid b{font-size:30px}main.tight .h-mid .tiny{font-size:10.5px}main.tight .h-st{font-size:12px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
-#wkstrip .h-d em{display:flex;justify-content:center;align-items:center;gap:3px;overflow:visible;text-overflow:clip}
+#wkstrip .h-d em{display:flex;justify-content:center;align-items:center;gap:2px;padding:0;overflow:hidden;text-overflow:clip}#wkstrip .h-d em>span:first-child{flex-shrink:0}
 .wg{font-style:normal;font-weight:400;font-size:9.5px;color:var(--mut)}.wg.no{color:var(--amb);font-weight:600}.wsep{color:var(--s3);font-weight:400}
 .h-d.now .wg{color:#3a3a3a}.h-d.now .wg.no{color:#b45309}.h-d.now .wsep{color:#777}
 .k-wg{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:var(--mut);line-height:1.1}.k-wg.no{color:var(--amb)}
@@ -384,7 +384,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v188";
+const APP_VERSION="v189";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
