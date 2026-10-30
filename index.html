@@ -308,6 +308,8 @@ main.fill .h-tiles .h-t.f-t{padding:6px 4px 7px!important}
 main.fill .k-sheet.k-home{padding-top:8px}
 .l-tt{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;gap:3px}.l-tn{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}.l-tm{font-size:12px;color:var(--mut);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #restdark .rd-s{display:flex;flex-direction:column;align-items:center;gap:3px;max-width:190px}#restdark .rd-n{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-m{font-size:12px;opacity:.85;white-space:nowrap}
+#restdark .rd-next{position:absolute;left:24px;right:24px;bottom:calc(84px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#111113;border:1px solid #1f1f22}
+#restdark .rd-next .pi{opacity:.75}#restdark.end .rd-next{background:#18181b;border-color:#27272a}#restdark.end .rd-next .pi{opacity:1}#restdark.end .rd-nn{color:#e4e4e7}#restdark.end .rd-nl,#restdark.end .rd-nm{color:#a1a1aa}#restdark .rd-nl{font-size:11px;color:#5a5a60}#restdark .rd-nn{font-size:15px;font-weight:700;color:#8a8a90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-nm{font-size:12px;color:#5a5a60}
 </style>
 </head>
 <body>
@@ -382,7 +384,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v187";
+const APP_VERSION="v188";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1156,16 +1158,28 @@ function nextSetInfo(){const a=state.active;if(!a)return"";
   for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}
   return"Alle Sätze erledigt"}
 function restLabelNow(){const a=state.active;if(!a)return"";for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}return""}
+// Pause nach abgeschlossener Übung: "fertig" + Karte mit der nächsten Übung
+function restNextCard(){const a=state.active;if(!a)return null;let li=-1,lt=0;
+  a.entries.forEach((e,i)=>e.sets.forEach(x=>{if(x.rir!=null&&num(x.r)>0&&(x.t||0)>=lt){lt=x.t||0;li=i}}));
+  if(li<0)return null;const e=a.entries[li];if(!exDone(e)||e.sets[e.sets.length-1].rir==null)return null;
+  if(e.ss&&a.entries.some(x=>x.ss===e.ss&&!exDone(x)))return null;
+  let t=-1;const n=a.entries.length;for(let k=1;k<=n;k++){const j=(li+k)%n;if(!exDone(a.entries[j])){t=j;break}}
+  const nm=x=>esc(x.name.replace(/\s*\([^)]*\)\s*$/,""));
+  const label='<span class="rd-n">'+nm(e)+'</span><span class="rd-m">fertig ✓</span>';
+  if(t<0)return{label,card:'<div class="rd-next"><div style="flex:1"><div class="rd-nl">Als Nächstes</div><div class="rd-nn">Alle Übungen erledigt</div></div></div>'};
+  let ne=a.entries[t];if(ne.ss){const tt=ssTurn(ne.ss);if(tt>=0)ne=a.entries[tt]}
+  const w=Math.max(0,...ne.sets.map(x=>num(x.w)));
+  return{label,card:'<div class="rd-next"><span class="pi s52">'+PICTO.svg(ne.exerciseId,ne.name)+'</span><div style="flex:1;min-width:0"><div class="rd-nl">Als Nächstes</div><div class="rd-nn">'+nm(ne)+'</div><div class="rd-nm">'+ne.sets.length+' × '+esc(ne.reps||"")+(w>0?' · '+String(w).replace(".",",")+' kg':'')+'</div></div></div>'}}
 function armDark(){clearTimeout(darkT);if(!screenOn()||!restCtx)return;darkAt=Date.now()+5000;darkT=setTimeout(showDark,5000);updDark()}
-function showDark(){if(!restCtx||$("restdark"))return;const d=document.createElement("div");d.id="restdark";
-  d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+restLabelNow()+'</div><div class="rd-h">Antippen für Ansicht</div>';
+function showDark(){if(!restCtx||$("restdark"))return;const nc=restNextCard()||{};const d=document.createElement("div");d.id="restdark";
+  d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+(nc.label||restLabelNow())+'</div>'+(nc.card||'')+'<div class="rd-h">Antippen für Ansicht</div>';
   d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);armDark()};document.body.appendChild(d);updDark()}
 function fadeOut(d){if(d.dataset.out)return;d.dataset.out=1;d.id="";d.style.transition="opacity .2s";d.style.opacity="0";setTimeout(()=>d.remove(),450);try{document.activeElement&&document.activeElement.blur()}catch(e){}}
 function updDark(){if(!restCtx)return;const left=Math.max(0,Math.round((restCtx.end-Date.now())/1000));const t=$("rdt");if(t)t.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
   const arc=$("rdarc");if(arc)arc.setAttribute("stroke-dashoffset",(339.3*(1-left/restCtx.sec)).toFixed(1));
   const h=$("restdk");if(h){const r=Math.ceil((darkAt-Date.now())/1000);h.textContent=screenOn()&&r>0&&!$("restdark")?"dunkel in "+r+" s":""}}
 function showEndRing(){clearTimeout(darkT);restCtx=null;let d=$("restdark");if(d)d.remove();d=document.createElement("div");d.id="restdark";d.className="end";
-  d.innerHTML='<div class="rd-ring2"></div><div class="rd-t">0:00</div><div class="rd-s">'+nextSetInfo()+'</div><div class="rd-h">Antippen → zurück zur Übung</div>';
+  d.innerHTML='<div class="rd-ring2"></div><div class="rd-t">0:00</div><div class="rd-s">'+((restNextCard()||{}).label||nextSetInfo())+'</div>'+((restNextCard()||{}).card||'')+'<div class="rd-h">Antippen → zurück zur Übung</div>';
   d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);const o=document.querySelector(".l-open");if(o)o.scrollIntoView({block:"center",behavior:"smooth"})};document.body.appendChild(d)}
 document.addEventListener("pointerdown",e=>{if(restCtx&&screenOn()&&!e.target.closest("#restdark"))armDark()},{passive:true});
 function pinTimer(){
