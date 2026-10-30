@@ -382,7 +382,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v186";
+const APP_VERSION="v187";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1033,8 +1033,8 @@ function ssRest(e,si){
 }
 function repsDone(ei,si){
   const e=state.active&&state.active.entries[ei];if(!e)return;
-  const s=e.sets[si];if(num(s.r)>0&&!s.t){s.t=Date.now();draftSave()}
-  if(!(num(s.r)>0)||restIv)return;      // nur wenn noch kein Timer läuft
+  const s=e.sets[si];let fresh=false;if(num(s.r)>0&&!s.t){s.t=Date.now();fresh=true;draftSave()}
+  if(!(num(s.r)>0)||restIv||!fresh)return;      // nur beim ersten Eintragen des Satzes und wenn noch kein Timer läuft (Korrekturen starten keine Pause)
   const isLast=si===e.sets.length-1;
   const rr=ssRest(e,si);startRest(rr.sec,rr.label);
 }
@@ -1149,7 +1149,9 @@ function screenOn(){return state.settings.screenOn!==false}
 function toggleScreen(){state.settings.screenOn=!screenOn();saveJ("settings",state.settings);if(!screenOn()){clearTimeout(darkT);const d=$("restdark");if(d)d.remove()}else armDark();render()}
 function wakeOn(){if(!screenOn())return wakeOff();try{if(navigator.wakeLock&&!wakeLk){wakeLk="pending";navigator.wakeLock.request("screen").then(l=>{wakeLk=l;l.addEventListener("release",()=>{wakeLk=null})}).catch(()=>{wakeLk=null})}}catch(e){wakeLk=null}}
 function wakeOff(){try{if(wakeLk&&wakeLk.release)wakeLk.release()}catch(e){}wakeLk=null}
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.active){wakeLk=null;wakeOn()}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.active){wakeLk=null;wakeOn()}
+  if(document.visibilityState==="visible"&&beepNodes.length&&(!restCtx||Date.now()>restCtx.end+1500)){beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[]}
+  if(document.visibilityState==="hidden"&&!restCtx&&beepNodes.length){beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[]}});
 function nextSetInfo(){const a=state.active;if(!a)return"";
   for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}
   return"Alle Sätze erledigt"}
@@ -1157,13 +1159,14 @@ function restLabelNow(){const a=state.active;if(!a)return"";for(const e of a.ent
 function armDark(){clearTimeout(darkT);if(!screenOn()||!restCtx)return;darkAt=Date.now()+5000;darkT=setTimeout(showDark,5000);updDark()}
 function showDark(){if(!restCtx||$("restdark"))return;const d=document.createElement("div");d.id="restdark";
   d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+restLabelNow()+'</div><div class="rd-h">Antippen für Ansicht</div>';
-  d.onclick=()=>{d.remove();armDark()};document.body.appendChild(d);updDark()}
+  d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);armDark()};document.body.appendChild(d);updDark()}
+function fadeOut(d){if(d.dataset.out)return;d.dataset.out=1;d.id="";d.style.transition="opacity .2s";d.style.opacity="0";setTimeout(()=>d.remove(),450);try{document.activeElement&&document.activeElement.blur()}catch(e){}}
 function updDark(){if(!restCtx)return;const left=Math.max(0,Math.round((restCtx.end-Date.now())/1000));const t=$("rdt");if(t)t.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
   const arc=$("rdarc");if(arc)arc.setAttribute("stroke-dashoffset",(339.3*(1-left/restCtx.sec)).toFixed(1));
   const h=$("restdk");if(h){const r=Math.ceil((darkAt-Date.now())/1000);h.textContent=screenOn()&&r>0&&!$("restdark")?"dunkel in "+r+" s":""}}
 function showEndRing(){clearTimeout(darkT);restCtx=null;let d=$("restdark");if(d)d.remove();d=document.createElement("div");d.id="restdark";d.className="end";
   d.innerHTML='<div class="rd-ring2"></div><div class="rd-t">0:00</div><div class="rd-s">'+nextSetInfo()+'</div><div class="rd-h">Antippen → zurück zur Übung</div>';
-  d.onclick=()=>{d.remove();const o=document.querySelector(".l-open");if(o)o.scrollIntoView({block:"center",behavior:"smooth"})};document.body.appendChild(d)}
+  d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);const o=document.querySelector(".l-open");if(o)o.scrollIntoView({block:"center",behavior:"smooth"})};document.body.appendChild(d)}
 document.addEventListener("pointerdown",e=>{if(restCtx&&screenOn()&&!e.target.closest("#restdark"))armDark()},{passive:true});
 function pinTimer(){
   const b=$("resttimer");if(!b)return;
@@ -1175,7 +1178,7 @@ function pinTimer(){
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}clearTimeout(darkT);restCtx=null;const dk=$("restdark");if(dk)dk.remove();beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
-  if(s.rir!==null&&num(s.r)>0){                                   // Satz abgeschlossen → Pause starten
+  if(s.rir!==null&&num(s.r)>0&&was==null){                        // Satz erstmals abgeschlossen → Pause starten (Korrektur der RIR startet keine neue Pause)
     const rr=ssRest(e,si);startRest(rr.sec,rr.label);
     autoNext(ei);
   }}
