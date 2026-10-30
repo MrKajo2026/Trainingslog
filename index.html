@@ -384,7 +384,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v189";
+const APP_VERSION="v190";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -881,7 +881,7 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now"}
     const first=d.slice(8)==="01";
-    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':'';return tx&&wg?'<span>'+tx+'</span><span class="wsep">|</span>'+wg:(tx||wg)})()+'</em></button>'}
+    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(()=>{const tx=esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab),wg=WSET.has(d)?'<i class="wg">G</i>':'';return tx&&wg?(tx.length>4?'<span style="letter-spacing:-.2px;margin-right:2px">'+tx+'</span>'+wg:'<span>'+tx+'</span><span class="wsep">|</span>'+wg):(tx||wg)})()+'</em></button>'}
   h+='</div>';
   if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
   h+='</div>';
