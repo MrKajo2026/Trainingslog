@@ -310,6 +310,7 @@ main.fill .k-sheet.k-home{padding-top:8px}
 #restdark .rd-s{display:flex;flex-direction:column;align-items:center;gap:3px;max-width:190px}#restdark .rd-n{max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-m{font-size:12px;opacity:.85;white-space:nowrap}
 #restdark .rd-next{position:absolute;left:24px;right:24px;bottom:calc(84px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#111113;border:1px solid #1f1f22}
 #restdark .rd-next .pi{opacity:.75}#restdark.end .rd-next{background:#18181b;border-color:#27272a}#restdark.end .rd-next .pi{opacity:1}#restdark.end .rd-nn{color:#e4e4e7}#restdark.end .rd-nl,#restdark.end .rd-nm{color:#a1a1aa}#restdark .rd-nl{font-size:11px;color:#5a5a60}#restdark .rd-nn{font-size:15px;font-weight:700;color:#8a8a90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-nm{font-size:12px;color:#5a5a60}
+.h-tsub{display:block;font-style:normal;font-size:10px;color:var(--mut);margin-top:1px;min-height:12px}
 </style>
 </head>
 <body>
@@ -384,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v191";
+const APP_VERSION="v192";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -852,7 +853,10 @@ function vHome(){
   let h='<div class="h-tiles">'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.rate>0?"+":"")+fx(wr.rate.toFixed(1))+'<small> kg/Wo</small></b>':'<b>–</b>'})()+'</button>'
-   +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
+   +(()=>{const fq=fatigueLoad(),rc=recoveryState(),col=rc?["#34d399","#f59e0b","#ef4444"][rc.lvl]:"#444";
+     const tip=rc?'Leistung '+rc.pct+' % (Median '+rc.n+' Übungen, '+esc(rc.log.sessionName||"")+' '+(+rc.log.date.slice(8))+"."+(+rc.log.date.slice(5,7))+"."+')'+(rc.prev!=null?' · davor '+rc.prev+' %':'')+(fq?' · Last '+fq.pct+' %':''):'Noch keine Vergleichsdaten (Deload/Wiedereinstieg zählen nicht)';
+     return '<button class="h-t f-t" onclick="toast(\''+tip.replace(/'/g,"")+'\')"><span>Erholung</span><svg width="44" height="22" viewBox="0 0 44 22" style="display:block;margin:4px auto 0"><rect x="1" y="1" width="38" height="20" rx="4" fill="none" stroke="#666" stroke-width="2"/><rect x="40" y="7" width="3" height="8" rx="1" fill="#666"/>'+(rc?'<rect x="4" y="4" width="'+(32*rc.fill).toFixed(1)+'" height="14" rx="2" fill="'+col+'"/>':'')+'</svg><i class="h-tsub">'+(fq?'Last '+fq.pct+' %':'')+'</i></button>'})()+'</div>';
+  {const rc=recoveryState();if(rc&&rc.lvl===2)h+='<p class="h-hint" style="color:#ef4444">Leistung 2× in Folge gesunken — Schlaf/Essen prüfen; hält es an: Deload vorziehen.</p>'}
   {const wr=weightRate();if(wr&&wr.raw>wr.hi)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +'+String((Math.round(wr.hi*10)/10)).replace(".",",")+' kg/Woche) — ca. 200 kcal/Tag weniger.</p>'}
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
@@ -1705,7 +1709,7 @@ function vStats(){
     const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
     const li0=loadIndex();
     const tl=(t,n,v)=>'<div class="h-t f-t"><span>'+t+'</span><em>'+n+'</em><b>'+v+'</b></div>';
-    h+='<div class="h-tiles t4">'+tl("Wochenlast","zu Ø 4 Wo",li0?fx(li0.acwr,2):"–")+tl("Einheiten",fx(wk)+" pro Woche",pl.length)
+    h+='<div class="h-tiles t4">'+tl("Wochenlast","letzte 7 Tage",(()=>{const fq=fatigueLoad();return fq?fq.pct+" %":"–"})())+tl("Einheiten",fx(wk)+" pro Woche",pl.length)
      +tl("Gewicht",wt?((wt.delta>=0?"+":"")+fx(wt.delta)+" kg/Wo"):"Ø 7 Tage",(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'<small> kg</small>')+tl("Muskeln","im Zielbereich",inT+'/'+MUSCLE_ORDER.length)+'</div>';
     if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
       h+='<div class="s-card"><div class="s-h s-hb"><b>Körpergewicht</b><span class="s-hv s-chr">'+(diff>0?"+":"")+fx(diff)+' kg</span></div><div id="wchart"></div></div>'}
@@ -1742,7 +1746,7 @@ function vStats(){
   }
   if(tab==="mehr"){
     const li=loadIndex();
-    if(li)h+='<div class="s-card"><div class="s-h s-hb"><b>Wochenlast</b><span class="s-hv s-chr">'+fx(li.acwr,2)+'</span></div><div id="lchart"></div></div>';
+    if(li)h+='<div class="s-card"><div class="s-h s-hb"><b>Wochenlast</b><span class="s-hv s-chr">'+(()=>{const fq=fatigueLoad();return fq?fq.pct+' %':'–'})()+'</span></div><div id="lchart"></div></div>';
     const tmode=state.tonMode||"woche";
     h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
      +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
@@ -2213,6 +2217,17 @@ function setsPerWeek(nSessions){
 }
 // Belastungsindex: Sätze × Anstrengung (10−RIR); ACWR = aktuelle Woche / Ø 4 Wochen
 // Belastung der letzten 7 Tage im Verhältnis zum Wochenschnitt der 4 Wochen davor (100 % = üblich)
+// Erholung: Leistung (e1RM inkl. RIR) je Übung vs. letzte reguläre Einheit mit derselben Übung; Median
+function recoveryState(){const ok=l=>!l.deload&&!l.reentry,L=[...state.logs].filter(ok).sort((a,b)=>a.date.localeCompare(b.date));
+  const e1=e=>Math.max(0,...e.sets.filter(x=>num(x.r)>0&&num(x.w)>0).map(x=>num(x.w)*(1+(num(x.r)+(x.rir==null?1:Math.min(num(x.rir),5)))/30)));
+  const perf=i=>{const l=L[i],rs=[];l.entries.forEach(e=>{const c=e1(e);if(!c)return;
+      for(let j=i-1;j>=0;j--){if(L[j].date<addDays(l.date,-28))break;const pe=L[j].entries.find(x=>x.exerciseId===e.exerciseId);if(pe){const r=e1(pe);if(r)rs.push(c/r);break}}});
+    if(rs.length<3)return null;rs.sort((a,b)=>a-b);const m=rs.length%2?rs[(rs.length-1)/2]:(rs[rs.length/2-1]+rs[rs.length/2])/2;return{pct:Math.round(m*100),n:rs.length,l}};
+  const cand=[];for(let i=L.length-1;i>=0&&cand.length<2;i--){const r=perf(i);if(r)cand.push(r)}
+  if(!cand.length||cand[0].l.date<addDays(todayISO(),-10))return null;
+  const p1=cand[0].pct,p2=cand[1]?cand[1].pct:100,lvl=p1<97&&p2<97?2:p1<97?1:0;
+  let fill=Math.max(.1,Math.min(1,(p1-90)/12));if(lvl===2)fill=Math.min(fill,.25);
+  return{lvl,fill,pct:p1,prev:cand[1]?p2:null,n:cand[0].n,log:cand[0].l}}
 function fatigueLoad(){const t=todayISO(),a7=addDays(t,-6),a35=addDays(t,-34);
   const ld=l=>{let v=0;l.entries.forEach(e=>e.sets.forEach(x=>{if(num(x.r)>0)v+=(10-(x.rir==null?1:Math.min(x.rir,5)))*(l.deload?0.6:1)}));return v};
   let cur=0,prev=0;state.logs.forEach(l=>{if(l.date>=a7&&l.date<=t)cur+=ld(l);else if(l.date>=a35&&l.date<a7)prev+=ld(l)});
@@ -2220,10 +2235,10 @@ function fatigueLoad(){const t=todayISO(),a7=addDays(t,-6),a35=addDays(t,-34);
   const chronic=prev/4;if(!(chronic>0))return null;return{pct:Math.round(cur/chronic*100),cur:Math.round(cur),chronic:Math.round(chronic)}}
 function loadIndex(){
   const wk={};
-  state.logs.filter(l=>!l.deload).forEach(l=>{
+  state.logs.forEach(l=>{
     const dt=new Date(l.date),on=new Date(dt);on.setDate(dt.getDate()-((dt.getDay()+6)%7));
     const k=on.toISOString().slice(0,10);
-    let v=0;l.entries.forEach(e=>e.sets.forEach(x=>{if(x.r>0)v+=(10-(x.rir==null?1:Math.min(x.rir,5)))}));
+    let v=0;l.entries.forEach(e=>e.sets.forEach(x=>{if(num(x.r)>0)v+=(10-(x.rir==null?1:Math.min(x.rir,5)))*(l.deload?0.6:1)}));
     wk[k]=(wk[k]||0)+Math.round(v);
   });
   (state.acts||[]).forEach(a=>{const dt=new Date(a.date),on=new Date(dt);on.setDate(dt.getDate()-((dt.getDay()+6)%7));
