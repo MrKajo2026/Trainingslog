@@ -384,7 +384,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v190";
+const APP_VERSION="v191";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -658,6 +658,11 @@ function startSession(sid,dl){
   saveJ("draft",state.active);render();
 }
 // Gewichtstrend: Ø letzte 7 Tage vs. Ø 7 Tage davor (je mind. 2 Messungen)
+// Zuwachs/Woche: Ø letzte 7 Tage vs. Ø 7 Tage vor 4 Wochen; Ziel Aufbau 0,25–0,5 % KG/Woche
+function weightRate(){const ws=state.weights||[],t=todayISO(),av=x=>x.reduce((s,w)=>s+num(w.kg),0)/x.length;
+  const cur=ws.filter(w=>w.date>=addDays(t,-6)&&w.date<=t),old=ws.filter(w=>w.date>=addDays(t,-34)&&w.date<=addDays(t,-28));
+  if(cur.length<2||old.length<2)return null;const c=av(cur),r=(c-av(old))/4,lo=c*.0025,hi=c*.005;
+  return{rate:Math.round(r*10)/10,raw:r,lo,hi,ok:r>=lo&&r<=hi}}
 function weightTrend(){
   const ws=state.weights||[],t=todayISO(),a=addDays(t,-6),b=addDays(t,-13);
   const cur=ws.filter(w=>w.date>=a&&w.date<=t),prv=ws.filter(w=>w.date>=b&&w.date<a);
@@ -846,9 +851,9 @@ function vHome(){
   const fx=v=>String(v).replace(".",",");
   let h='<div class="h-tiles">'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
-   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Gewicht</span><b>'+(wt?fx(wt.cur):"–")+'<small> kg</small></b></button>'
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.rate>0?"+":"")+fx(wr.rate.toFixed(1))+'<small> kg/Wo</small></b>':'<b>–</b>'})()+'</button>'
    +(()=>{const fq=fatigueLoad();return '<button class="h-t f-t" onclick="go(\'statistik\')"><span>Belastung</span><b style="'+(fq&&fq.pct>120?'color:var(--amb);-webkit-text-fill-color:var(--amb)':'')+'">'+(fq?fq.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
-  if(wt&&wt.delta>0.5)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +0,5 kg/Woche) — ca. 200 kcal/Tag weniger.</p>';
+  {const wr=weightRate();if(wr&&wr.raw>wr.hi)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +'+String((Math.round(wr.hi*10)/10)).replace(".",",")+' kg/Woche) — ca. 200 kcal/Tag weniger.</p>'}
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
   // Ist heute laut Plan Training? (Rhythmus jeden 2. Tag) – sonst Ruhetag mit nächstem Termin
