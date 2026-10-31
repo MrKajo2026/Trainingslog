@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v192";
+const APP_VERSION="v193";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -855,7 +855,7 @@ function vHome(){
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.rate>0?"+":"")+fx(wr.rate.toFixed(1))+'<small> kg/Wo</small></b>':'<b>–</b>'})()+'</button>'
    +(()=>{const fq=fatigueLoad(),rc=recoveryState(),col=rc?["#34d399","#f59e0b","#ef4444"][rc.lvl]:"#444";
      const tip=rc?'Leistung '+rc.pct+' % (Median '+rc.n+' Übungen, '+esc(rc.log.sessionName||"")+' '+(+rc.log.date.slice(8))+"."+(+rc.log.date.slice(5,7))+"."+')'+(rc.prev!=null?' · davor '+rc.prev+' %':'')+(fq?' · Last '+fq.pct+' %':''):'Noch keine Vergleichsdaten (Deload/Wiedereinstieg zählen nicht)';
-     return '<button class="h-t f-t" onclick="toast(\''+tip.replace(/'/g,"")+'\')"><span>Erholung</span><svg width="44" height="22" viewBox="0 0 44 22" style="display:block;margin:4px auto 0"><rect x="1" y="1" width="38" height="20" rx="4" fill="none" stroke="#666" stroke-width="2"/><rect x="40" y="7" width="3" height="8" rx="1" fill="#666"/>'+(rc?'<rect x="4" y="4" width="'+(32*rc.fill).toFixed(1)+'" height="14" rx="2" fill="'+col+'"/>':'')+'</svg><i class="h-tsub">'+(fq?'Last '+fq.pct+' %':'')+'</i></button>'})()+'</div>';
+     return '<button class="h-t f-t" onclick="toast(\''+tip.replace(/'/g,"")+'\')"><span>Leistung</span><b'+(rc?' style="color:'+col+';-webkit-text-fill-color:'+col+'"':'')+'>'+(rc?rc.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
   {const rc=recoveryState();if(rc&&rc.lvl===2)h+='<p class="h-hint" style="color:#ef4444">Leistung 2× in Folge gesunken — Schlaf/Essen prüfen; hält es an: Deload vorziehen.</p>'}
   {const wr=weightRate();if(wr&&wr.raw>wr.hi)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +'+String((Math.round(wr.hi*10)/10)).replace(".",",")+' kg/Woche) — ca. 200 kcal/Tag weniger.</p>'}
   // 2. Zyklus-Ring + Start
