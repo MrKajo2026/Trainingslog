@@ -390,7 +390,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v205";
+const APP_VERSION="v206";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1350,8 +1350,10 @@ function anchorSub(){const pc=$("pcard"),bg=document.querySelector("#overlay .sh
 function drawRules(){const ap=activePlan();
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="closeSub()">✕</button></div>'
    +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
+   +'<div class="s-h" style="margin-top:4px"><b>Annahmen</b><span class="tiny">'+(asDue().length?'<span style="color:var(--amb)">'+asDue().length+' jetzt prüfen</span>':'mit Prüftermin')+'</span></div>'+[...(state.settings.assume||[])].sort((x,y)=>x.due.localeCompare(y.due)).map(asRow).join("")
+   +'<div class="s-h" style="margin-top:14px"><b>Regeln</b></div>'
    +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")
-   +'<div class="s-h" style="margin-top:12px"><b>Annahmen</b><span class="tiny">mit Prüftermin</span></div>'+[...(state.settings.assume||[])].sort((x,y)=>x.due.localeCompare(y.due)).map(asRow).join("")
+
    +(ap.versions&&ap.versions.length?'<details style="margin-top:10px"><summary class="tiny">Änderungen ('+ap.versions.length+')</summary>'+[...ap.versions].reverse().map(v=>'<div class="s-row"><span class="mono">v'+v.v+' · '+fmtD(v.date)+'</span><span>'+esc(v.comment)+'</span></div>').join("")+'</details>':'')+'</div></div>';
   if(state.tab==="plaene")anchorSub()}
 // ===== Übungs-Pictogramme (eigene Vektorzeichnungen) =====
