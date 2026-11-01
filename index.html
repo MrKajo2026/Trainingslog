@@ -390,7 +390,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v206";
+const APP_VERSION="v207";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -407,7 +407,7 @@ const ASSUME_SEED=[
  {id:"lr45",txt:"Seitheben L/R: 45 s Wechsel zum Trizeps",why:"L und R nacheinander, 20 s waren zu knapp",since:"2026-11-01",due:"2026-11-22"},
  {id:"rir1",txt:"Grundübungen: letzter Satz RIR 1 statt 0",why:"Versagen kostet Erholung bei kaum Mehrnutzen",since:"2026-11-01",due:"2026-11-29"},
  {id:"kcal",txt:"+200 kcal/Tag",why:"Gewichtstrend unter Ziel (+0,2–0,4 kg/Woche)",since:"2026-10-30",due:"2026-11-27"},
- {id:"re1",txt:"Wiedereinstieg (RIR 2 im letzten Satz) schon nach 1 Krankheitstag",why:"Vorsicht nach Infekt — offen: auch ohne Fieber nötig?",since:"",due:"2026-11-01"}];
+ {id:"re1",txt:"Krank 1 Tag ohne Fieber: kein Wiedereinstieg, normal trainieren · ab 2 Tagen RIR 2 im letzten Satz · ab 3 Tagen −10 %",why:"Festgelegt 01.11.",since:"2026-11-01",due:"2026-11-29"}];
 function asDue(){return (state.settings.assume||[]).filter(a=>a.due&&a.due<=todayISO())}
 function asRefresh(){if(document.querySelector("#overlay .sheet")&&state.rulesOpen)drawRules();else render()}
 function asOk(id){const a=(state.settings.assume||[]).find(x=>x.id===id);if(!a)return;a.checked=todayISO();a.due=addDays(todayISO(),28);saveJ("settings",state.settings);toast("Gilt weiter — nächste Prüfung "+fmtD(a.due));asRefresh()}
@@ -545,6 +545,10 @@ function boot(){
     if(ch)saveJ("plans",state.plans);
     if(!state.settings.assume)state.settings.assume=ASSUME_SEED.map(a=>Object.assign({},a));
     state.settings.pv1101=true;saveJ("settings",state.settings)}
+  // Einmalig 01.11.: Regel krank 1 Tag ohne Fieber = keine Anpassung → Annahme aktualisieren, 30.10. als normale Einheit werten
+  if(!state.settings.re1101){const a=(state.settings.assume||[]).find(x=>x.id==="re1");if(a){const n=ASSUME_SEED.find(x=>x.id==="re1");Object.assign(a,{txt:n.txt,why:n.why,since:n.since,due:n.due})}
+    let ch=false;state.logs.forEach(l=>{if(l.reentry&&l.reentry.sick===1&&l.reentry.gap<5){delete l.reentry;ch=true}});if(ch)saveJ("logs",state.logs);
+    state.settings.re1101=true;saveJ("settings",state.settings)}
   // Einmalig 01.11.: bewusst gesenkte Startgewichte (28.10.) mit Datum versehen, damit sie gegenüber dem letzten Wert gelten
   if(!state.settings.sd1101){state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>p.sessions.forEach(se=>se.exercises.forEach(x=>{if((x.id==="rudern-kabel"&&num(x.start)===95)||(x.id==="face-pull"&&num(x.start)===10))x.startDate="2026-10-28"})));
     saveJ("plans",state.plans);state.settings.sd1101=true;saveJ("settings",state.settings)}
@@ -2275,7 +2279,7 @@ function reentryInfo(){
   if(state.pendingDeload)return null;
   const gap=daysSinceLast(),sick=sickSinceLast();
   let lvl=gap<5?-1:gap<=14?1:gap<=28?2:3;
-  if(sick>0){lvl=Math.max(lvl,sick>=3?1:0);if(sick>=7)lvl=Math.min(3,lvl+1)}   // krank: mind. RIR-Puffer, ab 3 Tagen −10 %, ab 7 Tagen eine Stufe vorsichtiger
+  if(sick>=2){lvl=Math.max(lvl,sick>=3?1:0);if(sick>=7)lvl=Math.min(3,lvl+1)}   // krank: 1 Tag (ohne Fieber) keine Anpassung; ab 2 Tagen RIR-Puffer, ab 3 Tagen −10 %, ab 7 Tagen eine Stufe vorsichtiger
   if(lvl<0)return null;
   return{gap,sick,factor:RE_LVL[lvl].factor,txt:RE_LVL[lvl].txt};
 }
