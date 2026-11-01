@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v195";
+const APP_VERSION="v196";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1022,7 +1022,8 @@ function vLogger(){
       +'<span style="flex:.85"><input type="text" inputmode="numeric" class="winr mono" id="r-'+ei+'-'+si+'" value="'+esc(s.r)+'" placeholder="'+esc(lr)+'" oninput="setR('+ei+','+si+',this.value)" onfocus="pushUndo();this.select()" onblur="repsDone('+ei+','+si+')"></span>'
       +'<span class="row" style="gap:3px;flex-wrap:nowrap" id="rir-'+ei+'-'+si+'">'+rirChips(e,ei,si)+'</span></div>';
     });
-    h+='</div><div class="row" style="margin-top:8px"><button class="chip" onclick="addSet('+ei+')">+ Satz</button>'
+    h+='</div><div class="row" style="margin-top:8px"><button class="chip'+(state.confirmDel==="as:"+ei?" sure":"")+'" onclick="addSet('+ei+')">'+(state.confirmDel==="as:"+ei?"Satz anlegen?":"+ Satz")+'</button>'
+     +(e.sets.length>1?'<button class="chip'+(state.confirmDel==="ds:"+ei?" sure":"")+'" onclick="delLastSet('+ei+')">'+(state.confirmDel==="ds:"+ei?"Letzten Satz löschen?":"− Satz")+'</button>':'')
      +(exDone(e)?'<button class="chip" style="margin-left:auto;color:var(--grn)" onclick="state.openEx=state.openEx||{};state.openEx['+ei+']=false;render()">✓ fertig, zuklappen</button>':'')+'</div></div>';
   });
   h+='<textarea class="grow" rows="2" placeholder="Notiz zur Einheit (Energie, Gelenke, Folgeübungen frisch/platt…)" oninput="setNote(this.value);autoGrow(this)" onfocus="pushUndo()">'+esc(a.note||"")+'</textarea>';
@@ -1226,7 +1227,11 @@ function growAll(){document.querySelectorAll("textarea.grow").forEach(autoGrow)}
 function fillR(ei,si){const lbe=lastByEx();const ls=lbe[state.active.entries[ei].exerciseId];const lr=ls&&ls.sets[si]?ls.sets[si].r:null;if(!lr)return;
   pushUndo();state.active.entries[ei].sets[si].r=lr;const inp=$("r-"+ei+"-"+si);if(inp)inp.value=lr;draftSave()}
 function applyRec(ei,w){pushUndo();state.active.entries[ei].sets.forEach((s,si)=>{s.w=w;const inp=$("w-"+ei+"-"+si);if(inp)inp.value=w});draftSave();toast("Gewicht übernommen: "+w+"kg")}
-function addSet(ei){pushUndo();const e=state.active.entries[ei];e.sets.push({w:e.sets[e.sets.length-1]?.w||0,r:"",rir:null});draftSave();render()}
+// Doppel-Check: 1. Tippen fragt, 2. Tippen führt aus (3 s gültig)
+let setConfT=null;function setConfirm(k){if(state.confirmDel===k){state.confirmDel=null;clearTimeout(setConfT);return true}
+  state.confirmDel=k;clearTimeout(setConfT);setConfT=setTimeout(()=>{if(state.confirmDel===k){state.confirmDel=null;render()}},3000);render();return false}
+function delLastSet(ei){const e=state.active.entries[ei];if(e.sets.length<2)return;if(!setConfirm("ds:"+ei))return;pushUndo();e.sets.pop();draftSave();render()}
+function addSet(ei){if(!setConfirm("as:"+ei))return;pushUndo();const e=state.active.entries[ei];e.sets.push({w:e.sets[e.sets.length-1]?.w||0,r:"",rir:null});draftSave();render()}
 // Swap
 function openSwap(ei){
   let h='<div class="sheet-bg" onclick="closeSwap(event)"><div class="sheet" onclick="event.stopPropagation()">'
