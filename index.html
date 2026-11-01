@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v198";
+const APP_VERSION="v199";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -598,10 +598,11 @@ function stagnationFor(exId){
 function recommendFor(entry){
   if(/prehab/i.test(entry.scheme||""))return null;
   const last=lastByEx()[entry.exerciseId];if(!last)return null;
-  const ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
+  let ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
   const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
   const lo=+m[1],hi=+m[2];
-  const w=num(ls[0].w);if(!w)return null;
+  // gemischte Gewichte (z. B. ab Satz 2 erhöht): Basis = höchstes Gewicht und nur die Sätze damit
+  const w=Math.max(...ls.map(x=>num(x.w)));if(!w)return null;ls=ls.filter(x=>num(x.w)===w);
   const mmI=MUSCLE_MAP[entry.exerciseId];
   const iso=/^1\//.test(entry.scheme||"")||/limit|RIR2|Core|Prehab/i.test(entry.scheme||"")||(mmI&&(!mmI.s||!mmI.s.length));
   const step=stepFor(w,iso);
