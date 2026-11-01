@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v197";
+const APP_VERSION="v198";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -912,6 +912,9 @@ function wkSwipe(){const el=document.getElementById("wkstrip");if(!el)return;if(
   el.addEventListener("scroll",upd,{passive:true});upd()}
 // ================= Logger =================
 const exDone=e=>e.sets.length>0&&e.sets.every(s=>num(s.r)>0);
+// Für die Navigation: Übung gilt als erledigt, wenn begonnen und danach schon an einer anderen Übung weitertrainiert wurde (leere Restsätze öffnen sie nicht wieder)
+function navDone(e){if(exDone(e))return true;const a=state.active;if(!a)return false;const lt=Math.max(0,...e.sets.filter(x=>num(x.r)>0).map(x=>x.t||0));
+  if(!lt)return false;return a.entries.some(x=>x!==e&&x.sets.some(y=>num(y.r)>0&&(y.t||0)>lt))}
 function exSum(e){const ws=e.sets.map(s=>num(s.w)),rs=e.sets.map(s=>num(s.r)).filter(Boolean);
   const w=ws.length?Math.max(...ws):0;
   return e.sets.length+' × '+(rs.length&&rs.length===e.sets.length?rs.join("/")+' · ':'')+(w>0?String(w).replace(".",",")+' kg':(e.sets[0]&&e.sets[0].w===""?"neu":"–"))}
@@ -936,7 +939,7 @@ function autoNext(ei){
     }else{
       state.openEx[ei]=false;
       const n=a.entries.length;
-      for(let k=1;k<=n;k++){const j=(ei+k)%n;if(!exDone(a.entries[j])){target=j;break}}
+      for(let k=1;k<=n;k++){const j=(ei+k)%n;if(!navDone(a.entries[j])){target=j;break}}
       if(target>=0){const ne=a.entries[target];
         if(ne.ss){target=ssTurn(ne.ss);a.entries.forEach((x,j)=>{if(x.ss===ne.ss)state.openEx[j]=(j===target)})}
         else state.openEx[target]=true}
@@ -947,7 +950,7 @@ function autoNext(ei){
   },700);
 }
 function toggleEx(ei){state.openEx=state.openEx||{};const cur=isOpenEx(ei);state.openEx[ei]=!cur;render()}
-function curExIdx(){const a=state.active;const i=a.entries.findIndex(e=>!exDone(e));return i}
+function curExIdx(){const a=state.active;const i=a.entries.findIndex(e=>!navDone(e));return i}
 function isOpenEx(ei){const a=state.active;if(state.openEx&&state.openEx[ei]!==undefined)return state.openEx[ei];
   const c=curExIdx();if(c<0)return false;
   const ce=a.entries[c];if(ce.ss)return ei===ssTurn(ce.ss);
@@ -1177,7 +1180,7 @@ function restNextCard(){const a=state.active;if(!a)return null;let li=-1,lt=0;
   a.entries.forEach((e,i)=>e.sets.forEach(x=>{if(x.rir!=null&&num(x.r)>0&&(x.t||0)>=lt){lt=x.t||0;li=i}}));
   if(li<0)return null;const e=a.entries[li];if(!exDone(e)||e.sets[e.sets.length-1].rir==null)return null;
   if(e.ss&&a.entries.some(x=>x.ss===e.ss&&!exDone(x)))return null;
-  let t=-1;const n=a.entries.length;for(let k=1;k<=n;k++){const j=(li+k)%n;if(!exDone(a.entries[j])){t=j;break}}
+  let t=-1;const n=a.entries.length;for(let k=1;k<=n;k++){const j=(li+k)%n;if(!navDone(a.entries[j])){t=j;break}}
   const nm=x=>esc(x.name.replace(/\s*\([^)]*\)\s*$/,""));
   const label='<span class="rd-n">'+nm(e)+'</span><span class="rd-m">fertig ✓</span>';
   if(t<0)return{label,card:'<div class="rd-next"><div style="flex:1"><div class="rd-nl">Als Nächstes</div><div class="rd-nn">Alle Übungen erledigt</div></div></div>'};
