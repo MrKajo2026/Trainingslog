@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v193";
+const APP_VERSION="v194";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1112,7 +1112,7 @@ function startRest(sec,label){
       beepNodes=[];
       try{navigator.vibrate&&navigator.vibrate([300,120,300,120,300,120,500])}catch(e){}
       const b=$("resttimer");
-      if(screenOn()){showEndRing();if(b)b.remove();return}
+      if(screenOn()){if(b)b.remove();if(typing()){endPending=true;toast("Pause vorbei — "+(label||"nächster Satz"));return}showEndRing();return}
       if(b){b.classList.add("done");const v=$("restval");if(v)v.textContent="FERTIG";
         setTimeout(()=>{if(b.isConnected&&b.classList.contains("done"))b.remove()},4000);}
       toast("Pause vorbei — "+(label||"nächster Satz"));
@@ -1179,15 +1179,20 @@ function restNextCard(){const a=state.active;if(!a)return null;let li=-1,lt=0;
   let ne=a.entries[t];if(ne.ss){const tt=ssTurn(ne.ss);if(tt>=0)ne=a.entries[tt]}
   const w=Math.max(0,...ne.sets.map(x=>num(x.w)));
   return{label,card:'<div class="rd-next"><span class="pi s52">'+PICTO.svg(ne.exerciseId,ne.name)+'</span><div style="flex:1;min-width:0"><div class="rd-nl">Als Nächstes</div><div class="rd-nn">'+nm(ne)+'</div><div class="rd-nm">'+ne.sets.length+' × '+esc(ne.reps||"")+(w>0?' · '+String(w).replace(".",",")+' kg':'')+'</div></div></div>'}}
+// Während Eingabe kein Wechsel in die Timer-Ansicht; erst nach Verlassen des Feldes
+let endPending=false;
+function typing(){const a=document.activeElement;return !!a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT"||a.isContentEditable)}
+document.addEventListener("focusout",()=>{setTimeout(()=>{if(typing())return;
+  if(endPending){endPending=false;if(screenOn())showEndRing()}else if(restCtx&&screenOn()&&!$("restdark"))armDark()},250)});
 function armDark(){clearTimeout(darkT);if(!screenOn()||!restCtx)return;darkAt=Date.now()+5000;darkT=setTimeout(showDark,5000);updDark()}
-function showDark(){if(!restCtx||$("restdark"))return;const nc=restNextCard()||{};const d=document.createElement("div");d.id="restdark";
+function showDark(){if(!restCtx||$("restdark"))return;if(typing())return;const nc=restNextCard()||{};const d=document.createElement("div");d.id="restdark";
   d.innerHTML='<svg class="rd-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="#1c1c1f" stroke-width="2.5"/><circle id="rdarc" cx="60" cy="60" r="54" fill="none" stroke="#4a1a1a" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="339.3" stroke-dashoffset="0"/></svg><div class="rd-t" id="rdt"></div><div class="rd-s">'+(nc.label||restLabelNow())+'</div>'+(nc.card||'')+'<div class="rd-h">Antippen für Ansicht</div>';
   d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);armDark()};document.body.appendChild(d);updDark()}
 function fadeOut(d){if(d.dataset.out)return;d.dataset.out=1;d.id="";d.style.transition="opacity .2s";d.style.opacity="0";setTimeout(()=>d.remove(),450);try{document.activeElement&&document.activeElement.blur()}catch(e){}}
 function updDark(){if(!restCtx)return;const left=Math.max(0,Math.round((restCtx.end-Date.now())/1000));const t=$("rdt");if(t)t.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
   const arc=$("rdarc");if(arc)arc.setAttribute("stroke-dashoffset",(339.3*(1-left/restCtx.sec)).toFixed(1));
   const h=$("restdk");if(h){const r=Math.ceil((darkAt-Date.now())/1000);h.textContent=screenOn()&&r>0&&!$("restdark")?"dunkel in "+r+" s":""}}
-function showEndRing(){clearTimeout(darkT);restCtx=null;let d=$("restdark");if(d)d.remove();d=document.createElement("div");d.id="restdark";d.className="end";
+function showEndRing(){endPending=false;clearTimeout(darkT);restCtx=null;let d=$("restdark");if(d)d.remove();d=document.createElement("div");d.id="restdark";d.className="end";
   d.innerHTML='<div class="rd-ring2"></div><div class="rd-t">0:00</div><div class="rd-s">'+((restNextCard()||{}).label||nextSetInfo())+'</div>'+((restNextCard()||{}).card||'')+'<div class="rd-h">Antippen → zurück zur Übung</div>';
   d.onclick=e=>{e.preventDefault();e.stopPropagation();fadeOut(d);const o=document.querySelector(".l-open");if(o)o.scrollIntoView({block:"center",behavior:"smooth"})};document.body.appendChild(d)}
 document.addEventListener("pointerdown",e=>{if(restCtx&&screenOn()&&!e.target.closest("#restdark"))armDark()},{passive:true});
