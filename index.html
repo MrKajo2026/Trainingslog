@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v196";
+const APP_VERSION="v197";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1053,10 +1053,11 @@ function repsDone(ei,si){
 function setR(ei,si,v){state.active.entries[ei].sets[si].r=v;draftSave()}
 // ===== Pausen-Timer =====
 let restIv=null,audioCtx=null;
-let beepNodes=[],keepAlive=null;
+let beepNodes=[],keepAlive=null,beepAt=0;
+function killBeeps(){beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[]}
 // Signalton ohne Datei (WebAudio). delay>0 = im Voraus planen (läuft auch ohne erneute Berührung, iOS-sicher)
 function beep(times,delay){
-  try{
+  try{if(document.visibilityState==="hidden"&&!delay)return[];   // unsichtbar: nicht in einen pausierten Audio-Kontext einplanen (würde später verspätet piepen)
     if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     if(audioCtx.state!=="running")audioCtx.resume();
     const n=times||4,t0=audioCtx.currentTime+(delay||0)+0.02,nodes=[];
@@ -1095,7 +1096,7 @@ function startRest(sec,label){
   unlockAudio();
   stopRest();
   beep(1);
-  beepNodes=beep(4,sec);startKeepAlive();          // End-Signal schon jetzt einplanen (innerhalb der Berührung)
+  beepNodes=beep(4,sec);beepAt=audioCtx?audioCtx.currentTime+sec:0;startKeepAlive();          // End-Signal schon jetzt einplanen (innerhalb der Berührung)
   try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
   const end=Date.now()+sec*1000;
   const box=document.createElement("div");box.id="resttimer";
@@ -1109,7 +1110,9 @@ function startRest(sec,label){
     if(bar)bar.style.width=(left/sec*100)+"%";
     if(left<=0){
       clearInterval(restIv);restIv=null;stopKeepAlive();
-      if(!beepNodes.length||!audioCtx||audioCtx.state!=="running"){beep(4)}   // Fallback, falls Vorplanung nicht lief
+      // Audio-Uhr hinkt (iOS hat den Kontext pausiert) → geplantes Signal käme später „zufällig“: verwerfen und jetzt piepen
+      const late=!beepNodes.length||!audioCtx||audioCtx.state!=="running"||audioCtx.currentTime<beepAt-0.3;
+      if(late){killBeeps();beep(4)}
       beepNodes=[];
       try{navigator.vibrate&&navigator.vibrate([300,120,300,120,300,120,500])}catch(e){}
       const b=$("resttimer");
@@ -1162,7 +1165,8 @@ function toggleScreen(){state.settings.screenOn=!screenOn();saveJ("settings",sta
 function wakeOn(){if(!screenOn())return wakeOff();try{if(navigator.wakeLock&&!wakeLk){wakeLk="pending";navigator.wakeLock.request("screen").then(l=>{wakeLk=l;l.addEventListener("release",()=>{wakeLk=null})}).catch(()=>{wakeLk=null})}}catch(e){wakeLk=null}}
 function wakeOff(){try{if(wakeLk&&wakeLk.release)wakeLk.release()}catch(e){}wakeLk=null}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.active){wakeLk=null;wakeOn()}
-  if(document.visibilityState==="visible"&&beepNodes.length&&(!restCtx||Date.now()>restCtx.end+1500)){beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[]}
+  if(document.visibilityState==="visible"&&beepNodes.length&&(!restCtx||Date.now()>restCtx.end+1500)){killBeeps()}
+  if(document.visibilityState==="visible"&&restCtx&&beepNodes.length&&audioCtx&&audioCtx.currentTime<beepAt-(restCtx.end-Date.now())/1000-0.5){killBeeps();const left=(restCtx.end-Date.now())/1000;if(left>0.5){beepNodes=beep(4,left);beepAt=audioCtx.currentTime+left}}
   if(document.visibilityState==="hidden"&&!restCtx&&beepNodes.length){beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[]}});
 function nextSetInfo(){const a=state.active;if(!a)return"";
   for(const e of a.entries){const i=e.sets.findIndex(x=>!(num(x.r)>0&&x.rir!=null));if(i>=0){const st=e.sets[i];return '<span class="rd-n">'+esc(e.name.replace(/\s*\([^)]*\)\s*$/,""))+'</span><span class="rd-m">Satz '+(i+1)+' von '+e.sets.length+(num(st.w)>0?' · '+String(st.w).replace(".",",")+' kg':'')+'</span>'}}
