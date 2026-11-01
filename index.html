@@ -339,7 +339,7 @@ sessions:[
  {id:"schraegbank",name:"Schrägbankdrücken KH",sets:4,reps:"8-12",scheme:"2/2/0",start:28,rest:150,note:"Gewicht halten bis Ellenbogen beschwerdefrei · Hantel locker greifen, Handgelenk gerade"},
  {id:"schulterdruecken",name:"Schulterdrücken KH neutral",sets:3,reps:"8-12",scheme:"2/2/1",start:18,rest:150,note:"sitzend, Lehne 80-85° · locker greifen, Handgelenk gerade (Ellenbogen)"},
  {id:"rudermaschine",name:"Rudermaschine (Straps)",sets:4,reps:"8-12",scheme:"2/2/0",start:65,rest:150},
- {id:"seitheben",name:"Seitheben Kabel",sets:3,reps:"12-15",scheme:"1/1/0",start:6.25,rest:75,ss:"K1",note:"Handschlaufe, bis Schulterhöhe"},
+ {id:"seitheben",name:"Seitheben Kabel",sets:3,reps:"12-15",scheme:"1/1/0",start:6.25,rest:75,ss:"K1",note:"L/R · Handschlaufe, bis Schulterhöhe"},
  {id:"pushdown",name:"Trizeps Pushdown Seil",sets:3,reps:"12-15",scheme:"1/1/0",start:18.75,rest:90,ss:"K1"},
  {id:"pallof",name:"Pallof Press",sets:2,reps:"10/Seite",scheme:"Core",start:12.5,rest:45,note:"Anti-Rotation: Rumpf bleibt fest, KEINE Drehung · Rotation nur im Warmup (Thoracic Rot)"}]},
 {id:"v2-uk-b",name:"UK B",sub:"Hinge",warmup:["5min Rad","Hüftmobilität","Thoracic Rot 8/Seite"],exercises:[
@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v199";
+const APP_VERSION="v200";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -499,6 +499,10 @@ function boot(){
    if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
   // Einmalig 28.10.: Hinweise aus OK B 27.10. übernehmen
+  // Einmalig 01.11.: Seitheben als L/R markieren (Wechsel im Supersatz 45 s)
+  if(!state.settings.lr1101){let ch=false;state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.id==="seitheben"&&!/L\/R/.test(x.note||"")){x.note="L/R · "+(x.note||"");ch=true}}));
+      if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"Seitheben L/R: Wechsel zum Trizeps 45 s statt 20 s"})}});
+    if(ch)saveJ("plans",state.plans);state.settings.lr1101=true;saveJ("settings",state.settings)}
   if(!state.settings.okb1028){const U={"rudern-kabel": {"start": 95, "note": "Ein Gewicht für alle Sätze (95 kg), Ziel 8/8/8 · Rücken spüren, nicht Griff"}, "bankdruecken": {"rest": 180, "note": "3 min Pause (Test: am 27.10. fielen Satz 3–4 bei 2:30 ab) · Im Studio gibt es 28er KH (keine 27,5)"}, "face-pull": {"start": 10, "note": "Prehab: 10 kg, RIR 3–4, NIE steigern (27.10.: 12,5 kg @1 war zu hart) · Daumen hinten"}};let ch=false;
     state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(U[x.id]){Object.assign(x,U[x.id]);ch=true}}));
       if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"Rudern ein Gewicht (95 kg) · Bankdrücken 3 min Pause · Face Pull max. 10 kg RIR 3–4"})}});
@@ -1045,7 +1049,8 @@ function ssRest(e,si){
   const i=pairs.indexOf(e);
   const nxt=pairs.slice(i+1).find(x=>x.sets[si]&&!(num(x.sets[si].r)>0));
   const full=Math.max(...pairs.map(x=>x.rest||90));
-  return nxt?{sec:20,label:"Wechsel → "+nxt.name}:{sec:full,label:"Supersatz "+e.ss};
+  const lr=/\bL\/R\b|einseitig|einarmig|einbeinig/i.test(e.name+" "+(e.note||"")+" "+(e.scheme||""));   // beide Seiten nacheinander → mehr Wechselzeit
+  return nxt?{sec:lr?45:20,label:"Wechsel → "+nxt.name}:{sec:full,label:"Supersatz "+e.ss};
 }
 function repsDone(ei,si){
   const e=state.active&&state.active.entries[ei];if(!e)return;
