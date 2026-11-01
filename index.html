@@ -385,7 +385,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v194";
+const APP_VERSION="v195";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -1356,6 +1356,8 @@ const PICTO=(()=>{
      j:{face:-1,head:[52,18],sh:[52,30],hip:[54,64],knee:[54,84],ankle:[54,104],toe:[44,104],el:[60,36],hand:[66,40],el2:[46,44],hand2:[44,58]},h:["delt"]},
    row:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 106h100M14 40v66"/><rect x="58" y="78" width="40" height="7" rx="3" fill="'+PAD+'"/><rect x="10" y="80" width="10" height="16" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M14 56L44 56"/><rect x="40" y="52" width="6" height="8" rx="2" fill="'+MC+'"/>',
      j:{face:-1,head:[76,22],sh:[74,34],hip:[78,74],knee:[46,70],ankle:[24,86],toe:[20,78],el:[86,50],hand:[52,56]},h:["back","rdelt"]},
+   rowmach:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 106h100M24 30v76M24 30L40 22M84 81v23M40 22L56 54M40 22L30 10"/><circle cx="28" cy="11" r="9" fill="'+PAD+'" stroke="'+MC+'" stroke-width="2"/><path fill="'+PAD+'" d="M52 32l7-1 4 32-7 1z"/><rect x="64" y="74" width="34" height="7" rx="3" fill="'+PAD+'"/><rect x="28" y="92" width="18" height="5" rx="2" fill="'+PAD+'"/>',
+     j:{face:-1,head:[68,22],sh:[70,34],hip:[80,72],knee:[52,72],ankle:[44,92],toe:[36,92],el:[88,50],hand:[58,54]},h:["back","rdelt"]},
    latpull:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M14 106h92M60 4v10"/><rect x="40" y="12" width="40" height="5" rx="2" fill="'+MC+'"/><rect x="48" y="76" width="40" height="7" rx="3" fill="'+PAD+'"/><rect x="34" y="62" width="22" height="6" rx="3" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="3" d="M80 83v21"/>',
      j:{face:-1,head:[62,32],sh:[64,44],hip:[70,78],knee:[42,74],ankle:[40,102],toe:[30,102],el:[54,46],hand:[54,28]},h:["back"]},
    facepull:{s:'<path stroke="'+MC+'" stroke-width="3" fill="none" stroke-linecap="round" d="M10 10v96M10 106h100"/><rect x="6" y="20" width="8" height="10" rx="2" fill="'+PAD+'"/><path stroke="'+MC+'" stroke-width="1.5" d="M12 25L52 24"/>',
@@ -1380,7 +1382,7 @@ const PICTO=(()=>{
     if(/pallof/.test(n))return"pallof";if(/schr[äa]g|incline/.test(n))return"incline";if(/bankdr|bench/.test(n))return"bench";
     if(/brustpresse|chest ?press/.test(n))return"chestpress";if(/fly|butterfly|pec/.test(n))return /reverse/.test(n)?"revfly":"fly";
     if(/schulterdr|overhead|military/.test(n))return"ohpress";if(/seitheben|lateral/.test(n))return"lateral";
-    if(/face ?pull/.test(n))return"facepull";if(/latzug|pulldown|klimmz/.test(n))return"latpull";if(/rudern|ruder|row/.test(n))return"row";
+    if(/face ?pull/.test(n))return"facepull";if(/latzug|pulldown|klimmz/.test(n))return"latpull";if(/rudermaschine|row(ing)? ?machine/.test(n))return"rowmach";if(/rudern|ruder|row/.test(n))return"row";
     if(/pushdown|trizeps|triceps/.test(n))return"pushdown";if(/[üu]berzug|pullover/.test(n))return"pullover";
     if(/handgelenk|wrist|unterarm/.test(n))return"wrist";if(/kniebeuge|squat/.test(n))return"hacksquat";return"generic"};
   function svg(id,name){const k=pick(id||"",name||""),p=P[k];let hl=p.h.slice();
