@@ -285,7 +285,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 /* Pictogramme in Listen */
 .pi{flex-shrink:0;border-radius:9px;background:radial-gradient(circle at 50% 38%,#2e2e32,#141416 72%);display:inline-grid;place-items:center;overflow:hidden}.pi svg{width:100%;height:100%;display:block}
 .pi.s32{width:32px;height:32px;border-radius:8px}.pi.s34{width:34px;height:34px;border-radius:8px}.pi.s52{width:52px;height:52px;border-radius:11px}.pi.s60{width:60px;height:60px;border-radius:12px}
-.l-row .l-rn{flex:1;min-width:0}
+.l-row .l-rn{flex:1;min-width:0;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere}.l-row .l-rs{flex-shrink:0}
 main.tight{gap:8px;padding-top:10px}main.tight .h-wk.wcard{padding:6px 8px 4px}main.tight .h-wk.wcard .h-a{height:30px}main.tight .h-hero{gap:2px}main.tight .h-mid b{font-size:30px}main.tight .h-mid .tiny{font-size:10.5px}main.tight .h-st{font-size:12px}main.tight .h-st{margin:1px 0 2px}main.tight .h-hint{margin-top:-4px}main.tight .h-hero{padding:10px 16px}main.tight .h-t{padding:8px 10px}main.tight .h-go{padding:11px}main.tight .h-days{margin-top:4px}main.tight .h-scroll{padding:6px 0!important}
 #wkstrip .h-d em{display:flex;justify-content:center;align-items:center;gap:2px;padding:0;overflow:hidden;text-overflow:clip}#wkstrip .h-d em>span:first-child{flex-shrink:0}
 .wg{font-style:normal;font-weight:400;font-size:9.5px;color:var(--mut)}.wg.no{color:var(--amb);font-weight:600}.wsep{color:var(--s3);font-weight:400}
@@ -390,7 +390,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v204";
+const APP_VERSION="v205";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -935,8 +935,8 @@ function vHome(){
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
   // Ist heute laut Plan Training? (Rhythmus jeden 2. Tag) – sonst Ruhetag mit nächstem Termin
-  const scNext=buildSchedule().find(x=>x.date>=t),trainedToday=state.logs.some(l=>l.date===t);
-  const rest=!trainedToday&&scNext&&scNext.date>t;
+  const trainedToday=state.logs.some(l=>l.date===t),scNext=buildSchedule().find(x=>trainedToday?x.date>t:x.date>=t);
+  const rest=!!(scNext&&scNext.date>t);     // Ruhetag oder heute schon trainiert → nächster Termin
   const nd=rest?new Date(scNext.date).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"}):"";
   const frac=Math.min(n/N,1),dlFrac=dp.active?dp.n/DELOAD_RUN:0;
   const status=dlNow?'<span style="color:var(--amb)">Deload '+(dp.n+1)+' von '+DELOAD_RUN+'</span>':re?'<span style="color:var(--sky)">Wiedereinstieg</span>':'<span style="color:var(--mut)">Aufbau</span>';
@@ -1067,7 +1067,7 @@ function vLogger(){
   a.entries.forEach((e,ei)=>{
     const done=exDone(e),open=isOpenEx(ei);
     if(!open){
-      h+='<button id="ex-'+ei+'" class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span>'+pi(e.exerciseId,e.name,"s32")+'<span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+'</span><span class="l-rs mono">'+exSum(e)+'</span></button>';
+      h+='<button id="ex-'+ei+'" class="l-row'+(done?" done":"")+'" onclick="toggleEx('+ei+')"><span class="l-ck">'+(done?"✓":ei+1)+'</span>'+pi(e.exerciseId,e.name,"s32")+'<span class="l-rn">'+esc(e.name)+(e.ss?' <span class="l-ss">SS '+esc(e.ss)+'</span>':'')+(done?'<span class="l-rs mono" style="display:block;margin-top:2px;white-space:normal;font-weight:400">'+exSum(e)+'</span>':'')+'</span>'+(done?'':'<span class="l-rs mono">'+exSum(e)+'</span>')+'</button>';
       return;}
     const lastSets=lbe[e.exerciseId]?lbe[e.exerciseId].sets:[];
     const rec=a.deload?null:recommendFor(e);
