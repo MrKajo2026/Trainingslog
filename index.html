@@ -313,9 +313,13 @@ main.fill .k-sheet.k-home{padding-top:8px}
 #restdark .rd-next .pi{opacity:.75}#restdark.end .rd-next{background:#18181b;border-color:#27272a}#restdark.end .rd-next .pi{opacity:1}#restdark.end .rd-nn{color:#e4e4e7}#restdark.end .rd-nl,#restdark.end .rd-nm{color:#a1a1aa}#restdark .rd-nl{font-size:11px;color:#5a5a60}#restdark .rd-nn{font-size:15px;font-weight:700;color:#8a8a90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#restdark .rd-nm{font-size:12px;color:#5a5a60}
 .h-tsub{display:block;font-style:normal;font-size:10px;color:var(--mut);margin-top:1px;min-height:12px}
 .rir.tgt{box-shadow:inset 0 0 0 1.5px #8a8a90;color:var(--tx)}
-.as-box{border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.06);border-radius:12px;padding:10px 12px;margin:10px 0}
-.as-row{padding:8px 0;border-top:1px solid var(--s2);display:flex;flex-direction:column;gap:2px}.as-box .as-row:first-of-type{border-top:none}.as-row b{font-size:13px}.as-row input{font-size:16px}
-.as-hint{display:block;width:100%;margin-top:8px;padding:6px 0 0;border:none;border-top:1px solid var(--s2);background:none;color:var(--amb);font-size:13px;font-weight:600;text-align:center}
+.as-box{border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.06);border-radius:12px;padding:2px 12px 10px;margin:8px 0 6px}
+.as-cap{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mut);margin:14px 0 2px}.as-box .as-cap{margin:8px 0 0}
+.as-row{padding:10px 0;border-top:1px solid var(--s2)}.as-box .as-row{border-top:none;padding-bottom:2px}
+.as-top{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.as-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;background:var(--s3)}.as-row.due .as-dot{background:var(--amb)}
+.as-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.as-tx b{font-size:14px;font-weight:600;line-height:1.3}.as-tx span{font-size:11.5px;color:var(--mut)}.as-tx input{font-size:16px}
+.as-pill{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:var(--s2);color:var(--mut)}.as-row.due .as-pill{background:var(--amb);color:#111}
+.as-act{display:flex;gap:6px;margin:8px 0 0 18px}.as-act .chip{flex:1;text-align:center}.as-act .as-p{background:var(--amb);color:#111;font-weight:700}
 </style>
 </head>
 <body>
@@ -390,7 +394,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v207";
+const APP_VERSION="v208";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -415,11 +419,22 @@ function asDel(id){if(!setConfirmQ("ad:"+id))return;state.settings.assume=(state
 function asEdit(id){state.asEdit=state.asEdit===id?null:id;asRefresh()}
 function asSave(id){const a=(state.settings.assume||[]).find(x=>x.id===id),i=$("as-"+id);if(!a||!i)return;const v=i.value.trim();if(v){a.txt=v;a.since=todayISO();a.checked=todayISO();a.due=addDays(todayISO(),28)}state.asEdit=null;saveJ("settings",state.settings);asRefresh()}
 function setConfirmQ(k){if(state.confirmDel===k){state.confirmDel=null;return true}state.confirmDel=k;setTimeout(()=>{if(state.confirmDel===k){state.confirmDel=null;asRefresh()}},3000);asRefresh();return false}
-function asRow(a){const due=a.due<=todayISO();
-  return '<div class="as-row'+(due?' due':'')+'">'+(state.asEdit===a.id?'<input id="as-'+a.id+'" type="text" value="'+esc(a.txt)+'">':'<b>'+esc(a.txt)+'</b>')
-   +'<span class="tiny">'+esc(a.why||"")+(a.since?' · seit '+fmtD(a.since):'')+' · '+(due?'<span style="color:var(--amb)">jetzt prüfen</span>':'Prüfung '+fmtD(a.due))+'</span>'
-   +'<div class="row" style="gap:6px;margin-top:6px">'+(state.asEdit===a.id?'<button class="chip" onclick="asSave(\''+a.id+'\')">Speichern</button><button class="chip" onclick="asEdit(\''+a.id+'\')">Abbrechen</button>'
-   :'<button class="chip" onclick="asOk(\''+a.id+'\')">✓ gilt weiter</button><button class="chip" onclick="asEdit(\''+a.id+'\')">✎ ändern</button><button class="chip'+(state.confirmDel==="ad:"+a.id?" sure":"")+'" onclick="asDel(\''+a.id+'\')">'+(state.confirmDel==="ad:"+a.id?"Wirklich streichen?":"✕ streichen")+'</button>')+'</div></div>'}
+const AS_GRP=[["Übungen",["bank3","rud95","bfly","hack","sat12","dl","lr45"]],["Reha & Gesundheit",["face10","ellb","wrist","re1"]],["Training & Ernährung",["rir1","kcal"]]];
+function asGrp(a){const g=AS_GRP.find(x=>x[1].includes(a.id));return g?g[0]:(a.grp||"Sonstiges")}
+function asToggle(id){state.asOpen=state.asOpen===id?null:id;asRefresh()}
+function asRow(a,forceOpen){const due=a.due<=todayISO(),open=forceOpen||due||state.asOpen===a.id||state.asEdit===a.id;
+  const days=Math.round((new Date(a.due)-new Date(todayISO()))/864e5);
+  return '<div class="as-row'+(due?' due':'')+'"><div class="as-top" onclick="asToggle(\''+a.id+'\')"><span class="as-dot"></span><div class="as-tx">'
+   +(state.asEdit===a.id?'<input id="as-'+a.id+'" type="text" value="'+esc(a.txt)+'" onclick="event.stopPropagation()">':'<b>'+esc(a.txt)+'</b>')
+   +'<span>'+esc(a.why||"")+(a.since?' · seit '+fmtD(a.since):'')+(a.checked?' · geprüft '+fmtD(a.checked):'')+'</span></div><span class="as-pill">'+(due?'fällig':'in '+days+' T')+'</span></div>'
+   +(open?'<div class="as-act">'+(state.asEdit===a.id?'<button class="chip as-p" onclick="asSave(\''+a.id+'\')">Speichern</button><button class="chip" onclick="asEdit(\''+a.id+'\')">Abbrechen</button>'
+   :'<button class="chip as-p" onclick="asOk(\''+a.id+'\')">✓ gilt weiter</button><button class="chip" onclick="asEdit(\''+a.id+'\')">✎ ändern</button><button class="chip'+(state.confirmDel==="ad:"+a.id?" sure":"")+'" onclick="asDel(\''+a.id+'\')">'+(state.confirmDel==="ad:"+a.id?"Wirklich?":"✕ streichen")+'</button>')+'</div>':'')+'</div>'}
+function asDueBox(){const ad=asDue();return ad.length?'<div class="as-box"><div class="as-cap" style="color:var(--amb)">JETZT PRÜFEN · '+ad.length+'</div>'+ad.map(a=>asRow(a,true)).join("")+'</div>':''}
+function asList(){const all=state.settings.assume||[],nx=all.filter(a=>a.due>todayISO()).sort((x,y)=>x.due.localeCompare(y.due))[0];
+  let h='<div class="s-h" style="margin-top:4px"><b>Annahmen</b><span class="tiny">'+all.length+(nx?' · nächste Prüfung '+fmtD(nx.due):'')+'</span></div>'+asDueBox();
+  const groups=[...new Set([...AS_GRP.map(g=>g[0]),...all.map(asGrp)])];
+  groups.forEach(g=>{const L=all.filter(a=>asGrp(a)===g&&a.due>todayISO()).sort((x,y)=>x.due.localeCompare(y.due));if(L.length)h+='<div class="as-cap">'+g.toUpperCase()+' · '+L.length+'</div>'+L.map(a=>asRow(a)).join("")});
+  return h}
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
 const e1rm=(w0,r0,rir)=>{const w=num(w0),r=num(r0); // Epley mit RIR-Korrektur; nur im validen Bereich
   const eff=r+(rir==null?0:Math.min(rir,4));
@@ -1050,7 +1065,7 @@ function vLogger(){
   {const iw=interferenceWarn(a.sessionId);if(iw)h+='<p class="tiny" style="color:var(--sky);margin-top:6px">🚴 '+esc(iw)+'</p>';}
   {const dlDue=deloadDueNow()||deloadPhase().active;
    if(dlDue||a.deload)h+='<label class="row tiny" style="margin-top:8px;color:'+(a.deload?"var(--amb)":"var(--mut)")+'"><input type="checkbox" style="width:auto;accent-color:var(--amb)" '+(a.deload?"checked":"")+' onchange="toggleDeload(this.checked)"> Deload (halbe Sätze, −10 %, RIR 3–4)</label>';}
-  {const ad=asDue();if(ad.length)h+='<div class="as-box"><b style="color:var(--amb)">⚑ '+ad.length+(ad.length>1?' Annahmen':' Annahme')+' prüfen</b>'+ad.map(asRow).join("")+'</div>';}
+  h+=asDueBox();
   // Check-in auf-/zuklappbar
   const bf=ci.befinden;
   h+='<button class="l-ci" onclick="state.ciOpen='+(!ciOpen)+';render()"><span>'+(ciDone?'✓ Check-in: '+esc(ci.gefuehl)+', Schlaf '+esc(ci.schlaf)+', Essen '+esc(ci.essen)+', Befinden '+bf:'Check-in ausfüllen'+(ci.gefuehl||ci.schlaf||ci.essen||bf!=null?' (unvollständig)':''))+(a.altGym?' · anderes Studio':'')+'</span><span>'+(ciOpen?"▴":"▾")+'</span></button>';
@@ -1354,7 +1369,7 @@ function anchorSub(){const pc=$("pcard"),bg=document.querySelector("#overlay .sh
 function drawRules(){const ap=activePlan();
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="closeSub()">✕</button></div>'
    +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
-   +'<div class="s-h" style="margin-top:4px"><b>Annahmen</b><span class="tiny">'+(asDue().length?'<span style="color:var(--amb)">'+asDue().length+' jetzt prüfen</span>':'mit Prüftermin')+'</span></div>'+[...(state.settings.assume||[])].sort((x,y)=>x.due.localeCompare(y.due)).map(asRow).join("")
+   +asList()
    +'<div class="s-h" style="margin-top:14px"><b>Regeln</b></div>'
    +ap.rules.map(r=>'<p class="r-li">'+esc(r)+'</p>').join("")
 
