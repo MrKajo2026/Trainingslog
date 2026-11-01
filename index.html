@@ -386,7 +386,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v201";
+const APP_VERSION="v202";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
@@ -500,11 +500,14 @@ function boot(){
    if(ch)saveJ("logs",state.logs)}
   renamePlans();pruneTrainerRecs();
   // Einmalig 28.10.: Hinweise aus OK B 27.10. übernehmen
+  // Einmalig 01.11.: bewusst gesenkte Startgewichte (28.10.) mit Datum versehen, damit sie gegenüber dem letzten Wert gelten
+  if(!state.settings.sd1101){state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>p.sessions.forEach(se=>se.exercises.forEach(x=>{if((x.id==="rudern-kabel"&&num(x.start)===95)||(x.id==="face-pull"&&num(x.start)===10))x.startDate="2026-10-28"})));
+    saveJ("plans",state.plans);state.settings.sd1101=true;saveJ("settings",state.settings)}
   // Einmalig 01.11.: Seitheben als L/R markieren (Wechsel im Supersatz 45 s)
   if(!state.settings.lr1101){let ch=false;state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.id==="seitheben"&&!/L\/R/.test(x.note||"")){x.note="L/R · "+(x.note||"");ch=true}}));
       if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"Seitheben L/R: Wechsel zum Trizeps 45 s statt 20 s"})}});
     if(ch)saveJ("plans",state.plans);state.settings.lr1101=true;saveJ("settings",state.settings)}
-  if(!state.settings.okb1028){const U={"rudern-kabel": {"start": 95, "note": "Ein Gewicht für alle Sätze (95 kg), Ziel 8/8/8 · Rücken spüren, nicht Griff"}, "bankdruecken": {"rest": 180, "note": "3 min Pause (Test: am 27.10. fielen Satz 3–4 bei 2:30 ab) · Im Studio gibt es 28er KH (keine 27,5)"}, "face-pull": {"start": 10, "note": "Prehab: 10 kg, RIR 3–4, NIE steigern (27.10.: 12,5 kg @1 war zu hart) · Daumen hinten"}};let ch=false;
+  if(!state.settings.okb1028){const U={"rudern-kabel": {"start": 95, "startDate": "2026-10-28", "note": "Ein Gewicht für alle Sätze (95 kg), Ziel 8/8/8 · Rücken spüren, nicht Griff"}, "bankdruecken": {"rest": 180, "note": "3 min Pause (Test: am 27.10. fielen Satz 3–4 bei 2:30 ab) · Im Studio gibt es 28er KH (keine 27,5)"}, "face-pull": {"start": 10, "startDate": "2026-10-28", "note": "Prehab: 10 kg, RIR 3–4, NIE steigern (27.10.: 12,5 kg @1 war zu hart) · Daumen hinten"}};let ch=false;
     state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(U[x.id]){Object.assign(x,U[x.id]);ch=true}}));
       if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"Rudern ein Gewicht (95 kg) · Bankdrücken 3 min Pause · Face Pull max. 10 kg RIR 3–4"})}});
     if(ch)saveJ("plans",state.plans);state.settings.okb1028=true;saveJ("settings",state.settings)}
@@ -560,7 +563,7 @@ const sessionsSinceCycle=()=>state.logs.filter(l=>!l.deload&&l.date>=state.setti
 const deloadDue=()=>sessionsSinceCycle()>=DELOAD_AFTER;
 function daysSinceLast(){const l=[...state.logs].sort((a,b)=>a.date.localeCompare(b.date));if(!l.length)return 0;
   return Math.floor((Date.now()-new Date(l[l.length-1].date).getTime())/864e5)}
-function lastByEx(){const m={};[...state.logs].filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets}}));return m}
+function lastByEx(){const m={};[...state.logs].filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>a.date.localeCompare(b.date)).forEach(l=>l.entries.forEach(e=>{if(e.sets.some(s=>s.w>0&&s.r>0))m[e.exerciseId]={sets:e.sets,date:l.date}}));return m}
 // Rückschritt erkennen: letzte Einheit schwächer als die davor (Tagesform)
 function prevBetter(exId){
   const ws=state.logs.filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>a.date.localeCompare(b.date))
@@ -600,29 +603,45 @@ function stagnationFor(exId){
     return{lvl:2,txt:"Stagnation über "+last3.length+" Einheiten trotz RIR0 → Übungs-Deload empfohlen: −10% für 1 Einheit, dann neu aufbauen",w:null};
   return{lvl:1,txt:"Kein Zuwachs über "+last3.length+" Einheiten → Gewicht halten, Wdh im Zielbereich ausreizen (Technik/Tempo sauber)",w:null};
 }
+// Doppelte Progression (Wdh-Bereich lo–hi):
+//  · Steigern erst, wenn ALLE Sätze am oberen Rand sind. Ist der nächste Schritt > 7,5 % (kleine Gewichte, KH-Sprünge), vorher hi+2 Wdh.
+//  · Nach einer Steigerung fallen die Wdh normal ab → 2 Einheiten Schonfrist (halten), außer klar zu schwer (Mehrheit < lo−2).
+//  · Senken nur, wenn die Mehrheit der Sätze in 2 Einheiten in Folge mit diesem Gewicht unter dem Bereich liegt, und nur um 1 Stufe.
+function exHist(id,n){const out=[];[...state.logs].filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>b.date.localeCompare(a.date)).some(l=>{const e=l.entries.find(x=>x.exerciseId===id);
+  if(e){const ss=e.sets.filter(x=>num(x.r)>0&&num(x.w)>0);if(ss.length){const w=Math.max(...ss.map(x=>num(x.w)));out.push({w,sets:ss.filter(x=>num(x.w)===w)})}}return out.length>=n});return out}
 function recommendFor(entry){
   if(/prehab/i.test(entry.scheme||""))return null;
-  const last=lastByEx()[entry.exerciseId];if(!last)return null;
-  let ls=last.sets.filter(s=>s.r>0);if(!ls.length)return null;
   const m=(entry.reps||"").match(/(\d+)\s*-\s*(\d+)/);if(!m)return null;
   const lo=+m[1],hi=+m[2];
-  // gemischte Gewichte (z. B. ab Satz 2 erhöht): Basis = höchstes Gewicht und nur die Sätze damit
-  const w=Math.max(...ls.map(x=>num(x.w)));if(!w)return null;ls=ls.filter(x=>num(x.w)===w);
+  const H=exHist(entry.exerciseId,4);if(!H.length)return null;
+  const w=H[0].w,ls=H[0].sets,rs=ls.map(x=>num(x.r)),fmt=v=>String(v).replace(".",",");
   const mmI=MUSCLE_MAP[entry.exerciseId];
   const iso=/^1\//.test(entry.scheme||"")||/limit|RIR2|Core|Prehab/i.test(entry.scheme||"")||(mmI&&(!mmI.s||!mmI.s.length));
-  const step=stepFor(w,iso);
-  const allTop=ls.every(x=>x.r>=hi)||(ls.every(x=>x.r>=hi-1)&&ls[0].r>=hi&&(ls[0].rir??0)>=2);  // alle oben, oder fast alle oben + deutliche Reserve
-  const anyBelow=ls.filter(x=>x.r<lo).length;
-  // Deutlich über dem Zielbereich (alle Sätze ≥ obere Grenze +2, keiner am Limit) → doppelter Schritt
-  if(allTop&&ls.every(x=>x.r>=hi+2&&(x.rir??0)>=1))return{w:roundPlate(w+2*step),txt:"+"+(2*step)+"kg — klar über Zielbereich ("+ls.map(x=>x.r).join("/")+")"};
-  if(allTop)return{w:roundPlate(w+step),txt:"+"+step+"kg — alle Sätze am oberen Zielrand ("+ls.map(x=>x.r).join("/")+")"};
-  if(anyBelow>=Math.ceil(ls.length/2)){
-    const allOut=ls.every(x=>x.rir===0);
-    const withReserve=ls.every(x=>x.rir!=null&&x.rir<=2);
-    if(allOut)return{w:roundPlate(Math.max(w-step,step)),txt:"−"+step+"kg — mehrheitlich unter Zielbereich trotz RIR0"};
-    if(withReserve)return{w:roundPlate(Math.max(w-2*step,step)),txt:"−"+(2*step)+"kg — unter Zielbereich schon mit Reserve, Gewicht zu hoch"};
+  // Gewichtsstufen: KH 2 kg, leichte Kabel/Stack 1,25 kg, sonst 2,5 kg
+  const fine=H.some(h=>Math.round(h.w*100)%250!==0);   // Gewichte wie 18,75 / 53,75 → 1,25er-Stufen am Gerät
+  const inc=/\bKH\b|kurzhantel/i.test(entry.name)?2:(fine||w<20)?1.25:2.5,r2=v=>Math.round(v*100)/100;
+  const step=Math.max(inc,Math.round(w*(iso?0.05:0.025)/inc)*inc);
+  const up=r2(w+step),dn=r2(Math.max(inc,w-step));
+  const jump=(up-w)/w,need=jump>0.075?hi+2:hi;
+  // Wie viele Einheiten in Folge mit genau diesem Gewicht? (Schonfrist nach Steigerung)
+  let atW=0;for(const h of H){if(h.w===w)atW++;else break}
+  const raised=H.length>atW&&H[atW].w<w;
+  const below=rs.filter(r=>r<lo).length,maj=below>=Math.ceil(rs.length/2);
+  const farBelow=rs.filter(r=>r<lo-2).length>=Math.ceil(rs.length/2);
+  const cur="("+rs.join("/")+")";
+  if(rs.every(r=>r>=need)){
+    const up2=r2(w+2*step);
+    if(rs.every(r=>r>=need+3)&&(up2-w)/w<=0.075)return{w:up2,txt:"+"+fmt(up2-w)+" kg — klar über dem Zielbereich "+cur};
+    return{w:up,txt:"+"+fmt(up-w)+" kg — alle Sätze am oberen Rand "+cur+(need>hi?" · großer Sprung ("+Math.round(jump*100)+" %), daher erst bei "+need+" Wdh":"")};
   }
-  if(ls[0].r>=hi)return{w:w,txt:"Gewicht halten — erst alle Sätze auf "+hi+" Wdh bringen (aktuell "+ls.map(x=>x.r).join("/")+")",hold:true};
+  if(maj){
+    if(farBelow)return{w:dn,txt:"−"+fmt(w-dn)+" kg — deutlich unter dem Zielbereich "+cur};
+    if(raised&&atW<=2)return{w,txt:"Gewicht halten — nach der Steigerung sinken die Wdh normal ab "+cur+", in 1–2 Einheiten wieder auf "+lo+"+ bringen",hold:true};
+    const prevBelow=atW>=2&&H[1].sets.filter(x=>num(x.r)<lo).length>=Math.ceil(H[1].sets.length/2);
+    if(prevBelow)return{w:dn,txt:"−"+fmt(w-dn)+" kg — 2 Einheiten in Folge unter dem Zielbereich "+cur};
+    return{w,txt:"Gewicht halten — einmal unter dem Zielbereich "+cur+", nächstes Mal prüfen",hold:true};
+  }
+  if(rs.some(r=>r>=hi))return{w,txt:"Gewicht halten — erst alle Sätze auf "+need+" Wdh bringen "+cur+(need>hi?" · großer Sprung ("+Math.round(jump*100)+" %) beim nächsten Gewicht":""),hold:true};
   return null;
 }
 
@@ -657,7 +676,7 @@ function startSession(sid,dl){
         if(!lv&&!(num(ex.start)>0)&&!state.pendingDeload){const dl=[...state.logs].filter(l=>l.deload).sort((x,y)=>y.date.localeCompare(x.date)).map(l=>l.entries.find(e=>e.exerciseId===ex.id)).find(Boolean);
           if(dl){const mx=Math.max(...dl.sets.map(x=>num(x.w)));if(mx>0)w=roundPlate(mx/DELOAD_LOAD)}}
         // Plan-Startgewicht gewinnt, wenn es UNTER dem letzten Wert liegt und die Planversion neuer ist als die letzte Einheit
-        if(lv&&num(ex.start)>0&&num(ex.start)<num(w)&&(activePlan().createdAt||"")>=(lv.date||""))w=ex.start;
+        if(lv&&num(ex.start)>0&&num(ex.start)<num(w)&&((activePlan().createdAt||"")>=(lv.date||"")||(ex.startDate||"")>=(lv.date||"")))w=ex.start;
         if(re&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*re.factor);
         if(state.pendingDeload&&!reha&&num(w)>0&&!/BW|Core/i.test(ex.scheme||""))w=roundPlate(num(w)*DELOAD_LOAD);
         return{w,r:"",rir:null}})}})};
