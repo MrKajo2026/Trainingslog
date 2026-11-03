@@ -394,7 +394,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v210";
+const APP_VERSION="v211";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1877,7 +1877,7 @@ function vStats(){
     +(state.shortText?'<textarea readonly rows="5" class="mono" style="font-size:11px" onclick="this.select()">'+esc(state.shortText)+'</textarea>':'')
     +'<div class="row"><button class="chip" style="flex:1;padding:10px" onclick="mkBackup()">Voll-Backup</button><button class="chip" style="flex:1;padding:10px" onclick="doCopyBk()">📋 Kopieren</button><button class="chip" style="padding:10px" onclick="doDlBk()">⬇ Datei</button></div>'
     +(state.backupText?'<textarea rows="4" readonly class="mono" style="font-size:11px" onclick="this.select();try{document.execCommand(\'copy\')}catch(e){}try{navigator.clipboard&&navigator.clipboard.writeText(this.value)}catch(e){}">'+esc(state.backupText)+'</textarea>':'')
-    +'<details><summary class="tiny">Backup wiederherstellen ▾</summary><p class="tiny" style="margin-top:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p><textarea rows="3" id="imptext" class="mono" style="font-size:11px;margin-top:6px" placeholder=\'{"version":1,...}\'></textarea><button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button></details></div></div>';
+    +'<details><summary class="tiny">Backup wiederherstellen ▾</summary><p class="tiny" style="margin-top:6px">Backup-Text einfügen. Einheiten werden zusammengeführt (keine Duplikate).</p><textarea rows="3" id="imptext" class="mono" style="font-size:11px;margin-top:6px" placeholder=\'{"version":1,...}\'></textarea><button class="btn grn" style="margin-top:6px" onclick="impBackup()">Backup wiederherstellen</button><label class="btn" style="margin-top:6px;display:block;text-align:center">📂 Backup-Datei wählen<input type="file" accept=".json,application/json,text/plain" style="display:none" onchange="impFile(this)"></label></details></div></div>';
   }
   return h;
 }
@@ -2154,6 +2154,7 @@ function closeBk(ev){if(ev&&ev.target!==ev.currentTarget)return;$("overlay").inn
 function mkBackup(){state.backupText=JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs,weights:state.weights||[],acts:state.acts||[],analyses:state.analyses||[]});render()}
 function dlBackup(){try{const blob=new Blob([JSON.stringify({version:1,exportedAt:todayISO(),settings:state.settings,plans:state.plans,library:state.library,logs:state.logs,weights:state.weights||[],acts:state.acts||[],analyses:state.analyses||[]})],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="trainingslog-backup-"+todayISO()+".json";a.click()}catch(e){toast("Download nicht möglich — Text-Weg nutzen")}}
+function impFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const t=$("imptext");if(t)t.value=r.result;impBackup()};r.readAsText(f)}
 function impBackup(){const t=($("imptext").value||"").trim();if(!t)return;
   try{const b=JSON.parse(t);if(!b||!Array.isArray(b.logs))throw 0;
     const ids=new Set(state.logs.map(l=>l.id));
