@@ -394,7 +394,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v212";
+const APP_VERSION="v213";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1147,8 +1147,9 @@ function ssRest(e,si){
 }
 function repsDone(ei,si){
   const e=state.active&&state.active.entries[ei];if(!e)return;
-  const s=e.sets[si];let fresh=false;if(num(s.r)>0&&!s.t){s.t=Date.now();fresh=true;draftSave()}
-  if(!(num(s.r)>0)||restIv||!fresh)return;      // nur beim ersten Eintragen des Satzes und wenn noch kein Timer läuft (Korrekturen starten keine Pause)
+  const s=e.sets[si];if(num(s.r)>0&&!s.t){s.t=Date.now();draftSave()}
+  if(!(num(s.r)>0)||restIv||s.rst)return;      // Pause je Satz nur einmal (auch wenn RIR vor den Wdh getippt wurde)
+  s.rst=1;draftSave();      // nur beim ersten Eintragen des Satzes und wenn noch kein Timer läuft (Korrekturen starten keine Pause)
   const isLast=si===e.sets.length-1;
   const rr=ssRest(e,si);startRest(rr.sec,rr.label);
 }
@@ -1313,7 +1314,7 @@ function pinTimer(){
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}clearTimeout(darkT);restCtx=null;const dk=$("restdark");if(dk)dk.remove();beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
-  if(s.rir!==null&&num(s.r)>0&&was==null){                        // Satz erstmals abgeschlossen → Pause starten (Korrektur der RIR startet keine neue Pause)
+  if(s.rir!==null&&num(s.r)>0&&(was==null&&!s.rst||!s.rst)){s.rst=1;                        // Satz erstmals abgeschlossen → Pause starten (Korrektur der RIR startet keine neue Pause)
     const rr=ssRest(e,si);startRest(rr.sec,rr.label);
     autoNext(ei);
   }}
