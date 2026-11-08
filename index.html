@@ -321,6 +321,7 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .as-pill{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:var(--s2);color:var(--mut)}.as-row.due .as-pill{background:var(--amb);color:#111}
 .as-act{display:flex;gap:6px;margin:8px 0 0 18px}.as-act .chip{flex:1;text-align:center}.as-act .as-p{background:var(--amb);color:#111;font-weight:700}
 #wkstrip .h-d .wm{display:block;font-style:normal;font-size:9px;font-weight:600;color:var(--mut);line-height:11px;margin-top:1px;letter-spacing:.04em}#wkstrip .h-d.now .wm{color:#3a3a3a}
+.as-hint{display:block;width:100%;margin-top:8px;padding:6px 0 0;border:none;border-top:1px solid var(--s2);background:none;color:var(--amb);font-size:13px;font-weight:600;text-align:center}
 </style>
 </head>
 <body>
@@ -395,7 +396,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v215";
+const APP_VERSION="v216";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -2193,7 +2194,7 @@ function vDeload(){
 function resetCycle(){state.settings.cycleStart=todayISO();state.settings.cycleManual=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);state.tab="training";render();toast("Neuer Zyklus gestartet")}
 function pauseAsDeload(){state.settings.cycleStart=todayISO();state.settings.cycleManual=todayISO();delete state.settings.plannedDeload;autoPlanDeload();saveJ("settings",state.settings);render();toast("Pause als Deload gewertet — neuer Zyklus ✓")}
 // ================= Andere Sportarten =================
-const ACT_TYPES={rad:{n:"Rad",i:"🚴",f:.6},lauf:{n:"Laufen",i:"🏃",f:1.0},schwimm:{n:"Schwimmen",i:"🏊",f:.7},paddel:{n:"Paddeln",i:"🛶",f:.7},sonst:{n:"Sonstiges",i:"⚡",f:.8}};
+const ACT_TYPES={rad:{n:"Rad",i:"🚴",f:.6},lauf:{n:"Laufen",i:"🏃",f:1.0},schwimm:{n:"Schwimmen",i:"🏊",f:.7},paddel:{n:"Paddeln",i:"🛶",f:.7},wandern:{n:"Wandern",i:"🥾",f:.5},berg:{n:"Bergsteigen",i:"🏔️",f:.8},sonst:{n:"Sonstiges",i:"⚡",f:.8}};
 // Belastungspunkte: Minuten × RPE × Sportart-Faktor / 6  (grob vergleichbar mit Satz-Anstrengung)
 const actLoad=a=>Math.round((a.min||0)*(a.rpe||5)*((ACT_TYPES[a.type]||{}).f||.8)/6);
 // Warnung: harte Ausdauer kurz vor Beintag
