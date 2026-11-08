@@ -397,7 +397,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v217";
+const APP_VERSION="v218";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -914,6 +914,7 @@ function render(){
 }
 const TABS=["training","statistik","kalender","plaene"];
 function initSwipe(){
+  return;   // Wischen zwischen den Hauptansichten deaktiviert (08.11.)
   if(window.__swipeOn)return;window.__swipeOn=true;
   let x0=null,y0=null;
   document.addEventListener("touchstart",e=>{const el=e.target.closest("#calgrid,#wkstrip,input,textarea,select,.sheet");if(el){x0=null;return}
