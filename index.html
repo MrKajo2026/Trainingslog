@@ -322,6 +322,7 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .as-act{display:flex;gap:6px;margin:8px 0 0 18px}.as-act .chip{flex:1;text-align:center}.as-act .as-p{background:var(--amb);color:#111;font-weight:700}
 #wkstrip .h-d .wm{display:block;font-style:normal;font-size:9px;font-weight:600;color:var(--mut);line-height:11px;margin-top:1px;letter-spacing:.04em}#wkstrip .h-d.now .wm{color:#3a3a3a}
 .as-hint{display:block;width:100%;margin-top:8px;padding:6px 0 0;border:none;border-top:1px solid var(--s2);background:none;color:var(--amb);font-size:13px;font-weight:600;text-align:center}
+#wkstrip .h-d .wm .wa{font-size:10px;letter-spacing:0}
 </style>
 </head>
 <body>
@@ -396,7 +397,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v216";
+const APP_VERSION="v217";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -984,7 +985,7 @@ function vHome(){
   h+='<div class="h-wk wcard"><div class="row" style="justify-content:space-between"><button class="h-a" onclick="wkScroll(-7)">‹</button>'
    +'<button class="h-kw" onclick="state.wkPos=null;wkCenter(true)"><b id="wktitle" style="font-size:14px">Heute · '+tl+'</b><span id="wkback" class="tiny" style="display:none;color:var(--amb)">↺ zurück zu heute</span></button>'
    +'<button class="h-a" onclick="wkScroll(7)">›</button></div><div class="h-days h-scroll" id="wkstrip">';
-  const WSET=new Set((state.weights||[]).map(w=>w.date)),SSET=new Set((state.sleep||[]).map(x=>x.date));
+  const WSET=new Set((state.weights||[]).map(w=>w.date)),SSET=new Set((state.sleep||[]).map(x=>x.date)),ASET=Object.fromEntries((state.acts||[]).map(a=>[a.date,(ACT_TYPES[a.type]||{}).i||'⚡']));
   for(let i=-28;i<=35;i++){const d=addDays(t,i);const lg=state.logs.filter(l=>l.date===d);const ab=(state.settings.absences||[]).find(a=>a.from<=d&&a.to>=d);const pl=plan[d];
     let cls="",lab="";
     if(lg.length){cls=lg.some(l=>l.deload)?"dl-done":"done";lab=lg.map(l=>l.sessionName).join("+")}
@@ -992,7 +993,7 @@ function vHome(){
     else if(pl){const s=p.sessions.find(x=>x.id===pl.sessionId);lab=s?s.name:"";cls=dlSet.has(d)?"plan dl":"plan"}
     if(d===t){cls+=" now"}
     const first=d.slice(8)==="01";
-    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)||'&nbsp;')+'</em><i class="wm">'+([WSET.has(d)?'G':'',SSET.has(d)?'S':''].filter(Boolean).join(' ')||'&nbsp;')+'</i></button>'}
+    h+='<button class="h-d '+cls+(state.calSel===d?" sel":"")+(first?" m1":"")+'" '+(d===t?'id="wktoday" ':'')+'onclick="calPick(\''+d+'\')"><small>'+(d===t?"Heute":WD[new Date(d).getDay()])+'</small><b>'+(+d.slice(8))+'</b><em>'+(esc(first&&!lab?new Date(d).toLocaleDateString("de-DE",{month:"short"}):lab)||'&nbsp;')+'</em><i class="wm">'+([WSET.has(d)?'G':'',SSET.has(d)?'S':'',ASET[d]?'<span class="wa">'+ASET[d]+'</span>':''].filter(Boolean).join(' ')||'&nbsp;')+'</i></button>'}
   h+='</div>';
   {const ad=asDue();if(ad.length)h+='<button class="as-hint" onclick="go(\'plaene\');setTimeout(()=>showRules(),50)">⚑ '+ad.length+(ad.length>1?' Annahmen':' Annahme')+' prüfen</button>'}
   if(state.calSel)h+='<div id="hdaycard" style="scroll-margin-bottom:90px">'+dayCard(state.calSel,true)+'</div>';
@@ -2574,7 +2575,7 @@ function saveAct(iso){
   const rpe=Math.min(10,Math.max(1,Math.round(num($("actRpe").value)||5)));
   if(!min){toast("Dauer in Minuten eingeben");return}
   state.acts=[...(state.acts||[]).filter(a=>a.date!==iso),{date:iso,type,min,km,rpe}].sort((a,b)=>a.date.localeCompare(b.date));
-  saveJ("acts",state.acts);state.actType=null;render();toast((ACT_TYPES[type]||{}).n+" gespeichert")}
+  saveJ("acts",state.acts);state.actType=null;state.calPanel=null;render();toast((ACT_TYPES[type]||{}).n+" gespeichert")}
 function delAct(iso){state.acts=(state.acts||[]).filter(a=>a.date!==iso);saveJ("acts",state.acts);render();toast("Eintrag gelöscht")}
 // Schlaf: Stunden der Nacht VOR dem Tag (0–12 h, 0,5er-Schritte)
 function saveSleep(iso){const v=num($("slin").value);if(isNaN(v)||v<0||v>12){toast("Schlaf 0–12 h");return}
