@@ -397,7 +397,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v219";
+const APP_VERSION="v220";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1056,7 +1056,11 @@ function autoNext(ei){
     if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
   },700);
 }
-function toggleEx(ei){state.openEx=state.openEx||{};const cur=isOpenEx(ei);state.openEx[ei]=!cur;render()}
+function toggleEx(ei){state.openEx=state.openEx||{};const cur=isOpenEx(ei);state.openEx[ei]=!cur;
+  // abgeschlossene Übung zugeklappt → nächste offene Übung direkt öffnen
+  let t=-1;const a=state.active;if(cur&&a&&exDone(a.entries[ei])){const n=a.entries.length;for(let k=1;k<n;k++){const j=(ei+k)%n;if(!navDone(a.entries[j])){t=j;break}}
+    if(t>=0){const ne=a.entries[t];if(ne.ss){const tt=ssTurn(ne.ss);if(tt>=0)t=tt}state.openEx[t]=true}}
+  render();if(t>=0)setTimeout(()=>{const el=$("ex-"+t);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},60)}
 function curExIdx(){const a=state.active;const i=a.entries.findIndex(e=>!navDone(e));return i}
 function isOpenEx(ei){const a=state.active;if(state.openEx&&state.openEx[ei]!==undefined)return state.openEx[ei];
   const c=curExIdx();if(c<0)return false;
