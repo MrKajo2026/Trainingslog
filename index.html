@@ -335,6 +335,7 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .wz-cnt{font-size:13px;color:var(--mut);font-weight:500;margin-left:6px}.wz-ex{display:flex;flex-direction:column}.wz-er{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);font-size:14px}.wz-er>span:not(.pi){flex:1;min-width:0}.wz-er b{font-size:13px;color:var(--mut)}
 .wz-er input{width:46px;text-align:center;padding:6px;font-size:16px;background:var(--bg);border:1px solid var(--s3);border-radius:8px;color:var(--tx)}.wz-er input+i{font-style:normal;color:var(--mut)}.wz-er input:last-of-type{width:64px}
 .cal{border:1px solid var(--s3);border-radius:12px;padding:10px 12px;margin-top:8px;display:flex;flex-direction:column}.cal b{font-size:14px}.cal .tiny{margin-top:1px}.cal input{flex:1;min-width:0;text-align:center;font-size:16px;background:var(--bg);border:1px solid var(--s3);border-radius:10px;color:var(--tx);padding:9px}
+.wz-date{width:100%;box-sizing:border-box;font-size:18px;padding:12px;background:var(--bg);border:1px solid var(--s3);border-radius:12px;color:var(--tx);color-scheme:dark}
 </style>
 </head>
 <body>
@@ -415,7 +416,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v226";
+const APP_VERSION="v227";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1592,7 +1593,7 @@ const ADV=()=>((state.settings.profile||{}).level||8)>=7;          // Progressio
 function lastKg(){const w=[...(state.weights||[])].sort((a,b)=>a.date.localeCompare(b.date)).pop();return w?num(w.kg):0}
 // Zielwerte aus Profil (Helms, Muscle & Strength Pyramid; ISSN Protein)
 function ageOf(p){p=p||state.settings.profile||{};if(p.birth){const b=new Date(p.birth),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}return num(p.age)}
-function profTargets(p){p=p||state.settings.profile||{};const kg=num(p.kg)||lastKg()||80,L=num(p.level)||5,g=p.goal||"aufbau";
+function profTargets(p){p=p||state.settings.profile||{};const kg=lastKg()||num(p.kg)||80,L=num(p.level)||5,g=p.goal||"aufbau";
   let lo,hi,kcal;
   if(g==="aufbau"){const m=L<=3?[.01,.015]:L<=6?[.005,.01]:[.0025,.0075];lo=kg*m[0]/4.33;hi=kg*m[1]/4.33;kcal=L<=3?250:L<=6?150:100}
   else if(g==="halten"){lo=-.1;hi=.1;kcal=0}
@@ -1621,13 +1622,13 @@ let wz=null;
 const LVL=l=>l<=3?"Einsteiger":l<=6?"Fortgeschritten":l<=9?"Sehr fortgeschritten":"Profi";
 function showProfile(first){const p=state.settings.profile||{};
   wz={step:0,first:!!first,p:Object.assign({age:"",kg:lastKg()||"",level:first?5:8,goal:"aufbau",typ:"aufbau",rhythm:{mode:"n",n:2}},JSON.parse(JSON.stringify(p)))};
-  if(!wz.p.age&&p.birth)wz.p.age=ageOf(p);drawWz()}
+  drawWz()}
 function wzGo(d){wz.step=Math.max(0,wz.step+d);drawWz()}
 function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
   let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
-  if(st===0){t="Über dich";b='<div class="row" style="gap:10px"><label class="pf-f"><span>Alter</span><input inputmode="numeric" value="'+esc(p.age)+'" oninput="wz.p.age=num(this.value)||\'\';delete wz.p.birth"><i>J.</i></label><label class="pf-f"><span>Gewicht</span><input inputmode="decimal" value="'+esc(String(p.kg).replace(".",","))+'" oninput="wz.p.kg=num(this.value)"><i>kg</i></label></div>'}
+  if(st===0){t="Geburtsdatum";b='<input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age">'}
   else if(st===1){t="Trainingslevel";b='<div class="wz-lv"><b id="wzlv">'+p.level+'</b><span id="wzlt">'+LVL(p.level)+'</span></div><input type="range" min="1" max="10" value="'+p.level+'" oninput="wz.p.level=+this.value;$(\'wzlv\').textContent=this.value;$(\'wzlt\').textContent=LVL(+this.value)" style="width:100%;accent-color:var(--tx)">'}
   else if(st===2){t="Ziel";b=big([["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]],p.goal,"wzGoal");foot=""}
   else if(st===3){t="Trainingsart";b=big(Object.keys(TPL).map(k=>[k,TPL[k].n]),p.typ,"wzTyp");foot=""}
