@@ -397,7 +397,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v222";
+const APP_VERSION="v223";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -674,7 +674,8 @@ function stagnationFor(exId){
     .map(l=>{const e=l.entries.find(x=>x.exerciseId===exId);if(!e)return null;
       const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?{v:b,date:l.date,rir:e.sets.map(s=>s.rir)}:null}).filter(Boolean);
   if(pts.length<5)return null;
-  const last3=pts.slice(-4);   // Fortgeschritten: Stillstand erst über 4 Einheiten wertenconst best=Math.max(...pts.slice(0,-3).map(p=>p.v),last3[0].v);
+  const last3=pts.slice(-4);   // Fortgeschritten: Stillstand erst über 4 Einheiten werten
+  const best=Math.max(...pts.slice(0,-last3.length).map(p=>p.v),last3[0].v);
   const noGain=last3.every(p=>p.v<=best*1.005);
   if(!noGain)return null;
   const n=pts.length-pts.findIndex(p=>p.v>=best*0.995);
