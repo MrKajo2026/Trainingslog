@@ -218,7 +218,9 @@ nav button.on{color:var(--tx)!important;border-top:2px solid #dcdcdc}
 .k-grid{gap:0}.k-d{height:56px;border-radius:0;border-bottom:1px solid var(--s2);justify-content:flex-start;padding-top:7px;gap:4px}.k-e{border-bottom:1px solid var(--s2)}
 .k-grid>*:nth-last-child(-n+7){border-bottom:none}
 .k-lab{display:block;font-style:normal;font-size:9.5px;font-weight:700;white-space:nowrap;min-height:12px}
-.k-lab.tr{color:var(--red2)}.k-lab.dl{color:var(--amb)}.k-lab.pl,.k-lab.pdl{color:var(--mut)}.k-lab.ab{color:var(--sky)}.c-leg .k-lab{font-size:12px;font-weight:600}
+.k-lab.tr{color:var(--red2)}.k-lab.dl{color:var(--amb)}.k-lab.pl,.k-lab.pdl{color:var(--mut)}.k-lab.ab{color:var(--sky)}.c-leg .k-lab{font-size:11px;font-weight:600}
+.c-leg{flex-wrap:nowrap!important;gap:9px!important;white-space:nowrap}.c-leg b{color:var(--tx)}
+.h-hero.h-new{flex:0 0 auto!important;padding:26px 16px 20px!important;gap:10px!important}
 .k-d.now{background:none;color:var(--tx)}.k-d.now b{background:var(--amb);color:#111;border-radius:8px;padding:0 6px;font-weight:800}
 .k-d.sel{box-shadow:none;background:var(--s1);border-radius:10px}
 .k-abs summary{list-style:none;cursor:pointer}.k-abs summary::-webkit-details-marker{display:none}.k-abs[open] summary span{color:var(--tx)}
@@ -426,7 +428,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v235";
+const APP_VERSION="v236";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1020,7 +1022,7 @@ function vHome(){
   const nd=rest?new Date(scNext.date).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"}):"";
   const frac=Math.min(n/N,1),dlFrac=dp.active?dp.n/DELOAD_RUN:0;
   const status=dlNow?'<span style="color:var(--amb)">Deload '+(dp.n+1)+' von '+DELOAD_RUN+'</span>':re?'<span style="color:var(--sky)">Wiedereinstieg</span>':'<span style="color:var(--mut)">Aufbau</span>';
-  h+='<div class="h-hero"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
+  h+='<div class="h-hero'+(state.logs.length?'':' h-new')+'"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
    +'<circle cx="98" cy="98" r="84" stroke="var(--s2)"/>'
    +(frac>0?'<circle cx="98" cy="98" r="84" stroke="url(#chrRing)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +(dlNow?'<circle cx="98" cy="98" r="84" stroke="var(--amb)" stroke-dasharray="'+(C*Math.max(dlFrac,0.03)).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
@@ -2881,7 +2883,7 @@ function vCal(){wDates=null;sDates=null;
   }
   {const tot=startDow+days,fill=(7-tot%7)%7;for(let i=0;i<fill;i++)h+='<span class="k-e"></span>';}
   h+='</div>';
-  h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">krank/Urlaub</span><span class="k-wg" style="display:inline;font-size:12px;font-weight:600">G = Gewicht · S = Schlaf</span></div>';
+  h+='<div class="c-leg"><span class="k-lab tr">Training</span><span class="k-lab dl">Deload</span><span class="k-lab pl">geplant</span><span class="k-lab ab">Pause</span><span><b>G</b> Gewicht</span><span><b>S</b> Schlaf</span></div>';
   // Tageskarte
   if(state.calSel)h+=dayCard(state.calSel);
   // Pausen
