@@ -427,7 +427,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v233";
+const APP_VERSION="v234";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -2135,10 +2135,10 @@ function vStats(){
     else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
     {const sl=rangeFilter((state.sleep||[]).filter(x=>x.h!=null).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng),l7=sl.slice(-7),av=l7.length?l7.reduce((a,x)=>a+num(x.h),0)/l7.length:null;
      h+=sl.length>=2?'<div class="s-card"><div class="s-h s-hb"><b>Schlaf</b><span class="s-hv s-chr">'+(av!=null?'Ø '+fx(av)+' h':'–')+'</span></div><div id="slchart"></div>'+(()=>{const sp=sleepPerf(),r=v=>v==null?"–":Math.round(v)+" %";
-       if(sp.lo.n<3||sp.hi.n<3)return '<p class="s-foot">Leistung nach Schlaf: ab 3 Einheiten je Gruppe (unter 7 h: '+sp.lo.n+', ab 7 h: '+sp.hi.n+')</p>';
+       if(sp.lo.n<3||sp.hi.n<3)return '';
        const d=sp.hi.p-sp.lo.p;return '<div class="s-row" style="margin-top:6px"><span>Leistung nach &lt; 7 h</span><span class="mono">'+r(sp.lo.p)+' <small style="color:var(--mut)">('+sp.lo.n+')</small></span></div>'
         +'<div class="s-row"><span>Leistung nach ≥ 7 h</span><span class="mono">'+r(sp.hi.p)+' <small style="color:var(--mut)">('+sp.hi.n+')</small></span></div>'
-        +'<p class="s-foot">'+(Math.abs(d)<2?'Kein klarer Unterschied.':d>0?'Nach kurzen Nächten im Schnitt '+fx(Math.round(d*10)/10)+' % schwächer.':'Nach kurzen Nächten nicht schwächer.')+' 100 % = wie letzte Ausführung.</p>'})()+'</div>'
+        +'<p class="s-foot">'+(Math.abs(d)<2?'Kein klarer Unterschied.':d>0?'Nach kurzen Nächten im Schnitt '+fx(Math.round(d*10)/10)+' % schwächer.':'Nach kurzen Nächten nicht schwächer.')+'</p>'})()+'</div>'
        :'<div class="s-card"><div class="s-h"><b>Schlaf</b></div><p class="tiny">Noch zu wenige Nächte — im Kalender Tag antippen und Schlaf eintragen.</p></div>'}
     const top=g.perEx.filter(e=>e.pct>1).slice(0,3),att=g.perEx.slice().sort((a,b)=>a.pct-b.pct).filter(e=>e.pct<=1).slice(0,3);
     const row=e=>'<button class="s-ex" onclick="state.statTab=\'uebungen\';state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span><b class="mono" style="color:'+col(Math.abs(e.pct)<1?0:e.pct)+'">'+(Math.abs(e.pct)<1?"±0 %":sg(e.pct)+" %")+'</b></button>';
@@ -2174,7 +2174,7 @@ function vStats(){
     const li=loadIndex();
     if(li)h+='<div class="s-card"><div class="s-h s-hb"><b>Wochenlast</b><span class="s-hv s-chr">'+(()=>{const fq=fatigueLoad();return fq?fq.pct+' %':'–'})()+'</span></div><div id="lchart"></div></div>';
     const tmode=state.tonMode||"woche";
-    h+='<div class="s-card"><div class="s-h"><b>Tonnage</b><span>kg</span></div><div class="s-seg" style="margin:0 0 8px">'
+    h+='<div class="s-card"><div class="s-h"><b>Tonnage</b></div><div class="s-seg" style="margin:0 0 8px">'
      +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';state.tonSel=null;render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
     h+='<div class="s-card"><div class="s-h"><b>Export & Backup</b></div><div style="display:flex;flex-direction:column;gap:10px">'
     +'<div class="row"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
@@ -2324,18 +2324,20 @@ function drawCharts(){
     if(data.length<1){tc.innerHTML='<p class="tiny" style="text-align:center;padding:12px">Keine Daten im Zeitraum.</p>'}
     else{
       const W=320,H=150,n=data.length,mx=Math.max(...data.map(t=>t.v),1),sl=Math.min(n-1,state.tonSel==null?n-1:state.tonSel);
-      const fmt=v=>v>=1000?(v/1000).toFixed(1).replace(".",",")+" t":v+" kg",slot=(W-20)/n,bw=Math.max(3,Math.min(26,slot*.62)),Y=v=>H-20-v/mx*(H-46);
+      const fmt=v=>v>=1000?(v/1000).toFixed(1).replace(".",",")+" t":v+" kg",L=30,slot=(W-L-6)/n,bw=Math.max(3,Math.min(26,slot*.62));
+      const stp=[1,2,5,10,20,50].map(x=>x*1000).concat([100,200,500]).sort((a,b)=>a-b).find(x=>mx/x<=4)||1e5,top=Math.ceil(mx/stp)*stp,Y=v=>H-20-v/top*(H-46);
       const avg=Math.round(data.reduce((a,t)=>a+t.v,0)/n);
       let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">';
-      svg+='<line x1="10" x2="'+(W-10)+'" y1="'+Y(avg)+'" y2="'+Y(avg)+'" stroke="#52525b" stroke-dasharray="3 3"/>';
-      data.forEach((t,i)=>{const cx=10+(i+.5)*slot,on=i===sl;
+      for(let v=0;v<=top;v+=stp)svg+='<line x1="'+L+'" x2="'+W+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#27272a"/><text x="'+(L-5)+'" y="'+(Y(v)+3)+'" fill="#52525b" font-size="8" text-anchor="end">'+(top>=1000?String(v/1000).replace(".",",")+"t":v)+'</text>';
+      svg+='<line x1="'+L+'" x2="'+W+'" y1="'+Y(avg)+'" y2="'+Y(avg)+'" stroke="#71717a" stroke-dasharray="3 3"/>';
+      data.forEach((t,i)=>{const cx=L+(i+.5)*slot,on=i===sl;
         svg+='<rect x="'+(cx-bw/2)+'" y="'+Y(t.v)+'" width="'+bw+'" height="'+(H-20-Y(t.v))+'" rx="3" fill="'+(on?"#ef4444":"#3f3f46")+'"/>'
           +'<rect x="'+(cx-slot/2)+'" y="0" width="'+slot+'" height="'+H+'" fill="transparent" style="cursor:pointer" onclick="state.tonSel='+i+';drawCharts()"/>'});
-      const sx=Math.max(34,Math.min(W-34,10+(sl+.5)*slot)),st=data[sl];
+      const sx=Math.max(L+24,Math.min(W-24,L+(sl+.5)*slot)),st=data[sl];
       svg+='<text x="'+sx+'" y="'+(Y(st.v)-14)+'" fill="#f4f4f5" font-size="11" font-weight="700" text-anchor="middle">'+fmt(st.v)+'</text>'
         +'<text x="'+sx+'" y="'+(Y(st.v)-4)+'" fill="#71717a" font-size="8" text-anchor="middle">'+st.d+'</text>';
-      if(n>1){svg+='<text x="10" y="'+(H-5)+'" fill="#52525b" font-size="8">'+data[0].d+'</text><text x="'+(W-10)+'" y="'+(H-5)+'" fill="#52525b" font-size="8" text-anchor="end">'+data[n-1].d+'</text>'}
-      tc.innerHTML=svg+'</svg><p class="tiny" style="text-align:right">Ø '+fmt(avg)+' je '+(tmode==="woche"?"Woche":"Einheit")+' · Balken antippen</p>';
+      if(n>1){svg+='<text x="'+L+'" y="'+(H-5)+'" fill="#52525b" font-size="8">'+data[0].d+'</text><text x="'+W+'" y="'+(H-5)+'" fill="#52525b" font-size="8" text-anchor="end">'+data[n-1].d+'</text>'}
+      tc.innerHTML=svg+'</svg><p class="tiny" style="text-align:right">Ø '+fmt(avg)+' je '+(tmode==="woche"?"Woche":"Einheit")+'</p>';
     }
   }
 }
