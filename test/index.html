@@ -336,6 +336,7 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .wz-seg i.done{background:var(--mut)}.wz-seg i.cur{background:var(--tx)}
 .wz-dw{position:relative}.wz-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--mut);pointer-events:none;background:var(--bg);border-radius:12px;margin:1px}
 .wz .pf-t{display:block;text-align:center}
+.wz-bd{display:flex;gap:8px}.wz-bd .wz-sel{flex:1;font-size:16px;text-align:center;text-align-last:center;padding:12px 6px}.wz-sel.empty{color:var(--mut)}
 .wz-q{font-size:15px;font-weight:700;color:var(--tx);margin:18px 0 8px}
 .wz-nb{display:flex;gap:8px}.wz-nb .wz-next{flex:1}.wz-next[disabled]{opacity:.3}
 .wz .wz-top{gap:12px}
@@ -437,7 +438,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v240";
+const APP_VERSION="v241";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1655,6 +1656,14 @@ const LVL=l=>l<=3?"Einsteiger":l<=6?"Fortgeschritten":l<=9?"Sehr fortgeschritten
 function showProfile(first){const p=state.settings.profile||{};
   wz={step:0,first:!!first,p:Object.assign({age:"",kg:lastKg()||"",level:first?5:8,goal:"aufbau",typ:"aufbau",rhythm:{mode:"n",n:2}},JSON.parse(JSON.stringify(p)))};
   drawWz()}
+// Geburtsdatum als Tag/Monat/Jahr-Auswahl (natives iOS-Datumsrad schließt sich nach der ersten Drehung)
+function wzBirthSel(){const b=(wz.p.birth||"").split("-"),y0=new Date().getFullYear(),MO=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const sel=(id,ph,opts,cur)=>'<select id="'+id+'" class="wz-date wz-sel'+(cur?'':' empty')+'" onchange="wzBirthSet()"><option value="">'+ph+'</option>'+opts.map(([v,l])=>'<option value="'+v+'"'+(v===cur?' selected':'')+'>'+l+'</option>').join('')+'</select>';
+  const pad=n=>String(n).padStart(2,"0");
+  return '<div class="wz-bd">'+sel("bdD","Tag",Array.from({length:31},(_,k)=>[pad(k+1),String(k+1)]),b[2]||"")+sel("bdM","Monat",MO.map((m,k)=>[pad(k+1),m]),b[1]||"")+sel("bdY","Jahr",Array.from({length:86},(_,k)=>[String(y0-12-k),String(y0-12-k)]),b[0]||"")+'</div>'}
+function wzBirthSet(){const d=$("bdD").value,m=$("bdM").value,y=$("bdY").value;["bdD","bdM","bdY"].forEach(id=>$(id).classList.toggle("empty",!$(id).value));
+  let v="";if(d&&m&&y){const dt=new Date(+y,+m-1,+d);if(dt.getMonth()!==+m-1){toast("Ungültiges Datum");}else v=y+"-"+m+"-"+d}
+  wzBirth({value:v})}
 // Datum ohne Neuzeichnen übernehmen (iOS schließt sonst den Picker nach dem ersten Drehen)
 function wzBirth(el){wz.p.birth=el.value;delete wz.p.age;const ph=document.querySelector(".wz-ph");if(ph)ph.style.display=el.value?"none":"";
   const nx=document.querySelector(".wz-nb .wz-next");if(nx){const ok=!!(wz.p.birth&&wz.p.sex);nx.disabled=!ok;nx.onclick=ok?()=>wzGo(1):null}}
@@ -1665,7 +1674,7 @@ function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
   let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
-  if(st===0){t="Persönliche Daten";b='<div class="wz-q" style="margin-top:0">Geburtsdatum</div><div class="wz-dw"><input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wzBirth(this)" onblur="wzBirth(this)">'+(p.birth?'':'<span class="wz-ph">TT.MM.JJJJ</span>')+'</div><div class="wz-q">Geschlecht</div><div class="seg">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>';if(!p.birth||!p.sex)foot=""}
+  if(st===0){t="Persönliche Daten";b='<div class="wz-q" style="margin-top:0">Geburtsdatum</div>'+wzBirthSel()+'<div class="wz-q">Geschlecht</div><div class="seg">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>';if(!p.birth||!p.sex)foot=""}
   else if(st===1){t="Trainingserfahrung";const sel=(arr,cur,k)=>'<div class="wz-opts">'+arr.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="wz.p.'+k+'='+v+';drawWz()">'+l+'</button>').join('')+'</div>';
     b='<div class="wz-q" style="margin-top:0">Wie lange trainierst du regelmäßig?</div>'+sel([[1,"unter 2 Monate"],[2,"2–12 Monate"],[3,"1–3 Jahre"],[4,"über 3 Jahre"]],p.exp,"exp")
      +'<div class="wz-q">Machst du gerade eine Trainingspause?</div>'+sel([[4,"Nein"],[3,"Ja, 1–4 Monate"],[2,"Ja, 4–8 Monate"],[1,"Ja, über 8 Monate"]],p.pause,"pause");
