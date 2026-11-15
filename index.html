@@ -257,7 +257,7 @@ button.chip[style*="--red2"]{color:#e2e2e2!important}
 .h-d.now,.h-d.now.plan,.h-d.now.plan.dl{background:var(--chrome);border-color:#e6e6e6;color:#0b0b0b}
 .h-d.now small,.h-d.now em,.h-d.now.plan em,.h-d.now.plan.dl em{color:#2a2a2a;-webkit-text-fill-color:#2a2a2a;background:none}
 .h-d.now{box-shadow:0 0 0 2px var(--bg),0 0 0 4px #d8d8d8,0 6px 16px rgba(255,255,255,.12)}
-.p-sel{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--tx);font-size:20px;font-weight:800;padding:0}
+.p-sel{white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--tx);font-size:20px;font-weight:800;padding:0}
 .p-sel i{font-style:normal;font-size:11px;color:var(--mut);border:1px solid var(--s2);border-radius:6px;padding:2px 6px}
 .lib-sheet{height:86vh;max-height:86vh;overflow:hidden!important;display:flex;flex-direction:column}.lib-sheet>*{flex-shrink:0}.lib-sheet>#libList{flex:1 1 auto;flex-shrink:1}.lib-sheet #libList{overflow-y:auto;flex:1;min-height:0}
 .lib-chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0 4px;padding-bottom:2px}.lib-chips span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--s2);color:var(--mut);white-space:nowrap;cursor:pointer}.lib-chips span.on{background:var(--chrome);color:#0b0b0b}
@@ -426,7 +426,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v234";
+const APP_VERSION="v235";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1005,7 +1005,7 @@ function vHome(){
   const wkDone=state.logs.filter(l=>l.date>=mon&&l.date<=sun).length;
   const wkPlan=wkDone+(state.settings.schedule||[]).filter(x=>x.date>=t&&x.date<=sun&&!state.logs.some(l=>l.date===x.date)).length;
   const fx=v=>String(v).replace(".",",");
-  let h='<div class="h-tiles">'
+  let h='<div class="h-tiles"'+(state.logs.length?'':' style="display:none"')+'>'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs/Wo</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.raw>0?"+":"")+fx(wr.raw.toFixed(2))+'<small> kg</small></b>':'<b>–</b>'})()+'</button>'
    +(()=>{const fq=fatigueLoad(),rc=recoveryState(),col=rc?["#34d399","#f59e0b","#ef4444"][rc.lvl]:"#444";
@@ -1863,7 +1863,7 @@ function vPlans(){
   const pcard=p=>'<div class="s-row" style="align-items:center"><span style="flex:1;min-width:0"><b style="font-size:13px;color:var(--tx)">'+esc(p.name)+'</b><br><span class="tiny">seit '+fmtD(p.createdAt)+(p.id===ap.id?' · aktiv':'')+'</span></span><span class="row" style="gap:4px">'
     +(p.id===ap.id?'<span style="font-size:12px;font-weight:700;color:#e2e2e2">✓ aktiv</span>':'<button class="chip" onclick="activatePlan(\''+p.id+'\')">Aktivieren</button><button class="chip" onclick="editPlan(\''+p.id+'\')">✎</button>'
     +'<button class="del'+(state.confirmDel==="p:"+p.id?" sure":"")+'" onclick="delPlan(\''+p.id+'\')">'+(state.confirmDel==="p:"+p.id?"Sicher?":"✕")+'</button>')+'</span></div>';
-  let h='<div class="s-card" id="pcard"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip'+(state.libOpen?' on-r':'')+'" onclick="showLibSheet()">Übungen</button><button class="chip'+(state.rulesOpen?' on-r':'')+'" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎ Bearbeiten</button></span></div>';
+  let h='<div class="s-card" id="pcard"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip'+(state.libOpen?' on-r':'')+'" onclick="showLibSheet()">Übungen</button><button class="chip'+(state.rulesOpen?' on-r':'')+'" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎</button></span></div>';
   if(state.planList){const ord=[ap].concat(sorted.filter(p=>p.id!==ap.id));const shown=state.planAll?ord:ord.slice(0,4);
     h+='<div style="margin-top:10px;border-top:1px solid var(--s2)">'+shown.map(pcard).join("")+'</div>'
      +'<div class="row" style="gap:6px;margin-top:8px"><button class="chip" style="flex:1;padding:9px" onclick="showProfile();wz.step=3;drawWz()">+ Neuer Plan</button><button class="chip" style="flex:1;padding:9px" onclick="showProfView()">Profil</button></div>'
@@ -1883,7 +1883,7 @@ function vPlans(){
        +'<span>'+(paused?'pausiert':ex.sets+' × '+esc(ex.reps)+' · '+esc(ex.scheme)+(ex.rest?' · '+fmtRest(ex.rest):'')+(xtra?' · <b style="color:var(--grn)">+'+xtra+' Meso</b>':''))+'</span>'
        +(ex.note?'<span class="p-note">'+esc(ex.note)+'</span>':'')+'</div>'
        +'<div class="p-w">'+(()=>{const lb=lastByEx()[ex.id];const lw=lb?Math.max(...lb.sets.map(x=>num(x.w))):0;
-          return lw>0?String(lw).replace(".",",")+' kg<small>zuletzt</small>':num(ex.start)>0?String(ex.start).replace(".",",")+' kg<small>Start</small>':'<span style="color:var(--amb)">neu</span>'})()+'</div></div>'});
+          return lw>0?String(lw).replace(".",",")+' kg<small>zuletzt</small>':num(ex.start)>0?String(ex.start).replace(".",",")+' kg<small>Start</small>':state.logs.length?'<span style="color:var(--amb)">neu</span>':''})()+'</div></div>'});
     h+='</div>';
   }
   return h;
@@ -2134,9 +2134,11 @@ function vStats(){
   const wk=pl.length?(pl.length/Math.max(1,Math.ceil((new Date(pl[pl.length-1].date)-new Date(pl[0].date))/6048e5)||1)):0;
   const T=[["ueberblick","Überblick"],["muskeln","Muskeln"],["uebungen","Übungen"],["mehr","Mehr"]];
   let h='<div class="s-seg">'+T.map(([k,l])=>'<button class="'+(tab===k?"on":"")+'" onclick="state.statTab=\''+k+'\';render()">'+l+'</button>').join("")+'</div>'
-   +'<div class="s-rng">'+["all","year","month"].map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
+   +(state.logs.length?'<div class="s-rng">':'<div class="s-rng" style="display:none">')+["all","year","month"].map(k=>'<button class="'+(rng===k?"on":"")+'" onclick="state.statRange=\''+k+'\';render()">'+RANGES[k]+'</button>').join("")+'</div>';
   const sw=setsPerWeek(8);
-  if(tab==="ueberblick"){
+  const EMP=!state.logs.length;
+  if(EMP&&tab!=="mehr")h+='<div class="s-card"><p class="tiny" style="text-align:center;padding:22px 0">Noch kein Training erfasst.</p></div>';
+  if(tab==="ueberblick"&&!EMP){
     h+='<div class="s-card"><div class="s-h s-hb"><b>Kraft</b><span class="s-hv s-chr">'+(g.overall==null?"–":sg(g.overall)+" %")+'</span></div><div id="kchart"></div></div>';
     const inT=sw?MUSCLE_ORDER.filter(m=>{const v=sw.sets[m]||0;return v>=SET_TARGET.min&&v<=SET_TARGET.max}).length:0;
     const li0=loadIndex();
@@ -2145,26 +2147,26 @@ function vStats(){
      +tl("Gewicht",wt?((wt.delta>=0?"+":"")+fx(wt.delta)+" kg/Wo"):"Ø 7 Tage",(wt?fx(wt.cur):ws.length?fx(ws[ws.length-1].kg):"–")+'<small> kg</small>')+tl("Muskeln","im Zielbereich",inT+'/'+MUSCLE_ORDER.length)+'</div>';
     if(ws.length>=2){const diff=Math.round((ws[ws.length-1].kg-ws[0].kg)*10)/10;
       h+='<div class="s-card"><div class="s-h s-hb"><b>Körpergewicht</b><span class="s-hv s-chr">'+(diff>0?"+":"")+fx(diff)+' kg</span></div><div id="wchart"></div></div>'}
-    else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Noch zu wenige Messungen — im Kalender Tag antippen und Gewicht eintragen (2–3× pro Woche, morgens nüchtern).</p></div>';
+    else h+='<div class="s-card"><div class="s-h"><b>Körpergewicht</b></div><p class="tiny">Im Kalender eintragen.</p></div>';
     {const sl=rangeFilter((state.sleep||[]).filter(x=>x.h!=null).slice().sort((a,b)=>a.date.localeCompare(b.date)),rng),l7=sl.slice(-7),av=l7.length?l7.reduce((a,x)=>a+num(x.h),0)/l7.length:null;
      h+=sl.length>=2?'<div class="s-card"><div class="s-h s-hb"><b>Schlaf</b><span class="s-hv s-chr">'+(av!=null?'Ø '+fx(av)+' h':'–')+'</span></div><div id="slchart"></div>'+(()=>{const sp=sleepPerf(),r=v=>v==null?"–":Math.round(v)+" %";
        if(sp.lo.n<3||sp.hi.n<3)return '';
        const d=sp.hi.p-sp.lo.p;return '<div class="s-row" style="margin-top:6px"><span>Leistung nach &lt; 7 h</span><span class="mono">'+r(sp.lo.p)+' <small style="color:var(--mut)">('+sp.lo.n+')</small></span></div>'
         +'<div class="s-row"><span>Leistung nach ≥ 7 h</span><span class="mono">'+r(sp.hi.p)+' <small style="color:var(--mut)">('+sp.hi.n+')</small></span></div>'
         +'<p class="s-foot">'+(Math.abs(d)<2?'Kein klarer Unterschied.':d>0?'Nach kurzen Nächten im Schnitt '+fx(Math.round(d*10)/10)+' % schwächer.':'Nach kurzen Nächten nicht schwächer.')+'</p>'})()+'</div>'
-       :'<div class="s-card"><div class="s-h"><b>Schlaf</b></div><p class="tiny">Noch zu wenige Nächte — im Kalender Tag antippen und Schlaf eintragen.</p></div>'}
+       :'<div class="s-card"><div class="s-h"><b>Schlaf</b></div><p class="tiny">Im Kalender eintragen.</p></div>'}
     const top=g.perEx.filter(e=>e.pct>1).slice(0,3),att=g.perEx.slice().sort((a,b)=>a.pct-b.pct).filter(e=>e.pct<=1).slice(0,3);
     const row=e=>'<button class="s-ex" onclick="state.statTab=\'uebungen\';state.statEx=\''+e.id+'\';render()"><span class="s-en">'+esc(e.name)+'</span><b class="mono" style="color:'+col(Math.abs(e.pct)<1?0:e.pct)+'">'+(Math.abs(e.pct)<1?"±0 %":sg(e.pct)+" %")+'</b></button>';
     if(top.length)h+='<div class="s-card"><div class="s-h" style="margin-bottom:2px"><b>Größte Fortschritte</b><span>'+RANGES[rng]+'</span></div>'+top.map(row).join("")+'</div>';
     if(att.length)h+='<div class="s-card"><div class="s-h" style="margin-bottom:2px"><b>Braucht Aufmerksamkeit</b><span>stagniert / fällt</span></div>'+att.map(row).join("")+'</div>';
   }
-  if(tab==="muskeln"){
+  if(tab==="muskeln"&&!EMP){
     const gg={};g.groups.forEach(x=>gg[x.g]=x.v);const ms=mesoState();const scale=SET_TARGET.max*1.5;
     h+='<div class="s-card"><div class="s-h"><b>Wochensätze & Kraft</b><span>Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+'</span></div>';
     MUSCLE_ORDER.forEach(m=>{const v=sw?(sw.sets[m]||0):0;const c=v<SET_TARGET.min?"var(--amb)":v>SET_TARGET.max?"var(--red2)":"var(--grn)";
       h+='<div class="s-m"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><div class="s-bar"><i class="band" style="left:'+(SET_TARGET.min/scale*100)+'%;width:'+((SET_TARGET.max-SET_TARGET.min)/scale*100)+'%"></i><i style="width:'+Math.min(v/scale*100,100)+'%;background:'+c+'"></i></div>'
        +'<span class="mono" style="color:'+c+'">'+fx(v)+'</span><span class="mono" style="color:'+(gg[m]==null?"var(--dim)":col(gg[m]))+'">'+(gg[m]==null?"–":sg(gg[m])+"%")+'</span></div>'});
-    h+='<p class="s-foot">Grünes Feld = Ziel '+SET_TARGET.min+'–'+SET_TARGET.max+' harte Sätze/Woche'+(sw?' (letzte '+sw.n+' Einheiten)':'')+' · rot = Mesozyklus-Fokus · rechts Kraftzuwachs (e1RM)'+(g.nDeload?' · '+g.nDeload+' Deload-Einheit(en) nicht gewertet':'')+'</p></div>';
+    h+='</div>';
     const cur=(sw||{sets:{}}).sets;
     h+='<div class="s-card"><div class="s-h"><b>Mesozyklus · Woche '+ms.week+'</b><span>+'+ms.add+' Sätze · '+(ms.stop?'<b style="color:var(--amb)">gestoppt</b>':'läuft')+'</span></div><p class="tiny" style="margin-bottom:6px">Fokus: <b style="color:var(--red2)">'+ms.focus.join(", ")+'</b>'+(ms.stop?' — Steigerung pausiert wegen Ermüdungssignalen':'')+'</p>';
     ms.focus.forEach(gm=>{const exs=activePlan().sessions.flatMap(se=>se.exercises).filter(x=>{const m=MUSCLE_MAP[x.id];return m&&m.p===gm&&!/Prehab|BW|Core|3s/i.test(x.scheme||"")});
@@ -2173,7 +2175,7 @@ function vStats(){
       h+='<div class="s-row"><span'+(ms.focus.includes(m)?' style="color:var(--red2)"':'')+'>'+m+'</span><span class="mono" style="color:'+cc+'">'+fx(c)+' / '+fx(t)+'</span></div>'});
     h+='<p class="s-foot">Ist / Wochenziel. +1 Satz pro Woche für die Fokus-Muskeln (max. +'+MESO_MAX_ADD+').</p></div>';
   }
-  if(tab==="uebungen"){
+  if(tab==="uebungen"&&!EMP){
     const unit=state.statUnit||"pct";const sel=g.perEx.find(e=>e.id===state.statEx);
     h+='<div class="s-card"><div class="s-h"><b>'+esc(sel?sel.name:(allEx.find(e=>e.id===state.statEx)||{}).name||"")+'</b><span><button class="s-tg'+(unit==="pct"?" on":"")+'" onclick="state.statUnit=\'pct\';render()">%</button><button class="s-tg'+(unit==="kg"?" on":"")+'" onclick="state.statUnit=\'kg\';render()">kg</button></span></div><div id="exchart"></div></div>';
     h+='<div class="s-card" style="padding-top:6px">';
@@ -2181,13 +2183,13 @@ function vStats(){
       if(s.length>=2){const mn=Math.min(...s),mx=Math.max(...s);sp='<svg width="64" height="20" viewBox="0 0 64 20"><polyline fill="none" stroke="'+col(e.pct)+'" stroke-width="1.8" points="'+s.map((v,i)=>(i/(s.length-1)*62+1).toFixed(1)+','+(18-(v-mn)/((mx-mn)||1)*16).toFixed(1)).join(" ")+'"/></svg>'}
       const dkg=e.last-e.first;
       h+='<button class="s-ex'+(e.id===state.statEx?" on":"")+'" onclick="state.statEx=\''+e.id+'\';render();document.getElementById(\'main\').scrollTo({top:0,behavior:\'smooth\'})">'+pi(e.id,e.name,"s34")+'<span class="s-en">'+esc(e.name)+'</span>'+sp+'<b class="mono" style="color:'+col(e.pct)+'">'+(unit==="pct"?sg(e.pct)+" %":(dkg>0?"+":"")+fx(dkg)+(e.unit==="e1RM"?" kg":""))+'</b></button>'});
-    h+='<p class="s-foot">Bester Satz je Einheit als e1RM (sonst Last × Wdh.). Mind. 2 Einheiten je Übung, Deload/anderes Studio nicht gewertet.</p></div>';
+    h+='</div>';
   }
   if(tab==="mehr"){
     const li=loadIndex();
     if(li)h+='<div class="s-card"><div class="s-h s-hb"><b>Wochenlast</b><span class="s-hv s-chr">'+(()=>{const fq=fatigueLoad();return fq?fq.pct+' %':'–'})()+'</span></div><div id="lchart"></div></div>';
     const tmode=state.tonMode||"woche";
-    h+='<div class="s-card"><div class="s-h"><b>Tonnage</b></div><div class="s-seg" style="margin:0 0 8px">'
+    if(!EMP)h+='<div class="s-card"><div class="s-h"><b>Tonnage</b></div><div class="s-seg" style="margin:0 0 8px">'
      +['woche'].concat(p.sessions.map(x=>x.id)).map(k=>{const lbl=k==="woche"?"Woche":(p.sessions.find(x=>x.id===k)||{}).name;return '<button class="'+(tmode===k?"on":"")+'" onclick="state.tonMode=\''+k+'\';state.tonSel=null;render()">'+esc(lbl)+'</button>'}).join("")+'</div><div id="tchart"></div></div>';
     h+='<div class="s-card"><div class="s-h"><b>Export & Backup</b></div><div style="display:flex;flex-direction:column;gap:10px">'
     +'<div class="row"><button class="chip" style="flex:1;padding:10px;color:var(--grn)" onclick="copyShort(3)">📋 Kurz-Export (3 Einh.)</button><button class="chip" style="padding:10px" onclick="copyShort(8)">8</button></div>'
