@@ -437,7 +437,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v239";
+const APP_VERSION="v240";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1002,7 +1002,7 @@ function vHome(){
   const wkDone=state.logs.filter(l=>l.date>=mon&&l.date<=sun).length;
   const wkPlan=wkDone+(state.settings.schedule||[]).filter(x=>x.date>=t&&x.date<=sun&&!state.logs.some(l=>l.date===x.date)).length;
   const fx=v=>String(v).replace(".",",");
-  let h='<div class="h-tiles"'+(state.logs.length?'':' style="display:none"')+'>'
+  let h='<div class="h-tiles">'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs/Wo</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.raw>0?"+":"")+fx(wr.raw.toFixed(2))+'<small> kg</small></b>':'<b>–</b>'})()+'</button>'
    +(()=>{const fq=fatigueLoad(),rc=recoveryState(),col=rc?["#34d399","#f59e0b","#ef4444"][rc.lvl]:"#444";
@@ -1017,7 +1017,7 @@ function vHome(){
   const nd=rest?new Date(scNext.date).toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"numeric"}):"";
   const frac=Math.min(n/N,1),dlFrac=dp.active?dp.n/DELOAD_RUN:0;
   const status=dlNow?'<span style="color:var(--amb)">Deload '+(dp.n+1)+' von '+DELOAD_RUN+'</span>':re?'<span style="color:var(--sky)">Wiedereinstieg</span>':'<span style="color:var(--mut)">Aufbau</span>';
-  h+='<div class="h-hero'+(state.logs.length?'':' h-new')+'"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
+  h+='<div class="h-hero"><div class="h-ring"><svg viewBox="0 0 196 196"><defs><linearGradient id="chrRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f6f6"/><stop offset=".45" stop-color="#cfcfcf"/><stop offset=".56" stop-color="#9d9d9d"/><stop offset="1" stop-color="#ededed"/></linearGradient></defs><g transform="rotate(-90 98 98)" fill="none" stroke-width="13" stroke-linecap="round">'
    +'<circle cx="98" cy="98" r="84" stroke="var(--s2)"/>'
    +(frac>0?'<circle cx="98" cy="98" r="84" stroke="url(#chrRing)" stroke-dasharray="'+(C*frac).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
    +(dlNow?'<circle cx="98" cy="98" r="84" stroke="var(--amb)" stroke-dasharray="'+(C*Math.max(dlFrac,0.03)).toFixed(1)+' '+C.toFixed(1)+'"/>':'')
