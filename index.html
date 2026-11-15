@@ -329,7 +329,8 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .tpl-c{display:flex;align-items:center;width:100%;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:12px;margin-top:8px;color:var(--tx)}.tpl-c span{flex:1;display:flex;flex-direction:column;gap:2px}.tpl-c b{font-size:15px}.tpl-c i{font-style:normal;font-size:12px;color:var(--mut)}.tpl-c em{font-style:normal;color:var(--mut);font-size:18px}
 .wz{min-height:62vh;display:flex;flex-direction:column}.wz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.wz-back{background:none;border:none;color:var(--mut);font-size:22px;width:32px;padding:0}
 .wz-dots{display:flex;gap:5px}.wz-dots i{width:6px;height:6px;border-radius:50%;background:var(--s3)}.wz-dots i.on{background:var(--tx)}
-.wz-b{flex:1;margin-top:14px}.wz-opts{display:flex;flex-direction:column;gap:8px}.wz-o{display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:15px 14px;color:var(--tx);font-size:15px;font-weight:600}.wz-o.on{border-color:var(--tx)}.wz-o em{font-style:normal;font-size:11px;font-weight:700;color:#111;background:var(--tx);border-radius:6px;padding:2px 6px}
+.wz-b{flex:1;margin-top:14px}.wz-opts{display:flex;flex-direction:column;gap:8px}.wz-o{display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:15px 14px;color:var(--tx);font-size:15px;font-weight:600}.wz-o.on{border-color:var(--tx)}
+.nx{display:flex;flex-direction:column;gap:10px;margin:4px 0 10px}.nx-mg{display:flex;flex-wrap:wrap;gap:6px}.nx-mg span{border:1px solid var(--s3);border-radius:16px;padding:6px 11px;font-size:13px;color:var(--mut)}.nx-mg span.on{border-color:var(--tx);color:var(--tx)}.wz-o em{font-style:normal;font-size:11px;font-weight:700;color:#111;background:var(--tx);border-radius:6px;padding:2px 6px}
 .wz-lv{display:flex;align-items:baseline;gap:10px;margin:6px 0 14px}.wz-lv b{font-size:40px}.wz-lv span{color:var(--mut);font-size:15px}
 .wz-next{width:100%;margin-top:14px;background:var(--chrome);color:#111;font-weight:800}.wz-sec{flex:0 0 auto;width:auto!important;margin-top:14px;padding:15px 18px;align-self:stretch;border-radius:14px;background:var(--s2)!important;color:var(--tx)!important;font-weight:700;border:1px solid var(--s3)}.wz-keep{background:none;border:none;color:var(--mut);margin-top:14px;width:100%;font-size:13px}
 .wz-cnt{font-size:13px;color:var(--mut);font-weight:500;margin-left:6px}.wz-ex{display:flex;flex-direction:column}.wz-er{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);font-size:14px}.wz-er>span:not(.pi){flex:1;min-width:0}.wz-er b{font-size:13px;color:var(--mut)}
@@ -421,7 +422,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v229";
+const APP_VERSION="v230";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -439,10 +440,12 @@ const ASSUME_SEED=[
  {id:"rir1",txt:"Grundübungen: letzter Satz RIR 1 statt 0",why:"Versagen kostet Erholung bei kaum Mehrnutzen",since:"2026-11-01",due:"2026-11-29"},
  {id:"kcal",txt:"+200 kcal/Tag",why:"Gewichtstrend unter Ziel (+0,2–0,4 kg/Woche)",since:"2026-10-30",due:"2026-11-27"},
  {id:"re1",txt:"Krank 1 Tag ohne Fieber: kein Wiedereinstieg, normal trainieren · ab 2 Tagen RIR 2 im letzten Satz · ab 3 Tagen −10 %",why:"Festgelegt 01.11.",since:"2026-11-01",due:"2026-11-29"}];
-function asDue(){return (state.settings.assume||[]).filter(a=>a.due&&a.due<=todayISO())}
+function lvPending(){const p=state.settings.profile;if(!p||!p.exp||p.levelManual)return null;const c=levelCalc(p),cur=num(p.level)||c;
+  if(c===cur||p.lvDismiss===c)return null;return{id:"lvl",txt:"Trainingslevel "+cur+" → "+c,why:"aus Trainingszeit, Pausen und Kraftniveau",due:todayISO(),sys:true,c}}
+function asDue(){const l=lvPending();return (l?[l]:[]).concat((state.settings.assume||[]).filter(a=>a.due&&a.due<=todayISO()))}
 function asRefresh(){if(document.querySelector("#overlay .sheet")&&state.rulesOpen)drawRules();else render()}
-function asOk(id){const a=(state.settings.assume||[]).find(x=>x.id===id);if(!a)return;a.checked=todayISO();a.due=addDays(todayISO(),28);saveJ("settings",state.settings);toast("Gilt weiter — nächste Prüfung "+fmtD(a.due));asRefresh()}
-function asDel(id){if(!setConfirmQ("ad:"+id))return;state.settings.assume=(state.settings.assume||[]).filter(x=>x.id!==id);saveJ("settings",state.settings);asRefresh()}
+function asOk(id){if(id==="lvl"){const p=state.settings.profile,c=levelCalc(p);p.level=c;delete p.lvDismiss;saveJ("settings",state.settings);toast("Trainingslevel "+c+" übernommen");asRefresh();return}const a=(state.settings.assume||[]).find(x=>x.id===id);if(!a)return;a.checked=todayISO();a.due=addDays(todayISO(),28);saveJ("settings",state.settings);toast("Gilt weiter — nächste Prüfung "+fmtD(a.due));asRefresh()}
+function asDel(id){if(id==="lvl"){const p=state.settings.profile;p.lvDismiss=levelCalc(p);saveJ("settings",state.settings);asRefresh();return}if(!setConfirmQ("ad:"+id))return;state.settings.assume=(state.settings.assume||[]).filter(x=>x.id!==id);saveJ("settings",state.settings);asRefresh()}
 function asEdit(id){state.asEdit=state.asEdit===id?null:id;asRefresh()}
 function asSave(id){const a=(state.settings.assume||[]).find(x=>x.id===id),i=$("as-"+id);if(!a||!i)return;const v=i.value.trim();if(v){a.txt=v;a.since=todayISO();a.checked=todayISO();a.due=addDays(todayISO(),28)}state.asEdit=null;saveJ("settings",state.settings);asRefresh()}
 function setConfirmQ(k){if(state.confirmDel===k){state.confirmDel=null;return true}state.confirmDel=k;setTimeout(()=>{if(state.confirmDel===k){state.confirmDel=null;asRefresh()}},3000);asRefresh();return false}
@@ -455,6 +458,7 @@ function asRow(a,forceOpen){const due=a.due<=todayISO(),open=forceOpen||due||sta
    +(state.asEdit===a.id?'<input id="as-'+a.id+'" type="text" value="'+esc(a.txt)+'" onclick="event.stopPropagation()">':'<b>'+esc(a.txt)+'</b>')
    +'<span>'+esc(a.why||"")+(a.since?' · seit '+fmtD(a.since):'')+(a.checked?' · geprüft '+fmtD(a.checked):'')+'</span></div><span class="as-pill">'+(due?'fällig':'in '+days+' T')+'</span></div>'
    +(open?'<div class="as-act">'+(state.asEdit===a.id?'<button class="chip as-p" onclick="asSave(\''+a.id+'\')">Speichern</button><button class="chip" onclick="asEdit(\''+a.id+'\')">Abbrechen</button>'
+   :a.sys?'<button class="chip as-p" onclick="asOk(\''+a.id+'\')">✓ übernehmen</button><button class="chip" onclick="asDel(\''+a.id+'\')">✕ behalten</button>'
    :'<button class="chip as-p" onclick="asOk(\''+a.id+'\')">✓ gilt weiter</button><button class="chip" onclick="asEdit(\''+a.id+'\')">✎ ändern</button><button class="chip'+(state.confirmDel==="ad:"+a.id?" sure":"")+'" onclick="asDel(\''+a.id+'\')">'+(state.confirmDel==="ad:"+a.id?"Wirklich?":"✕ streichen")+'</button>')+'</div>':'')+'</div>'}
 function asDueBox(){const ad=asDue();return ad.length?'<div class="as-box"><div class="as-cap" style="color:var(--amb)">JETZT PRÜFEN · '+ad.length+'</div>'+ad.map(a=>asRow(a,true)).join("")+'</div>':''}
 function asList(){const all=state.settings.assume||[],nx=all.filter(a=>a.due>todayISO()).sort((x,y)=>x.due.localeCompare(y.due))[0];
@@ -596,6 +600,8 @@ function boot(){
   if(!state.settings.pf1115&&!state.settings.profile&&state.logs.length>20){state.settings.profile={birth:"1991-05-07",age:35,kg:lastKg()||"",level:8,goal:"aufbau",rhythm:{mode:"n",n:2}};state.settings.pfConfirm=true}
   state.settings.pf1115=true;
   if(state.settings.pfConfirm){delete state.settings.pfConfirm;saveJ("settings",state.settings);setTimeout(()=>showProfile(),1500)}
+  // Einmalig 15.11.: Trainingserfahrung für bestehendes Profil (über 3 Jahre, keine Pause)
+  if(!state.settings.lv1115){const pf=state.settings.profile;if(pf&&!pf.exp&&state.logs.length>20){Object.assign(pf,{exp:4,pause:4,sex:pf.sex||"m",setAt:todayISO()})}state.settings.lv1115=true;saveJ("settings",state.settings)}
   // Einmalig 15.11.: Progressionsregel-Text (fortgeschrittenes Niveau)
   if(!state.settings.pr1115){state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.rules=(p.rules||[]).map(r=>/^Progression/.test(r)?"Progression (fortgeschritten): steigern erst, wenn ALLE Sätze am oberen Rand · Sprung >7,5 % erst bei +2 Wdh (nach 2 Einheiten am Rand trotzdem) · nach Steigerung halten, solange die Leistung hält · senken nur bei 2× unter Bereich UND Leistung −3 % (1 Stufe) · Stufen KH 2 kg, Kabel 1,25 kg, sonst 2,5 kg":r)});saveJ("plans",state.plans);state.settings.pr1115=true;saveJ("settings",state.settings)}
   // Einmalig 15.11.: Beinbeuger liegend wird L/R abwechselnd ausgeführt
@@ -911,7 +917,7 @@ const $=id=>document.getElementById(id);
 function toast(msg){$("toastbox").innerHTML='<div class="toast">'+esc(msg)+'</div>';setTimeout(()=>$("toastbox").innerHTML="",2500)}
 function banner(msg){$("hbanner").innerHTML='<div class="card warn" style="margin-top:8px;padding:9px 12px;font-size:12px;color:var(--amb)">'+esc(msg)+'</div>'}
 function updUndoBtn(){const b=$("undobtn");if(b){b.disabled=state.undo.length===0}}
-function render(){const ka=document.querySelector(".k-acts"),kaX=ka?ka.scrollLeft:0;try{render0()}finally{const kb=document.querySelector(".k-acts");if(kb&&kaX)kb.scrollLeft=kaX}}
+function render(){regMuscle();const ka=document.querySelector(".k-acts"),kaX=ka?ka.scrollLeft:0;try{render0()}finally{const kb=document.querySelector(".k-acts");if(kb&&kaX)kb.scrollLeft=kaX}}
 function render0(){
   $("hinfo").innerHTML="<span>"+APP_VERSION+"</span><span>"+esc(activePlan().name.split(" ·")[0])+"</span>";
   const dl=deloadDue();
@@ -1594,12 +1600,32 @@ const PICTO=(()=>{
 })();
 
 // ================= Profil, Rhythmus, Vorlagen =================
-const ADV=()=>((state.settings.profile||{}).level||8)>=7;          // Progressionsregeln „fortgeschritten“ ab Level 7
+const ADV=()=>(num((state.settings.profile||{}).level)||8)>=7;          // Progressionsregeln „fortgeschritten“ ab Level 7
 function lastKg(){const w=[...(state.weights||[])].sort((a,b)=>a.date.localeCompare(b.date)).pop();return w?num(w.kg):0}
 // Zielwerte aus Profil (Helms, Muscle & Strength Pyramid; ISSN Protein)
+// Trainingslevel nach Santos Junior et al. 2021 (SCJ 43:77–86): Mittel aus Trainingszeit, Pause, frühere Erfahrung, Kraftniveau → 1–10 (max. 9 automatisch)
+const EXP_MO={1:1,2:7,3:24,4:48};
+function levelCalc(p){p=p||state.settings.profile||{};if(p.levelManual)return p.levelManual;if(!p.exp)return num(p.level)||5;
+  const t=todayISO(),ls=state.logs.map(l=>l.date).sort();
+  // Trainingszeit: Angabe zum Einrichtungszeitpunkt + seitdem vergangene Zeit
+  const mo=EXP_MO[p.exp]+(p.setAt?(new Date(t)-new Date(p.setAt))/2.63e9:0),sTime=mo<2?1:mo<12?2:mo<36?3:4;
+  // Pause: aus den Einträgen, sonst Angabe
+  let sPause=p.pause||4;if(ls.length){const d=(new Date(t)-new Date(ls[ls.length-1]))/864e5;sPause=d<=30?4:d<=120?3:d<=240?2:1}
+  const items=[sTime,sPause,sTime];   // frühere Erfahrung = Trainingszeit (Pflichtitem)
+  // Kraftniveau (Langhantel/Klimmzug) relativ zum Körpergewicht, beste Werte der letzten 12 Wochen
+  const kg=lastKg(),W=p.sex==="w";if(kg){const from=addDays(t,-84),best=id=>Math.max(0,...state.logs.filter(l=>l.date>=from&&!l.deload).flatMap(l=>l.entries.filter(e=>e.exerciseId===id).flatMap(e=>e.sets.filter(x=>num(x.r)>0).map(x=>e1rm(x.w,x.r,x.rir)))));
+    const T={kniebeuge:W?[60,100,130]:[80,120,150],"bankdruecken-lh":W?[40,60,80]:[60,100,120],deadlift:W?[80,120,160]:[100,150,180]},sc=[];
+    Object.entries(T).forEach(([id,th])=>{const b=best(id);if(b>0){const pc=b/kg*100;sc.push(pc<th[0]?1:pc<th[1]?2:pc<=th[2]?3:4)}});
+    if(sc.length)items.push(sc.reduce((a,b)=>a+b,0)/sc.length)}
+  const m=items.reduce((a,b)=>a+b,0)/items.length;return Math.max(1,Math.min(9,Math.round(1+(m-1)*3)))}
 function ageOf(p){p=p||state.settings.profile||{};if(p.birth){const b=new Date(p.birth),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}return num(p.age)}
-function profTargets(p){p=p||state.settings.profile||{};const kg=lastKg()||num(p.kg)||80,L=num(p.level)||5,g=p.goal||"aufbau";
+function profTargets(p){p=p||state.settings.profile||{};const kg=lastKg()||num(p.kg)||80,L=num(p.level)||levelCalc(p),G=p.goals||[p.goal||"aufbau"],A=G.includes("aufbau"),H=G.includes("halten"),F=G.includes("abnehmen");
+  // Kombinationen: Aufbau+Fett reduzieren = Rekomposition (leichtes Defizit, viel Protein); Aufbau+Halten = Rekomposition bei Erhaltung; Halten+Fett = langsame Abnahme
+  const g=A&&F?"recomp":A&&H?"recomp0":H&&F?"slowcut":A?"aufbau":H?"halten":"abnehmen";
   let lo,hi,kcal;
+  if(g==="recomp")return{lo:-kg*.0025,hi:0,kcal:-200,prot:Math.round(kg*2.2/5)*5};
+  if(g==="recomp0")return{lo:-.1,hi:.1,kcal:0,prot:Math.round(kg*2.2/5)*5};
+  if(g==="slowcut")return{lo:-kg*.005,hi:-kg*.0025,kcal:-250,prot:Math.round(kg*2.2/5)*5};
   if(g==="aufbau"){const m=L<=3?[.01,.015]:L<=6?[.005,.01]:[.0025,.0075];lo=kg*m[0]/4.33;hi=kg*m[1]/4.33;kcal=L<=3?250:L<=6?150:100}
   else if(g==="halten"){lo=-.1;hi=.1;kcal=0}
   else{lo=-kg*.01;hi=-kg*.005;kcal=-400}
@@ -1618,7 +1644,7 @@ const SPLIT_N={gk:"Ganzkörper",ouk:"Ober/Unter",ppl:"Push/Pull/Beine"};
 // ----- Profil-Fenster -----
 let profTmp=null;
 function saveProfile(){const p=profTmp;if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
-  delete p.first;state.settings.profile=p;
+  delete p.first;if(p.exp&&!p.setAt)p.setAt=todayISO();if(p.exp&&!state.settings.profile)p.level=levelCalc(p);state.settings.profile=p;
   const t=profTargets(p),a=(state.settings.assume||[]).find(x=>x.id==="kcal");
   if(a){a.txt="Kalorien "+(t.kcal?f2(t.kcal).replace(",","")+" kcal":"Erhaltung")+" (Profil)";a.since=todayISO();a.due=addDays(todayISO(),28)}
   DELOAD_AFTER=ageOf(p)>=40?18:21;applyRhythm();saveJ("settings",state.settings);closeProfile();buildSchedule(true);render();toast("Profil gespeichert")}
@@ -1633,9 +1659,12 @@ function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
   let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
-  if(st===0){t="Geburtsdatum";b='<input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age">'}
-  else if(st===1){t="Trainingslevel";b='<div class="wz-lv"><b id="wzlv">'+p.level+'</b><span id="wzlt">'+LVL(p.level)+'</span></div><input type="range" min="1" max="10" value="'+p.level+'" oninput="wz.p.level=+this.value;$(\'wzlv\').textContent=this.value;$(\'wzlt\').textContent=LVL(+this.value)" style="width:100%;accent-color:var(--tx)">'}
-  else if(st===2){t="Ziel";b=big([["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]],p.goal,"wzGoal");foot=""}
+  if(st===0){t="Über dich";b='<input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age"><div class="seg" style="margin-top:10px">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>'}
+  else if(st===1){t="Trainingserfahrung";const sel=(arr,cur,k)=>'<div class="wz-opts">'+arr.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="wz.p.'+k+'='+v+';drawWz()">'+l+'</button>').join('')+'</div>';
+    b='<div class="pf-l" style="margin-top:0">Regelmäßig seit</div>'+sel([[1,"unter 2 Monaten"],[2,"2–12 Monaten"],[3,"1–3 Jahren"],[4,"über 3 Jahren"]],p.exp,"exp")
+     +'<div class="pf-l">Aktuell Pause?</div>'+sel([[4,"Nein"],[3,"1–4 Monate"],[2,"4–8 Monate"],[1,"über 8 Monate"]],p.pause,"pause");
+    if(!p.exp||!p.pause)foot=""}
+  else if(st===2){t="Ziel";const gs=p.goals||(p.goals=[p.goal||"aufbau"]);b='<div class="wz-opts">'+[["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]].map(([v,l])=>'<button class="wz-o'+(gs.includes(v)?' on':'')+'" onclick="wzGoal(\''+v+'\')">'+l+(gs.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!gs.length)foot=""}
   else if(st===3){t="Trainingsart";const ts=wzTyps();b='<div class="wz-opts">'+[["aufbau","Bodybuilding"],["kraft","Powerlifting"],["ausdauer","Kraftausdauer"]].map(([v,l])=>'<button class="wz-o'+(ts.includes(v)?' on':'')+'" onclick="wzTyp(\''+v+'\')">'+l+(ts.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!ts.length)foot=""}
   else if(st===4){t="Rhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
     b=big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
@@ -1648,7 +1677,7 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
     b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><button class="wz-sw" onclick="wzPick('+i+','+j+')">'+esc(e.name)+' <i>⇄</i></button><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
       :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+(wz.edit?'<button class="wz-add" onclick="wzPick('+i+',-1)">+ Übung</button>':'')+'</div>';
     foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'
-    if(wz.pick){t=wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="wz.pick=null;drawWz()">Abbrechen</button>'}}
+    if(wz.pick){t=wz.pick.nw?"Eigene Übung":wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="if(wz.pick.nw)wz.pick.nw=false;else wz.pick=null;drawWz()">Abbrechen</button>'}}
   const dots='<div class="wz-dots">'+Array.from({length:N},(_,k)=>'<i class="'+(k<=st?'on':'')+'"></i>').join('')+'</div>';
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0?'<button class="wz-back" onclick="wz.edit=false;wzGo(-1)">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
 // Übungsauswahl im Assistenten: Bibliothek (Kern + eigene), neue Übungen landen nur in der eigenen Bibliothek
@@ -1657,11 +1686,12 @@ function wzLib(){const seen=new Set(),out=[];const add=e=>{if(!e||seen.has(e.id)
   (state.library||[]).forEach(add);SEED_LIB.forEach(add);Object.values(TPL).forEach(t=>t.s.forEach(x=>x[2].forEach(add)));
   return out.filter(e=>!/^(ellenbogen|g2hmzr1v)$/.test(e.id)||state.logs.length).sort((a,b)=>a.name.localeCompare(b.name,"de"))}
 function wzPickList(){const q=(wz.pick.q||"").toLowerCase(),L=wzLib().filter(e=>!q||e.name.toLowerCase().includes(q)).slice(0,40);
-  return '<input id="wzq" class="wz-date" placeholder="Suchen oder neue Übung" value="'+esc(wz.pick.q)+'" oninput="wz.pick.q=this.value;$(\'wzpl\').innerHTML=wzPickRows()">'
+  if(wz.pick.nw)return nxForm('const e=nxSave();if(e){wz.pick.nw=false;wzChoose(e.id)}','drawWz()');
+  return '<button class="wz-pr" onclick="wz.pick.nw=true;NX={n:wz.pick.q||\'\',mg:null};drawWz()"><span class="wz-plus">+</span><span>Eigene Übung anlegen</span></button><input id="wzq" class="wz-date" placeholder="Übung suchen" value="'+esc(wz.pick.q)+'" oninput="wz.pick.q=this.value;$(\'wzpl\').innerHTML=wzPickRows()">'
     +'<div id="wzpl" class="wz-pl">'+wzPickRows()+'</div>'}
 function wzPickRows(){const q=(wz.pick.q||"").trim(),ql=q.toLowerCase(),L=wzLib().filter(e=>!ql||e.name.toLowerCase().includes(ql)).slice(0,40);
   return L.map(e=>'<button class="wz-pr" onclick="wzChoose(\''+e.id+'\')"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span></button>').join('')
-    +(q&&!L.some(e=>e.name.toLowerCase()===ql)?'<button class="wz-pr" onclick="wzNew()"><span class="wz-plus">+</span><span>„'+esc(q)+'“ neu anlegen</span></button>':'')}
+    +(q&&!L.some(e=>e.name.toLowerCase()===ql)?'<button class="wz-pr" onclick="wz.pick.nw=true;NX={n:wz.pick.q,mg:null};drawWz()"><span class="wz-plus">+</span><span>„'+esc(q)+'“ neu anlegen</span></button>':'')}
 function wzDefaults(e){const b=wzBase(),d=TYP[b==="kraft"?"kraft":b==="ausdauer"?"ausdauer":"aufbau"];return{reps:e.reps||d.reps,scheme:e.scheme||d.scheme,rest:e.rest||d.rest}}
 function wzChoose(id){const e=wzLib().find(x=>x.id===id),pk=wz.pick,S=wz.ses[pk.i].ex;
   if(pk.j<0)S.push(Object.assign({id:e.id,name:e.name,sets:3,start:""},wzDefaults(e)));
@@ -1669,7 +1699,7 @@ function wzChoose(id){const e=wzLib().find(x=>x.id===id),pk=wz.pick,S=wz.ses[pk.
   wz.pick=null;drawWz()}
 function wzNew(){const n=wz.pick.q.trim();if(!n)return;const e={id:"u-"+uid(),name:n,reps:"",scheme:"",start:"",note:"",custom:true};
   state.library.push(e);saveJ("library",state.library);wzChoose(e.id)}
-function wzGoal(v){wzSet("goal",v,true)}
+function wzGoal(v){const g=wz.p.goals||[];wz.p.goals=g.includes(v)?g.filter(x=>x!==v):[...g,v];wz.p.goal=wz.p.goals[0]||"aufbau";drawWz()}
 function wzTyps(){const t=wz.p.typs||(wz.p.typ?[wz.p.typ==="power"?"aufbau":wz.p.typ].concat(wz.p.typ==="power"?["kraft"]:[]):["aufbau"]);wz.p.typs=t;return t}
 function wzTyp(v){const t=wzTyps();wz.p.typs=t.includes(v)?t.filter(x=>x!==v):[...t,v];drawWz()}
 // Kombination → Basisvorlage; Kraftausdauer in Kombination = letzte 2 Übungen je Einheit als Ausdauer-Sätze
@@ -1749,6 +1779,17 @@ function weightRate(){const t=todayISO(),ws=(state.weights||[]).filter(w=>w.date
   let sxy=0,sxx=0;xs.forEach((x,i)=>{sxy+=(x-mx)*(ys[i]-my);sxx+=(x-mx)*(x-mx)});const r=sxx?sxy/sxx*7:0;
   const tg=profTargets();return{rate:Math.round(r*10)/10,raw:r,lo:tg.lo,hi:tg.hi,ok:r>=tg.lo-0.02&&r<=tg.hi+0.02}}
 
+// ===== Eigene Übungen anlegen (Name + Muskelgruppe) =====
+function regMuscle(){(state.library||[]).forEach(e=>{if(e.mg&&!MUSCLE_MAP[e.id]){MUSCLE_MAP[e.id]={p:e.mg,s:[]};MUSCLE_GROUPS[e.id]=e.mg}})}
+let NX={n:"",mg:null};
+function nxForm(done,cancel){return '<div class="nx"><input id="nxn" class="wz-date" style="text-align:left" placeholder="Name der Übung" value="'+esc(NX.n)+'" oninput="NX.n=this.value">'
+  +'<div class="nx-mg">'+MUSCLE_ORDER.map(g=>'<span class="'+(NX.mg===g?'on':'')+'" onclick="NX.n=$(\'nxn\').value;NX.mg=\''+g+'\';'+cancel+'">'+esc(g)+'</span>').join('')+'</div>'
+  +'<button class="btn wz-next" style="width:100%" onclick="NX.n=$(\'nxn\').value;'+done+'">Anlegen</button></div>'}
+function nxSave(){const n=(NX.n||"").trim();if(!n){toast("Name fehlt");return null}if(!NX.mg){toast("Muskelgruppe wählen");return null}
+  if(state.library.some(e=>e.name.toLowerCase()===n.toLowerCase())){toast("Übung existiert bereits");return null}
+  const pf=state.settings.profile||{},b=(pf.typs||[])[0]==="kraft"?"kraft":(pf.typs||[])[0]==="ausdauer"?"ausdauer":"aufbau",d=(typeof TYP!=="undefined"&&TYP[b])||{reps:"8-12",scheme:"RIR1-2"};
+  const e={id:"u-"+uid(),name:n,mg:NX.mg,reps:d.reps,scheme:d.scheme,start:"",note:"",custom:true};
+  state.library.push(e);saveJ("library",state.library);regMuscle();NX={n:"",mg:null};toast("Übung angelegt");return e}
 // ===== Übungsbibliothek als Fenster =====
 function showLibSheet(){if(state.libOpen){closeSub();return}state.rulesOpen=false;state.libOpen=true;render();state.libQ="";state.libG="Alle";state.libSel=null;drawLib()}
 function closeLib(){closeSub()}
@@ -1777,8 +1818,8 @@ function libRows(){const ap=activePlan(),lb=lastByEx(),q=(state.libQ||"").toLowe
 function libSaveSet(id){const v=($("ls-"+id)||{}).value||"";const e=state.library.find(x=>x.id===id);if(e){e.setting=v.trim();saveJ("library",state.library)}state.libSet=null;drawLib();toast("Einstellung gespeichert")}
 function drawLib(){if(!state.libOpen)return;
   const groups=["Alle"].concat([...new Set(state.library.map(e=>(MUSCLE_MAP[e.id]||{}).p||"Sonstige"))].sort((a,b)=>(MUSCLE_ORDER.indexOf(a)+1||99)-(MUSCLE_ORDER.indexOf(b)+1||99)));
-  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)closeLib()"><div class="sheet lib-sheet"><div class="s-h"><b style="font-size:17px">Übungsbibliothek</b><span class="row" style="gap:6px"><button class="chip" style="color:#e2e2e2" onclick="state.libNew=!state.libNew;drawLib()">'+(state.libNew?'✕ Neu':'+ Neu')+'</button><button class="c-x" onclick="closeLib()">✕</button></span></div>'
-   +(state.libNew?'<div class="lib-open" style="margin:4px 0 8px"><input type="text" id="lname" placeholder="Name (z.B. Bulgarian Split Squat)" style="flex:1 1 100%"><input type="text" id="lreps" value="8-12" style="width:70px;text-align:center" class="mono"><input type="text" id="lscheme" value="RIR1-2" style="flex:1"><input type="text" id="lstart" inputmode="decimal" placeholder="kg" style="width:60px;text-align:center" class="mono"><button class="chip" style="flex:1 1 100%;padding:10px" onclick="addLib();state.libNew=false;drawLib()">+ In Bibliothek aufnehmen</button></div>':'')
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)closeLib()"><div class="sheet lib-sheet"><div class="s-h"><b style="font-size:17px">Übungsbibliothek</b><span class="row" style="gap:6px"><button class="chip" style="color:#e2e2e2" onclick="state.libNew=!state.libNew;NX={n:\'\',mg:null};drawLib()">'+(state.libNew?'✕ Neu':'+ Neu')+'</button><button class="c-x" onclick="closeLib()">✕</button></span></div>'
+   +(state.libNew?nxForm('if(nxSave()){state.libNew=false;drawLib()}','drawLib()'):'')
    +'<input type="text" placeholder="Übung suchen …" value="'+esc(state.libQ||"")+'" oninput="state.libQ=this.value;$(\'libList\').innerHTML=libRows()">'
    +'<div class="lib-chips">'+groups.map(g=>'<span class="'+((state.libG||"Alle")===g?"on":"")+'" onclick="state.libG=\''+g+'\';drawLib()">'+esc(g)+(g==="Alle"?' '+state.library.length:'')+'</span>').join("")+'</div>'
    +'<div id="libList">'+libRows()+'</div></div></div>';
