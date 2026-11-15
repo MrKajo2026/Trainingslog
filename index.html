@@ -397,7 +397,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v220";
+const APP_VERSION="v221";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -568,6 +568,10 @@ function boot(){
   if(!state.settings.re1101){const a=(state.settings.assume||[]).find(x=>x.id==="re1");if(a){const n=ASSUME_SEED.find(x=>x.id==="re1");Object.assign(a,{txt:n.txt,why:n.why,since:n.since,due:n.due})}
     let ch=false;state.logs.forEach(l=>{if(l.reentry&&l.reentry.sick===1&&l.reentry.gap<5){delete l.reentry;ch=true}});if(ch)saveJ("logs",state.logs);
     state.settings.re1101=true;saveJ("settings",state.settings)}
+  // Einmalig 15.11.: Beinbeuger liegend wird L/R abwechselnd ausgeführt
+  if(!state.settings.bbl1115){let ch=false;state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.id==="beinbeuger-liegend"&&!/L\/R/.test(x.note||"")){x.note="L/R abwechselnd (Wdh pro Seite) · "+(x.note||"");ch=true}}));
+      if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"Beinbeuger liegend als L/R abwechselnd markiert"})}});
+    if(ch)saveJ("plans",state.plans);state.settings.bbl1115=true;saveJ("settings",state.settings)}
   // Einmalig 07.11.: OK B Supersatz Reverse Fly + Face Pull: 45 s Wechsel (Umbau Kabel), 120 s Rundenpause (06.11.: 15 → 7 → 8 Wdh bei 65–120 s)
   if(!state.settings.ss1107){let ch=false;state.plans.filter(p=>p.id===PLAN_V2.id).forEach(p=>{p.sessions.forEach(se=>se.exercises.forEach(x=>{if(x.ss&&(/reverse cable fly/i.test(x.name)||x.id==="reverse-fly")){x.ssw=45;x.rest=120;ch=true}}));
       if(ch){p.versions=p.versions||[];p.version=(p.version||1)+1;p.versions.push({v:p.version,date:todayISO(),comment:"OK B Supersatz Reverse Fly/Face Pull: Wechsel 45 s, Rundenpause 120 s"})}});
@@ -696,7 +700,10 @@ function recommendFor(entry){
   const inc=/\bKH\b|kurzhantel/i.test(entry.name)?2:(fine||w<20)?1.25:2.5,r2=v=>Math.round(v*100)/100;
   const step=Math.max(inc,Math.round(w*(iso?0.05:0.025)/inc)*inc);
   const up=r2(w+step),dn=r2(Math.max(inc,w-step));
-  const jump=(up-w)/w,need=jump>0.075?hi+2:hi;
+  const jump=(up-w)/w;
+  const allHi=h=>h&&h.w===w&&h.sets.every(x=>num(x.r)>=hi);
+  const stuck=allHi(H[0])&&allHi(H[1]);          // 2 Einheiten in Folge alle Sätze ≥ oberer Rand → trotz großem Sprung steigern
+  const need=jump>0.075&&!stuck?hi+2:hi;
   // Wie viele Einheiten in Folge mit genau diesem Gewicht? (Schonfrist nach Steigerung)
   let atW=0;for(const h of H){if(h.w===w)atW++;else break}
   const raised=H.length>atW&&H[atW].w<w;
@@ -1164,6 +1171,7 @@ function ssRest(e,si){
 function repsDone(ei,si){
   const e=state.active&&state.active.entries[ei];if(!e)return;
   const s=e.sets[si];if(num(s.r)>0&&!s.t){s.t=Date.now();draftSave()}
+  if(num(s.r)>0&&s.rir!=null&&!s.an){s.an=1;autoNext(ei)}   // RIR vorher getippt → jetzt abgeschlossen
   if(!(num(s.r)>0)||restIv||s.rst)return;      // Pause je Satz nur einmal (auch wenn RIR vor den Wdh getippt wurde)
   s.rst=1;draftSave();      // nur beim ersten Eintragen des Satzes und wenn noch kein Timer läuft (Korrekturen starten keine Pause)
   const isLast=si===e.sets.length-1;
@@ -1330,9 +1338,9 @@ function pinTimer(){
 function stopRest(){if(restIv){clearInterval(restIv);restIv=null}clearTimeout(darkT);restCtx=null;const dk=$("restdark");if(dk)dk.remove();beepNodes.forEach(o=>{try{o.stop()}catch(e){}});beepNodes=[];stopKeepAlive();const b=$("resttimer");if(b)b.remove()}
 function setRir(ei,si,n){pushUndo();const e=state.active.entries[ei];const s=e.sets[si];const was=s.rir;s.rir=s.rir===n?null:n;if(s.rir!==null&&!s.t)s.t=Date.now();draftSave();
   const el=$("rir-"+ei+"-"+si);if(el)el.innerHTML=rirChips(e,ei,si);
-  if(s.rir!==null&&num(s.r)>0&&(was==null&&!s.rst||!s.rst)){s.rst=1;                        // Satz erstmals abgeschlossen → Pause starten (Korrektur der RIR startet keine neue Pause)
-    const rr=ssRest(e,si);startRest(rr.sec,rr.label);
-    autoNext(ei);
+  if(s.rir!==null&&num(s.r)>0){
+    if(!s.rst){s.rst=1;const rr=ssRest(e,si);startRest(rr.sec,rr.label)}   // Pause je Satz genau einmal
+    if(was==null)autoNext(ei);                                            // Satz abgeschlossen → ggf. nächste Übung / Supersatz-Partner öffnen
   }}
 function setExSetting(id,v){
   const e=state.library.find(x=>x.id===id);
