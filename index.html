@@ -421,7 +421,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v228";
+const APP_VERSION="v229";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1636,7 +1636,7 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   if(st===0){t="Geburtsdatum";b='<input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age">'}
   else if(st===1){t="Trainingslevel";b='<div class="wz-lv"><b id="wzlv">'+p.level+'</b><span id="wzlt">'+LVL(p.level)+'</span></div><input type="range" min="1" max="10" value="'+p.level+'" oninput="wz.p.level=+this.value;$(\'wzlv\').textContent=this.value;$(\'wzlt\').textContent=LVL(+this.value)" style="width:100%;accent-color:var(--tx)">'}
   else if(st===2){t="Ziel";b=big([["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]],p.goal,"wzGoal");foot=""}
-  else if(st===3){t="Trainingsart";b=big(Object.keys(TPL).map(k=>[k,TPL[k].n]),p.typ,"wzTyp");foot=""}
+  else if(st===3){t="Trainingsart";const ts=wzTyps();b='<div class="wz-opts">'+[["aufbau","Bodybuilding"],["kraft","Powerlifting"],["ausdauer","Kraftausdauer"]].map(([v,l])=>'<button class="wz-o'+(ts.includes(v)?' on':'')+'" onclick="wzTyp(\''+v+'\')">'+l+(ts.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!ts.length)foot=""}
   else if(st===4){t="Rhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
     b=big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
     if(r.mode==="days")b+='<div class="seg" style="margin-top:10px">'+[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]].map(([d,l])=>'<button class="'+((r.days||[]).includes(d)?'on':'')+'" onclick="wzDay('+d+')">'+l+'</button>').join('')+'</div>';
@@ -1662,7 +1662,7 @@ function wzPickList(){const q=(wz.pick.q||"").toLowerCase(),L=wzLib().filter(e=>
 function wzPickRows(){const q=(wz.pick.q||"").trim(),ql=q.toLowerCase(),L=wzLib().filter(e=>!ql||e.name.toLowerCase().includes(ql)).slice(0,40);
   return L.map(e=>'<button class="wz-pr" onclick="wzChoose(\''+e.id+'\')"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span></button>').join('')
     +(q&&!L.some(e=>e.name.toLowerCase()===ql)?'<button class="wz-pr" onclick="wzNew()"><span class="wz-plus">+</span><span>„'+esc(q)+'“ neu anlegen</span></button>':'')}
-function wzDefaults(e){const d=TYP[wz.p.typ==="kraft"?"kraft":wz.p.typ==="ausdauer"?"ausdauer":"aufbau"];return{reps:e.reps||d.reps,scheme:e.scheme||d.scheme,rest:e.rest||d.rest}}
+function wzDefaults(e){const b=wzBase(),d=TYP[b==="kraft"?"kraft":b==="ausdauer"?"ausdauer":"aufbau"];return{reps:e.reps||d.reps,scheme:e.scheme||d.scheme,rest:e.rest||d.rest}}
 function wzChoose(id){const e=wzLib().find(x=>x.id===id),pk=wz.pick,S=wz.ses[pk.i].ex;
   if(pk.j<0)S.push(Object.assign({id:e.id,name:e.name,sets:3,start:""},wzDefaults(e)));
   else{const o=S[pk.j];S[pk.j]=Object.assign({id:e.id,name:e.name,sets:o.sets,start:""},wzDefaults(e),{reps:o.reps})}
@@ -1670,20 +1670,26 @@ function wzChoose(id){const e=wzLib().find(x=>x.id===id),pk=wz.pick,S=wz.ses[pk.
 function wzNew(){const n=wz.pick.q.trim();if(!n)return;const e={id:"u-"+uid(),name:n,reps:"",scheme:"",start:"",note:"",custom:true};
   state.library.push(e);saveJ("library",state.library);wzChoose(e.id)}
 function wzGoal(v){wzSet("goal",v,true)}
-function wzTyp(v){wzSet("typ",v,true)}
+function wzTyps(){const t=wz.p.typs||(wz.p.typ?[wz.p.typ==="power"?"aufbau":wz.p.typ].concat(wz.p.typ==="power"?["kraft"]:[]):["aufbau"]);wz.p.typs=t;return t}
+function wzTyp(v){const t=wzTyps();wz.p.typs=t.includes(v)?t.filter(x=>x!==v):[...t,v];drawWz()}
+// Kombination → Basisvorlage; Kraftausdauer in Kombination = letzte 2 Übungen je Einheit als Ausdauer-Sätze
+function wzBase(){const t=wzTyps(),bb=t.includes("aufbau"),pl=t.includes("kraft"),ka=t.includes("ausdauer");return bb&&pl?"power":pl?"kraft":bb?"aufbau":"ausdauer"}
+function wzSessions(split){const t=wzTyps(),base=wzBase(),ses=tplSessions(base,split);
+  if(t.includes("ausdauer")&&base!=="ausdauer")ses.forEach(s=>s.ex.slice(-2).forEach(e=>Object.assign(e,{reps:"15-20",scheme:"RIR2",rest:60})));return ses}
+function wzName(){return wzTyps().map(k=>({aufbau:"Bodybuilding",kraft:"Powerlifting",ausdauer:"Kraftausdauer"})[k]).join(" + ")}
 function wzRh(v){wz.p.rhythm=v==="days"?{mode:"days",days:(wz.p.rhythm.days&&wz.p.rhythm.days.length?wz.p.rhythm.days:[1,3,5])}:{mode:"n",n:+v};if(v!=="days")wz.step++;drawWz()}
 function wzDay(d){const r=wz.p.rhythm;r.days=r.days||[];r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d].sort();drawWz()}
-function wzSplit(k){wz.split=k;wz.ses=tplSessions(wz.p.typ,k);wz.edit=false;wz.step=6;drawWz()}
+function wzSplit(k){wz.p.typ=wzBase();wz.split=k;wz.ses=wzSessions(k);wz.edit=false;wz.step=6;drawWz()}
 function wzTake(){wz.edit=false;if(wz.step-6<wz.ses.length-1){wz.step++;drawWz()}else wzFinish(true)}
-function wzFinish(withPlan){const p=wz.p,sp=wz.split,ses=wz.ses;if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
+function wzFinish(withPlan){const p=wz.p,sp=wz.split,ses=wz.ses,base=wzBase(),lab=wzName();if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
   profTmp=p;saveProfile();
-  if(withPlan)createPlan(p.typ,sp,ses)}
+  if(withPlan)createPlan(base,sp,ses,lab)}
 function closeProfile(){$("overlay").innerHTML="";profTmp=null;wz=null}
 
 // ----- Vorlagen -----
 const R3=(id,name,sets,reps,scheme,rest,x)=>Object.assign({id,name,sets,reps,scheme,start:"",rest},x||{});
 const TPL={
- aufbau:{n:"Muskelaufbau",d:"6–15 Wdh",s:[
+ aufbau:{n:"Bodybuilding",d:"6–15 Wdh",s:[
   ["UK A","Quads",[R3("kniebeuge","Kniebeuge",3,"6-10","2/2/1",180),R3("rdl","Rumänisches Kreuzheben",3,"8-10","2/2/1",150),R3("beinstrecker","Beinstrecker",3,"10-15","1/1/0",90),R3("beinbeuger-sitzend","Beinbeuger sitzend",3,"10-15","1/1/0",90),R3("wadenheben-stehend","Wadenheben stehend",3,"10-15","1/1/0",60)]],
   ["OK A","Push/Pull",[R3("schraegbank","Schrägbankdrücken KH",3,"8-12","2/2/1",150),R3("latzug","Latzug",3,"8-12","2/2/1",150),R3("schulterdruecken","Schulterdrücken KH",3,"8-12","2/2/1",120),R3("rudern-kabel","Kabelrudern",3,"10-12","2/2/1",120),R3("seitheben","Seitheben Kabel",3,"12-15","1/1/0",60),R3("trizeps-ueberkopf","Trizeps überkopf Kabel",3,"10-15","1/1/0",75)]],
   ["UK B","Hinge",[R3("beinpresse","Beinpresse",3,"8-12","2/2/1",150),R3("split-squat","Bulgarian Split Squat",2,"8-12","RIR1-2",120,{note:"L/R"}),R3("hip-thrust","Hip Thrust",3,"8-12","2/2/1",120),R3("beinbeuger-liegend","Beinbeuger liegend",3,"10-15","1/1/0",90),R3("wadenheben-sitzend","Wadenheben sitzend",3,"12-20","1/1/0",60),R3("kabel-crunch","Kabel-Crunch",3,"10-15","1/1/0",60)]],
@@ -1719,10 +1725,10 @@ function tplSessions(key,split){const t=TPL[key],S=t.s.map(x=>({name:x[0],sub:x[
            {name:"Pull",sub:"Rücken/Bizeps",ex:fix(uniq(up.filter(e=>PULL.includes(grp(e)))).slice(0,6))},
            {name:"Beine",sub:"Beine/Bauch",ex:fix(uniq([S[0].ex[0],S[0].ex[1],S[2].ex[2],...S[0].ex.slice(2),...S[2].ex.slice(3)].filter(Boolean)).slice(0,6))}]}
   return S.map(x=>({name:x.name,sub:x.sub,ex:cp(x.ex)}))}
-function createPlan(key,split,sesIn){const t=TPL[key],id="tpl-"+key+"-"+uid();
+function createPlan(key,split,sesIn,label){const t=TPL[key],id="tpl-"+key+"-"+uid();
   const rules=(PLAN_V2.rules||[]).filter(r=>!/^(Rhythmus|Kalorien)/.test(r));
   const ses=(sesIn||tplSessions(key,split)).map((s,i)=>({id:id+"-s"+i,name:s.name,sub:s.sub,warmup:["5 min locker","2 Aufwärmsätze"],exercises:JSON.parse(JSON.stringify(s.ex))}));
-  const np={id,name:{aufbau:"MA",kraft:"PL",power:"PB",ausdauer:"KA"}[key]+"-"+{gk:"GK",ouk:"OU",ppl:"PPL"}[split]+" · "+t.n+" "+SPLIT_N[split],createdAt:todayISO(),version:1,versions:[],rules,sessions:ses};
+  const np={id,name:{aufbau:"BB",kraft:"PL",power:"PB",ausdauer:"KA"}[key]+"-"+{gk:"GK",ouk:"OU",ppl:"PPL"}[split]+" · "+(label||t.n)+" · "+SPLIT_N[split],createdAt:todayISO(),version:1,versions:[],rules,sessions:ses};
   ses.forEach(s=>s.exercises.forEach(e=>{if(!state.library.some(x=>x.id===e.id))state.library.push({id:e.id,name:e.name,reps:e.reps,scheme:e.scheme,start:"",note:e.note||""})}));
   saveJ("library",state.library);state.plans.push(np);saveJ("plans",state.plans);state.planList=false;activatePlan(np.id);toast("Plan übernommen")}
 function createFromTemplate(key,split){closeProfile();createPlan(key,split)}
