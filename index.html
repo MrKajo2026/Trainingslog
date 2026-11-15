@@ -331,6 +331,12 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .tpl-c{display:flex;align-items:center;width:100%;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:12px;margin-top:8px;color:var(--tx)}.tpl-c span{flex:1;display:flex;flex-direction:column;gap:2px}.tpl-c b{font-size:15px}.tpl-c i{font-style:normal;font-size:12px;color:var(--mut)}.tpl-c em{font-style:normal;color:var(--mut);font-size:18px}
 .wz{min-height:62vh;display:flex;flex-direction:column}.wz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.wz-back{background:none;border:none;color:var(--mut);font-size:22px;width:32px;padding:0}
 .wz-dots{display:flex;gap:5px}
+.wz-prog{flex:1;display:flex;align-items:center;gap:10px}.wz-prog span{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+.wz-seg{flex:1;display:flex;gap:4px}.wz-seg i{flex:1;height:4px;border-radius:2px;background:var(--s2);position:relative}.wz-seg i::after{content:"";position:absolute;inset:-10px 0}
+.wz-seg i.done{background:var(--mut)}.wz-seg i.cur{background:var(--tx)}
+.wz-q{font-size:15px;font-weight:700;color:var(--tx);margin:18px 0 8px}
+.wz-nb{display:flex;gap:8px}.wz-nb .wz-next{flex:1}.wz-next[disabled]{opacity:.3}
+.wz .wz-top{gap:12px}
 .h-prof{position:absolute;top:max(8px,calc(env(safe-area-inset-top,0px) - 4px));right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--s3);background:var(--bg);color:var(--mut);display:flex;align-items:center;justify-content:center;padding:0;z-index:11}
 .pv-r{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--s2);font-size:14px}.pv-r span{color:var(--mut)}.pv-r b{text-align:right;font-weight:600}
 .pv-r em{font-style:normal;color:var(--amb);font-size:12px;margin-left:6px}
@@ -428,7 +434,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v236";
+const APP_VERSION="v237";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1667,14 +1673,14 @@ function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
   let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
-  if(st===0){t="Über dich";b='<input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age"><div class="seg" style="margin-top:10px">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>'}
+  if(st===0){t="Persönliche Daten";b='<div class="wz-q" style="margin-top:0">Geburtsdatum</div><input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age;drawWz()"><div class="wz-q">Geschlecht</div><div class="seg">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>';if(!p.birth||!p.sex)foot=""}
   else if(st===1){t="Trainingserfahrung";const sel=(arr,cur,k)=>'<div class="wz-opts">'+arr.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="wz.p.'+k+'='+v+';drawWz()">'+l+'</button>').join('')+'</div>';
-    b='<div class="pf-l" style="margin-top:0">Regelmäßig seit</div>'+sel([[1,"unter 2 Monaten"],[2,"2–12 Monaten"],[3,"1–3 Jahren"],[4,"über 3 Jahren"]],p.exp,"exp")
-     +'<div class="pf-l">Aktuell Pause?</div>'+sel([[4,"Nein"],[3,"1–4 Monate"],[2,"4–8 Monate"],[1,"über 8 Monate"]],p.pause,"pause");
+    b='<div class="wz-q" style="margin-top:0">Wie lange trainierst du regelmäßig?</div>'+sel([[1,"unter 2 Monate"],[2,"2–12 Monate"],[3,"1–3 Jahre"],[4,"über 3 Jahre"]],p.exp,"exp")
+     +'<div class="wz-q">Machst du gerade eine Trainingspause?</div>'+sel([[4,"Nein"],[3,"Ja, 1–4 Monate"],[2,"Ja, 4–8 Monate"],[1,"Ja, über 8 Monate"]],p.pause,"pause");
     if(!p.exp||!p.pause)foot=""}
   else if(st===2){t="Ziel";const gs=p.goals||(p.goals=[p.goal||"aufbau"]);b='<div class="wz-opts">'+[["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]].map(([v,l])=>'<button class="wz-o'+(gs.includes(v)?' on':'')+'" onclick="wzGoal(\''+v+'\')">'+l+(gs.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!gs.length)foot=""}
   else if(st===3){t="Trainingsart";const ts=wzTyps();b='<div class="wz-opts">'+[["aufbau","Bodybuilding"],["kraft","Powerlifting"],["ausdauer","Kraftausdauer"]].map(([v,l])=>'<button class="wz-o'+(ts.includes(v)?' on':'')+'" onclick="wzTyp(\''+v+'\')">'+l+(ts.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!ts.length)foot=""}
-  else if(st===4){t="Rhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
+  else if(st===4){t="Trainingsrhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
     b=big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
     if(r.mode==="days")b+='<div class="seg" style="margin-top:10px">'+[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]].map(([d,l])=>'<button class="'+((r.days||[]).includes(d)?'on':'')+'" onclick="wzDay('+d+')">'+l+'</button>').join('')+'</div>';
     else foot=""}
@@ -1686,10 +1692,13 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
       :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+(wz.edit?'<button class="wz-add" onclick="wzPick('+i+',-1)">+ Übung</button>':'')+'</div>';
     foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'
     if(wz.pick){t=wz.pick.nw?"Eigene Übung":wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="wzBack()">‹ Zurück</button>'}}
+  if(st<6){let ok=foot!=="";if(st===4)ok=!!p.rhythm&&(p.rhythm.mode!=="days"||(p.rhythm.days||[]).length>0);if(st===5)ok=!!(wz.split&&wz.ses);
+    foot='<div class="wz-nb">'+(st>0?'<button class="btn wz-sec" onclick="wzBack()">Zurück</button>':'')+'<button class="btn wz-next"'+(ok?' onclick="wzGo(1)"':' disabled')+'>Weiter</button></div>'}
+  else if(!wz.pick)foot=foot.replace('<div class="row" style="gap:8px">','<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wzBack()">Zurück</button>');
   wz.max=Math.max(wz.max||0,st);
   const WL=["Profil","Erfahrung","Ziel","Art","Rhythmus","Split","Plan"],cs=Math.min(st,6);
-  const dots='<div class="wz-nav">'+WL.map((l,k)=>{const ok=k!==cs&&k<=Math.min(wz.max,6)&&(k<6||wz.ses);return '<span class="'+(k===cs?'cur':ok?'ok':'')+'"'+(ok?' onclick="wzJump('+k+')"':'')+'>'+l+'</span>'}).join('')+'</div>';
-  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0||wz.pick?'<button class="wz-back" onclick="wzBack()">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
+  const dots='<div class="wz-prog"><div class="wz-seg">'+WL.map((l,k)=>{const ok=k!==cs&&k<=Math.min(wz.max,6)&&(k<6||wz.ses);return '<i class="'+(k===cs?'cur':k<=Math.min(wz.max,6)?'done':'')+'"'+(ok?' onclick="wzJump('+k+')"':'')+' title="'+l+'"></i>'}).join('')+'</div><span>'+(cs+1)+' / '+WL.length+'</span></div>';
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
 // Übungsauswahl im Assistenten: Bibliothek (Kern + eigene), neue Übungen landen nur in der eigenen Bibliothek
 function wzPick(i,j){wz.pick={i,j,q:""};drawWz();setTimeout(()=>{const q=$("wzq");if(q)q.focus()},50)}
 function wzLib(){const seen=new Set(),out=[];const add=e=>{if(!e||seen.has(e.id))return;seen.add(e.id);out.push(e)};
