@@ -334,6 +334,8 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .wz-prog{flex:1;display:flex;align-items:center;gap:10px}.wz-prog span{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
 .wz-seg{flex:1;display:flex;gap:4px}.wz-seg i{flex:1;height:4px;border-radius:2px;background:var(--s2);position:relative}.wz-seg i::after{content:"";position:absolute;inset:-10px 0}
 .wz-seg i.done{background:var(--mut)}.wz-seg i.cur{background:var(--tx)}
+.wz-dw{position:relative}.wz-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--mut);pointer-events:none;background:var(--bg);border-radius:12px;margin:1px}
+.wz .pf-t{display:block;text-align:center}
 .wz-q{font-size:15px;font-weight:700;color:var(--tx);margin:18px 0 8px}
 .wz-nb{display:flex;gap:8px}.wz-nb .wz-next{flex:1}.wz-next[disabled]{opacity:.3}
 .wz .wz-top{gap:12px}
@@ -435,7 +437,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v237";
+const APP_VERSION="v238";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1660,7 +1662,7 @@ function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
   let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
-  if(st===0){t="Persönliche Daten";b='<div class="wz-q" style="margin-top:0">Geburtsdatum</div><input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age;drawWz()"><div class="wz-q">Geschlecht</div><div class="seg">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>';if(!p.birth||!p.sex)foot=""}
+  if(st===0){t="Persönliche Daten";b='<div class="wz-q" style="margin-top:0">Geburtsdatum</div><div class="wz-dw"><input type="date" class="wz-date" value="'+esc(p.birth||"")+'" max="'+todayISO()+'" onchange="wz.p.birth=this.value;delete wz.p.age;drawWz()">'+(p.birth?'':'<span class="wz-ph">TT.MM.JJJJ</span>')+'</div><div class="wz-q">Geschlecht</div><div class="seg">'+[["m","Mann"],["w","Frau"]].map(([v,l])=>'<button class="'+(p.sex===v?'on':'')+'" onclick="wz.p.sex=\''+v+'\';drawWz()">'+l+'</button>').join('')+'</div>';if(!p.birth||!p.sex)foot=""}
   else if(st===1){t="Trainingserfahrung";const sel=(arr,cur,k)=>'<div class="wz-opts">'+arr.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="wz.p.'+k+'='+v+';drawWz()">'+l+'</button>').join('')+'</div>';
     b='<div class="wz-q" style="margin-top:0">Wie lange trainierst du regelmäßig?</div>'+sel([[1,"unter 2 Monate"],[2,"2–12 Monate"],[3,"1–3 Jahre"],[4,"über 3 Jahre"]],p.exp,"exp")
      +'<div class="wz-q">Machst du gerade eine Trainingspause?</div>'+sel([[4,"Nein"],[3,"Ja, 1–4 Monate"],[2,"Ja, 4–8 Monate"],[1,"Ja, über 8 Monate"]],p.pause,"pause");
