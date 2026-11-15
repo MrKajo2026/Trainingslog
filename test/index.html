@@ -335,7 +335,12 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .wz-cnt{font-size:13px;color:var(--mut);font-weight:500;margin-left:6px}.wz-ex{display:flex;flex-direction:column}.wz-er{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);font-size:14px}.wz-er>span:not(.pi){flex:1;min-width:0}.wz-er b{font-size:13px;color:var(--mut)}
 .wz-er input{width:46px;text-align:center;padding:6px;font-size:16px;background:var(--bg);border:1px solid var(--s3);border-radius:8px;color:var(--tx)}.wz-er input+i{font-style:normal;color:var(--mut)}.wz-er input:last-of-type{width:64px}
 .cal{border:1px solid var(--s3);border-radius:12px;padding:10px 12px;margin-top:8px;display:flex;flex-direction:column}.cal b{font-size:14px}.cal .tiny{margin-top:1px}.cal input{flex:1;min-width:0;text-align:center;font-size:16px;background:var(--bg);border:1px solid var(--s3);border-radius:10px;color:var(--tx);padding:9px}
-.wz-date{width:100%;box-sizing:border-box;font-size:18px;padding:12px;background:var(--bg);border:1px solid var(--s3);border-radius:12px;color:var(--tx);color-scheme:dark}
+.wz-date{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;min-height:52px;text-align:center;font-size:18px;padding:12px;background:var(--bg);border:1px solid var(--s3);border-radius:12px;color:var(--tx);color-scheme:dark}
+.wz-sw{flex:1;min-width:0;text-align:left;background:none;border:none;color:var(--tx);font-size:14px;padding:0}.wz-sw i{font-style:normal;color:var(--mut);font-size:12px;margin-left:4px}
+.wz-add{margin-top:10px;background:none;border:1px dashed var(--s3);border-radius:10px;color:var(--mut);padding:11px;font-size:14px;width:100%}
+.wz-pl{display:flex;flex-direction:column;margin-top:8px;max-height:46vh;overflow-y:auto}.wz-pr{display:flex;align-items:center;gap:10px;background:none;border:none;border-bottom:1px solid var(--s2);color:var(--tx);padding:7px 0;font-size:14px;text-align:left}
+.wz-date::-webkit-date-and-time-value{text-align:center}.wz-plus{width:32px;height:32px;border-radius:8px;border:1px dashed var(--s3);display:flex;align-items:center;justify-content:center;color:var(--mut)}
+#wzq{text-align:left}
 </style>
 </head>
 <body>
@@ -416,7 +421,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v227";
+const APP_VERSION="v228";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1626,11 +1631,30 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
     b=big(["gk","ouk","ppl"].map(k=>[k,SPLIT_N[k]+(k===rs?' <em>Empfohlen</em>':'')]),wz.split||"",'wzSplit');
     if(!wz.first&&state.logs.length)b+='<button class="wz-keep" onclick="wzFinish(false)">Aktuellen Plan behalten</button>';foot=""}
   else{const i=st-6,s=wz.ses[i];t=s.name+' <span class="wz-cnt">'+(i+1)+' / '+wz.ses.length+'</span>';
-    b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><span>'+esc(e.name)+'</span><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
-      :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+'</div>';
-    foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'}
+    b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><button class="wz-sw" onclick="wzPick('+i+','+j+')">'+esc(e.name)+' <i>⇄</i></button><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
+      :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+(wz.edit?'<button class="wz-add" onclick="wzPick('+i+',-1)">+ Übung</button>':'')+'</div>';
+    foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'
+    if(wz.pick){t=wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="wz.pick=null;drawWz()">Abbrechen</button>'}}
   const dots='<div class="wz-dots">'+Array.from({length:N},(_,k)=>'<i class="'+(k<=st?'on':'')+'"></i>').join('')+'</div>';
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0?'<button class="wz-back" onclick="wz.edit=false;wzGo(-1)">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
+// Übungsauswahl im Assistenten: Bibliothek (Kern + eigene), neue Übungen landen nur in der eigenen Bibliothek
+function wzPick(i,j){wz.pick={i,j,q:""};drawWz();setTimeout(()=>{const q=$("wzq");if(q)q.focus()},50)}
+function wzLib(){const seen=new Set(),out=[];const add=e=>{if(!e||seen.has(e.id))return;seen.add(e.id);out.push(e)};
+  (state.library||[]).forEach(add);SEED_LIB.forEach(add);Object.values(TPL).forEach(t=>t.s.forEach(x=>x[2].forEach(add)));
+  return out.filter(e=>!/^(ellenbogen|g2hmzr1v)$/.test(e.id)||state.logs.length).sort((a,b)=>a.name.localeCompare(b.name,"de"))}
+function wzPickList(){const q=(wz.pick.q||"").toLowerCase(),L=wzLib().filter(e=>!q||e.name.toLowerCase().includes(q)).slice(0,40);
+  return '<input id="wzq" class="wz-date" placeholder="Suchen oder neue Übung" value="'+esc(wz.pick.q)+'" oninput="wz.pick.q=this.value;$(\'wzpl\').innerHTML=wzPickRows()">'
+    +'<div id="wzpl" class="wz-pl">'+wzPickRows()+'</div>'}
+function wzPickRows(){const q=(wz.pick.q||"").trim(),ql=q.toLowerCase(),L=wzLib().filter(e=>!ql||e.name.toLowerCase().includes(ql)).slice(0,40);
+  return L.map(e=>'<button class="wz-pr" onclick="wzChoose(\''+e.id+'\')"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span></button>').join('')
+    +(q&&!L.some(e=>e.name.toLowerCase()===ql)?'<button class="wz-pr" onclick="wzNew()"><span class="wz-plus">+</span><span>„'+esc(q)+'“ neu anlegen</span></button>':'')}
+function wzDefaults(e){const d=TYP[wz.p.typ==="kraft"?"kraft":wz.p.typ==="ausdauer"?"ausdauer":"aufbau"];return{reps:e.reps||d.reps,scheme:e.scheme||d.scheme,rest:e.rest||d.rest}}
+function wzChoose(id){const e=wzLib().find(x=>x.id===id),pk=wz.pick,S=wz.ses[pk.i].ex;
+  if(pk.j<0)S.push(Object.assign({id:e.id,name:e.name,sets:3,start:""},wzDefaults(e)));
+  else{const o=S[pk.j];S[pk.j]=Object.assign({id:e.id,name:e.name,sets:o.sets,start:""},wzDefaults(e),{reps:o.reps})}
+  wz.pick=null;drawWz()}
+function wzNew(){const n=wz.pick.q.trim();if(!n)return;const e={id:"u-"+uid(),name:n,reps:"",scheme:"",start:"",note:"",custom:true};
+  state.library.push(e);saveJ("library",state.library);wzChoose(e.id)}
 function wzGoal(v){wzSet("goal",v,true)}
 function wzTyp(v){wzSet("typ",v,true)}
 function wzRh(v){wz.p.rhythm=v==="days"?{mode:"days",days:(wz.p.rhythm.days&&wz.p.rhythm.days.length?wz.p.rhythm.days:[1,3,5])}:{mode:"n",n:+v};if(v!=="days")wz.step++;drawWz()}
@@ -1650,7 +1674,7 @@ const TPL={
   ["OK A","Push/Pull",[R3("schraegbank","Schrägbankdrücken KH",3,"8-12","2/2/1",150),R3("latzug","Latzug",3,"8-12","2/2/1",150),R3("schulterdruecken","Schulterdrücken KH",3,"8-12","2/2/1",120),R3("rudern-kabel","Kabelrudern",3,"10-12","2/2/1",120),R3("seitheben","Seitheben Kabel",3,"12-15","1/1/0",60),R3("trizeps-ueberkopf","Trizeps überkopf Kabel",3,"10-15","1/1/0",75)]],
   ["UK B","Hinge",[R3("beinpresse","Beinpresse",3,"8-12","2/2/1",150),R3("split-squat","Bulgarian Split Squat",2,"8-12","RIR1-2",120,{note:"L/R"}),R3("hip-thrust","Hip Thrust",3,"8-12","2/2/1",120),R3("beinbeuger-liegend","Beinbeuger liegend",3,"10-15","1/1/0",90),R3("wadenheben-sitzend","Wadenheben sitzend",3,"12-20","1/1/0",60),R3("kabel-crunch","Kabel-Crunch",3,"10-15","1/1/0",60)]],
   ["OK B","Push/Pull",[R3("bankdruecken-lh","Bankdrücken LH",3,"6-10","2/2/1",180),R3("klimmzug","Klimmzug",3,"6-10","2/2/1",150),R3("rudern-brust","Rudern brustgestützt",3,"8-12","2/2/1",120),R3("kabel-fly","Kabel-Fly",3,"10-15","1/1/0",75),R3("reverse-fly","Reverse Fly",3,"12-20","1/1/0",60),R3("curl-schraeg","Schrägbank-Curl",3,"10-15","1/1/0",75)]]]},
- kraft:{n:"Kraft",d:"3–6 Wdh",s:[
+ kraft:{n:"Powerlifting",d:"3–6 Wdh",s:[
   ["UK A","Kniebeuge",[R3("kniebeuge","Kniebeuge",4,"3-5","2/2/2/1",240),R3("rdl","Rumänisches Kreuzheben",3,"6-8","2/2/1",180),R3("beinpresse","Beinpresse",3,"6-10","2/2/1",150),R3("kabel-crunch","Kabel-Crunch",3,"8-12","1/1/0",60)]],
   ["OK A","Bankdrücken",[R3("bankdruecken-lh","Bankdrücken LH",4,"3-5","2/2/2/1",240),R3("rudern-lh","Rudern LH",4,"5-8","2/2/1",180),R3("schulterdruecken-lh","Schulterdrücken LH",3,"5-8","2/2/1",180),R3("klimmzug","Klimmzug",3,"5-8","2/2/1",180)]],
   ["UK B","Kreuzheben",[R3("deadlift","Kreuzheben",3,"3-5","2/2/1",240),R3("frontkniebeuge","Frontkniebeuge",3,"4-6","2/2/1",210),R3("hip-thrust","Hip Thrust",3,"6-8","2/2/1",150),R3("wadenheben-stehend","Wadenheben stehend",3,"8-12","1/1/0",60)]],
@@ -1684,7 +1708,7 @@ function tplSessions(key,split){const t=TPL[key],S=t.s.map(x=>({name:x[0],sub:x[
 function createPlan(key,split,sesIn){const t=TPL[key],id="tpl-"+key+"-"+uid();
   const rules=(PLAN_V2.rules||[]).filter(r=>!/^(Rhythmus|Kalorien)/.test(r));
   const ses=(sesIn||tplSessions(key,split)).map((s,i)=>({id:id+"-s"+i,name:s.name,sub:s.sub,warmup:["5 min locker","2 Aufwärmsätze"],exercises:JSON.parse(JSON.stringify(s.ex))}));
-  const np={id,name:{aufbau:"MA",kraft:"KR",power:"PB",ausdauer:"KA"}[key]+"-"+{gk:"GK",ouk:"OU",ppl:"PPL"}[split]+" · "+t.n+" "+SPLIT_N[split],createdAt:todayISO(),version:1,versions:[],rules,sessions:ses};
+  const np={id,name:{aufbau:"MA",kraft:"PL",power:"PB",ausdauer:"KA"}[key]+"-"+{gk:"GK",ouk:"OU",ppl:"PPL"}[split]+" · "+t.n+" "+SPLIT_N[split],createdAt:todayISO(),version:1,versions:[],rules,sessions:ses};
   ses.forEach(s=>s.exercises.forEach(e=>{if(!state.library.some(x=>x.id===e.id))state.library.push({id:e.id,name:e.name,reps:e.reps,scheme:e.scheme,start:"",note:e.note||""})}));
   saveJ("library",state.library);state.plans.push(np);saveJ("plans",state.plans);state.planList=false;activatePlan(np.id);toast("Plan übernommen")}
 function createFromTemplate(key,split){closeProfile();createPlan(key,split)}
