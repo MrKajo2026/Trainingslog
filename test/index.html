@@ -437,7 +437,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v242";
+const APP_VERSION="v243";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1640,7 +1640,19 @@ function okDay(d){const r=rhy();return r.mode!=="days"||!(r.days||[]).length||r.
 function nextDay(d){const r=rhy();if(r.mode!=="days"||!(r.days||[]).length)return addDays(d,r.n||2);let x=addDays(d,1);for(let i=0;i<7&&!okDay(x);i++)x=addDays(x,1);return x}
 function applyRhythm(){const r=rhy();RHYTHM=r.mode==="days"&&(r.days||[]).length?Math.max(1,Math.round(7/r.days.length*10)/10):(r.n||2)}
 function perWeek(r){r=r||rhy();return r.mode==="days"?(r.days||[]).length:Math.round(7/(r.n||2)*10)/10}
-function recSplit(r){const f=perWeek(r);return f<=3?"gk":f<=4.5?"ouk":"ppl"}
+// Split-Empfehlung: Einheiten/Woche, Trainingsdauer, Trainingsart, Level.
+// Ziel ≥ ~2× pro Muskel/Woche (Schoenfeld 2016); bei gleichem Volumen sind Splits sonst etwa gleichwertig → Rest = Zeit-/Volumenlogik (Heuristik).
+function recInfo(r,p){p=p||state.settings.profile||{};const f=perWeek(r),D=num(p.dur)||60,ty=p.typs||[p.typ||"aufbau"],kr=ty.includes("kraft"),ka=ty.length===1&&ty[0]==="ausdauer";
+  const m=kr?3.5:ka?1.75:2.75,S=Math.max(6,(D-10)/m),L=num(p.level)||levelCalc(p)||5,T=L<=3?10:L<=6?14:18,vol=Math.min(T,S*f/6);
+  let best=null;[["gk",1],["ouk",2],["ppl",3]].forEach(([k,n])=>{const fr=f/n,v=vol/fr;
+    let sc=Math.max(0,1.5-fr)*4+Math.max(0,fr-3)*.5+Math.max(0,v-8)*.5+Math.max(0,3-v)*.5;if(kr)sc+=Math.max(0,2-fr)*2;
+    if(!best||sc<best.sc-1e-9)best={k,sc}});
+  return{k:best.k,vol:Math.round(vol),T,S:Math.round(S)}}
+function recSplit(r,p){return recInfo(r,p).k}
+// Plan an Trainingsdauer anpassen: Satz ≈ Pause + 45 s, 10 min Aufwärmen; 2–4 Sätze je Übung
+function fitDur(ses,D){if(!D)return ses;const est=x=>10+x.ex.reduce((a,e)=>a+e.sets*((num(e.rest)||120)/60+.75),0);
+  ses.forEach(x=>{let g=0;while(est(x)>D+3&&g++<40){const c=x.ex.filter(e=>e.sets>2);if(c.length){c[c.length-1].sets--;continue}if(x.ex.length>3){x.ex.pop();continue}break}
+    g=0;while(g++<40){const c=x.ex.find(e=>e.sets<4&&est(x)+((num(e.rest)||120)/60+.75)<=D);if(!c)break;c.sets++}});return ses}
 const SPLIT_N={gk:"Ganzkörper",ouk:"Ober/Unter",ppl:"Push/Pull/Beine"};
 // ----- Profil-Fenster -----
 let profTmp=null;
@@ -1673,18 +1685,20 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
   else if(st===2){t="Ziel";const gs=p.goals||(p.goals=[p.goal||"aufbau"]);b='<div class="wz-opts">'+[["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]].map(([v,l])=>'<button class="wz-o'+(gs.includes(v)?' on':'')+'" onclick="wzGoal(\''+v+'\')">'+l+(gs.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!gs.length)foot=""}
   else if(st===3){t="Trainingsart";const ts=wzTyps();b='<div class="wz-opts">'+[["aufbau","Bodybuilding"],["kraft","Powerlifting"],["ausdauer","Kraftausdauer"]].map(([v,l])=>'<button class="wz-o'+(ts.includes(v)?' on':'')+'" onclick="wzTyp(\''+v+'\')">'+l+(ts.includes(v)?' <em>✓</em>':'')+'</button>').join('')+'</div>';if(!ts.length)foot=""}
   else if(st===4){t="Trainingsrhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
-    b=big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
+    b='<div class="wz-q" style="margin-top:0">Wie oft trainierst du?</div>'+big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
     if(r.mode==="days")b+='<div class="seg" style="margin-top:10px">'+[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]].map(([d,l])=>'<button class="'+((r.days||[]).includes(d)?'on':'')+'" onclick="wzDay('+d+')">'+l+'</button>').join('')+'</div>';
-    else foot=""}
-  else if(st===5){t="Split";const rs=recSplit(p.rhythm);
+    b+='<div class="wz-q">Wie lange dauert ein Training?</div><div class="seg">'+[45,60,75,90].map(m=>'<button class="'+(num(p.dur)===m?'on':'')+'" onclick="wz.p.dur='+m+';wz.split=null;wz.ses=null;drawWz()">'+m+(m===90?'+':'')+' min</button>').join('')+'</div>';
+    if(!p.dur)foot=""}
+  else if(st===5){t="Split";const ri=recInfo(p.rhythm,p),rs=ri.k;
     b=big(["gk","ouk","ppl"].map(k=>[k,SPLIT_N[k]+(k===rs?' <em>Empfohlen</em>':'')]),wz.split||"",'wzSplit');
+    if(ri.vol<ri.T*.8)b+='<p class="tiny" style="margin-top:10px;text-align:center">Zeit reicht für ~'+ri.vol+' von '+ri.T+' Sätzen pro Muskel und Woche.</p>';
     if(!wz.first&&state.logs.length)b+='<button class="wz-keep" onclick="wzFinish(false)">Aktuellen Plan behalten</button>';foot=""}
   else{const i=st-6,s=wz.ses[i];t=s.name+' <span class="wz-cnt">'+(i+1)+' / '+wz.ses.length+'</span>';
     b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><button class="wz-sw" onclick="wzPick('+i+','+j+')">'+esc(e.name)+' <i>⇄</i></button><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
       :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+(wz.edit?'<button class="wz-add" onclick="wzPick('+i+',-1)">+ Übung</button>':'')+'</div>';
     foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'
     if(wz.pick){t=wz.pick.nw?"Eigene Übung":wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="wzBack()">‹ Zurück</button>'}}
-  if(st<6){let ok=foot!=="";if(st===4)ok=!!p.rhythm&&(p.rhythm.mode!=="days"||(p.rhythm.days||[]).length>0);if(st===5)ok=!!(wz.split&&wz.ses);
+  if(st<6){let ok=foot!=="";if(st===4)ok=!!p.rhythm&&!!p.dur&&(p.rhythm.mode!=="days"||(p.rhythm.days||[]).length>0);if(st===5)ok=!!(wz.split&&wz.ses);
     foot='<div class="wz-nb">'+(st>0?'<button class="btn wz-sec" onclick="wzBack()">Zurück</button>':'')+'<button class="btn wz-next"'+(ok?' onclick="wzGo(1)"':' disabled')+'>Weiter</button></div>'}
   else if(!wz.pick)foot=foot.replace('<div class="row" style="gap:8px">','<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wzBack()">Zurück</button>');
   wz.max=Math.max(wz.max||0,st);
@@ -1712,15 +1726,15 @@ function wzNew(){const n=wz.pick.q.trim();if(!n)return;const e={id:"u-"+uid(),na
   state.library.push(e);saveJ("library",state.library);wzChoose(e.id)}
 function wzGoal(v){const g=wz.p.goals||[];wz.p.goals=g.includes(v)?g.filter(x=>x!==v):[...g,v];wz.p.goal=wz.p.goals[0]||"aufbau";drawWz()}
 function wzTyps(){const t=wz.p.typs||(wz.p.typ?[wz.p.typ==="power"?"aufbau":wz.p.typ].concat(wz.p.typ==="power"?["kraft"]:[]):["aufbau"]);wz.p.typs=t;return t}
-function wzTyp(v){const t=wzTyps();wz.p.typs=t.includes(v)?t.filter(x=>x!==v):[...t,v];drawWz()}
+function wzTyp(v){wz.split=null;wz.ses=null;const t=wzTyps();wz.p.typs=t.includes(v)?t.filter(x=>x!==v):[...t,v];drawWz()}
 // Kombination → Basisvorlage; Kraftausdauer in Kombination = letzte 2 Übungen je Einheit als Ausdauer-Sätze
 function wzBase(){const t=wzTyps(),bb=t.includes("aufbau"),pl=t.includes("kraft"),ka=t.includes("ausdauer");return bb&&pl?"power":pl?"kraft":bb?"aufbau":"ausdauer"}
 function wzSessions(split){const t=wzTyps(),base=wzBase(),ses=tplSessions(base,split);
   if(t.includes("ausdauer")&&base!=="ausdauer")ses.forEach(s=>s.ex.slice(-2).forEach(e=>Object.assign(e,{reps:"15-20",scheme:"RIR2",rest:60})));return ses}
 function wzName(){return wzTyps().map(k=>({aufbau:"Bodybuilding",kraft:"Powerlifting",ausdauer:"Kraftausdauer"})[k]).join(" + ")}
-function wzRh(v){wz.p.rhythm=v==="days"?{mode:"days",days:(wz.p.rhythm.days&&wz.p.rhythm.days.length?wz.p.rhythm.days:[1,3,5])}:{mode:"n",n:+v};if(v!=="days")wz.step++;drawWz()}
-function wzDay(d){const r=wz.p.rhythm;r.days=r.days||[];r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d].sort();drawWz()}
-function wzSplit(k){wz.p.typ=wzBase();wz.split=k;wz.ses=wzSessions(k);wz.edit=false;wz.step=6;drawWz()}
+function wzRh(v){wz.split=null;wz.ses=null;wz.p.rhythm=v==="days"?{mode:"days",days:(wz.p.rhythm.days&&wz.p.rhythm.days.length?wz.p.rhythm.days:[1,3,5])}:{mode:"n",n:+v};drawWz()}
+function wzDay(d){wz.split=null;wz.ses=null;const r=wz.p.rhythm;r.days=r.days||[];r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d].sort();drawWz()}
+function wzSplit(k){wz.p.typ=wzBase();wz.split=k;wz.ses=fitDur(wzSessions(k),num(wz.p.dur));wz.edit=false;wz.step=6;drawWz()}
 function wzTake(){wz.edit=false;if(wz.step-6<wz.ses.length-1){wz.step++;drawWz()}else wzFinish(true)}
 function wzFinish(withPlan){const p=wz.p,sp=wz.split,ses=wz.ses,base=wzBase(),lab=wzName();if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
   profTmp=p;saveProfile();
@@ -1802,7 +1816,7 @@ function showProfView(){const p=state.settings.profile;if(!p){showProfile(true);
     +row("Trainingslevel",(num(p.level)||levelCalc(p))+" / 10"+(lp?'<em>→ '+lp.c+' möglich</em>':""))
     +(p.exp?row("Regelmäßig seit",EX[p.exp]+(p.pause&&p.pause<4?" · "+PA[p.pause]:"")):"")
     +row("Ziel",(p.goals||[p.goal||"aufbau"]).map(g=>GL[g]).join(" + "))+row("Trainingsart",(p.typs||[p.typ||"aufbau"]).map(x=>TL[x]||x).join(" + "))
-    +row("Rhythmus",rh)+row("Plan",esc(activePlan().name))
+    +row("Rhythmus",rh+(p.dur?" · "+p.dur+(p.dur>=90?"+":"")+" min":""))+row("Plan",esc(activePlan().name))
     +row("Kalorien",t.kcal?(t.kcal>0?"+":"−")+Math.abs(t.kcal)+" kcal":"Erhaltung")+row("Protein","~"+t.prot+" g")+row("Gewicht / Woche",(t.lo>0?"+":"")+f1(t.lo)+" bis "+(t.hi>0?"+":"")+f1(t.hi)+" kg");
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)closeProfile()"><div class="sheet pf"><div class="wz-top"><span></span><b class="pf-t" style="margin:0">Profil</b><button class="wz-back" onclick="closeProfile()">✕</button></div><div class="wz-b">'+b+'</div>'
     +'<button class="btn wz-next" style="width:100%;margin-top:14px" onclick="showProfile()">Bearbeiten</button></div></div>'}
