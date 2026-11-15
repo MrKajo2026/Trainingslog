@@ -328,7 +328,8 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .pf-res{margin-top:14px;padding-top:4px;border-top:1px solid var(--s2)}.pf-r{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}.pf-r span{color:var(--mut)}
 .tpl-c{display:flex;align-items:center;width:100%;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:12px;margin-top:8px;color:var(--tx)}.tpl-c span{flex:1;display:flex;flex-direction:column;gap:2px}.tpl-c b{font-size:15px}.tpl-c i{font-style:normal;font-size:12px;color:var(--mut)}.tpl-c em{font-style:normal;color:var(--mut);font-size:18px}
 .wz{min-height:62vh;display:flex;flex-direction:column}.wz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.wz-back{background:none;border:none;color:var(--mut);font-size:22px;width:32px;padding:0}
-.wz-dots{display:flex;gap:5px}.wz-dots i{width:6px;height:6px;border-radius:50%;background:var(--s3)}.wz-dots i.on{background:var(--tx)}
+.wz-dots{display:flex;gap:5px}
+.wz-nav{display:flex;gap:4px 9px;flex:1;justify-content:center;flex-wrap:wrap;font-size:11.5px;color:var(--s3);padding:0 4px}.wz-nav span.ok{color:var(--mut);text-decoration:underline;text-underline-offset:3px}.wz-nav span.cur{color:var(--tx);font-weight:700}.wz-dots i{width:6px;height:6px;border-radius:50%;background:var(--s3)}.wz-dots i.on{background:var(--tx)}
 .wz-b{flex:1;margin-top:14px}.wz-opts{display:flex;flex-direction:column;gap:8px}.wz-o{display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:15px 14px;color:var(--tx);font-size:15px;font-weight:600}.wz-o.on{border-color:var(--tx)}
 .nx{display:flex;flex-direction:column;gap:10px;margin:4px 0 10px}.nx-mg{display:flex;flex-wrap:wrap;gap:6px}.nx-mg span{border:1px solid var(--s3);border-radius:16px;padding:6px 11px;font-size:13px;color:var(--mut)}.nx-mg span.on{border-color:var(--tx);color:var(--tx)}.wz-o em{font-style:normal;font-size:11px;font-weight:700;color:#111;background:var(--tx);border-radius:6px;padding:2px 6px}
 .wz-lv{display:flex;align-items:baseline;gap:10px;margin:6px 0 14px}.wz-lv b{font-size:40px}.wz-lv span{color:var(--mut);font-size:15px}
@@ -422,7 +423,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v230";
+const APP_VERSION="v231";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -1654,6 +1655,8 @@ const LVL=l=>l<=3?"Einsteiger":l<=6?"Fortgeschritten":l<=9?"Sehr fortgeschritten
 function showProfile(first){const p=state.settings.profile||{};
   wz={step:0,first:!!first,p:Object.assign({age:"",kg:lastKg()||"",level:first?5:8,goal:"aufbau",typ:"aufbau",rhythm:{mode:"n",n:2}},JSON.parse(JSON.stringify(p)))};
   drawWz()}
+function wzBack(){if(wz.pick){if(wz.pick.nw)wz.pick.nw=false;else wz.pick=null;drawWz();return}wz.edit=false;wzGo(-1)}
+function wzJump(k){wz.pick=null;wz.edit=false;wz.step=k;drawWz()}
 function wzGo(d){wz.step=Math.max(0,wz.step+d);drawWz()}
 function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
 function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
@@ -1677,9 +1680,11 @@ function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
     b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><button class="wz-sw" onclick="wzPick('+i+','+j+')">'+esc(e.name)+' <i>⇄</i></button><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
       :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+(wz.edit?'<button class="wz-add" onclick="wzPick('+i+',-1)">+ Übung</button>':'')+'</div>';
     foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'
-    if(wz.pick){t=wz.pick.nw?"Eigene Übung":wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="if(wz.pick.nw)wz.pick.nw=false;else wz.pick=null;drawWz()">Abbrechen</button>'}}
-  const dots='<div class="wz-dots">'+Array.from({length:N},(_,k)=>'<i class="'+(k<=st?'on':'')+'"></i>').join('')+'</div>';
-  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0?'<button class="wz-back" onclick="wz.edit=false;wzGo(-1)">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
+    if(wz.pick){t=wz.pick.nw?"Eigene Übung":wz.pick.j<0?"Übung hinzufügen":"Übung tauschen";b=wzPickList();foot='<button class="btn wz-sec" style="width:100%!important" onclick="wzBack()">‹ Zurück</button>'}}
+  wz.max=Math.max(wz.max||0,st);
+  const WL=["Profil","Erfahrung","Ziel","Art","Rhythmus","Split","Plan"],cs=Math.min(st,6);
+  const dots='<div class="wz-nav">'+WL.map((l,k)=>{const ok=k!==cs&&k<=Math.min(wz.max,6)&&(k<6||wz.ses);return '<span class="'+(k===cs?'cur':ok?'ok':'')+'"'+(ok?' onclick="wzJump('+k+')"':'')+'>'+l+'</span>'}).join('')+'</div>';
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0||wz.pick?'<button class="wz-back" onclick="wzBack()">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
 // Übungsauswahl im Assistenten: Bibliothek (Kern + eigene), neue Übungen landen nur in der eigenen Bibliothek
 function wzPick(i,j){wz.pick={i,j,q:""};drawWz();setTimeout(()=>{const q=$("wzq");if(q)q.focus()},50)}
 function wzLib(){const seen=new Set(),out=[];const add=e=>{if(!e||seen.has(e.id))return;seen.add(e.id);out.push(e)};
