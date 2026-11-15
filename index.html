@@ -327,6 +327,13 @@ main.fill .k-sheet.k-home{padding-top:8px}
 .pf{padding:16px 14px!important}.pf-t{font-size:19px}.pf-l{font-size:11px;color:var(--mut);margin:14px 0 5px}.pf-f{flex:1;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--mut);position:relative}.pf-f input{font-size:16px;font-weight:700;padding:10px 30px 10px 10px;background:var(--bg);border:1px solid var(--s3);border-radius:10px;color:var(--tx);width:100%;box-sizing:border-box}.pf-f i{position:absolute;right:10px;bottom:11px;font-style:normal;font-size:12px}
 .pf-res{margin-top:14px;padding-top:4px;border-top:1px solid var(--s2)}.pf-r{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}.pf-r span{color:var(--mut)}
 .tpl-c{display:flex;align-items:center;width:100%;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:12px;margin-top:8px;color:var(--tx)}.tpl-c span{flex:1;display:flex;flex-direction:column;gap:2px}.tpl-c b{font-size:15px}.tpl-c i{font-style:normal;font-size:12px;color:var(--mut)}.tpl-c em{font-style:normal;color:var(--mut);font-size:18px}
+.wz{min-height:62vh;display:flex;flex-direction:column}.wz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.wz-back{background:none;border:none;color:var(--mut);font-size:22px;width:32px;padding:0}
+.wz-dots{display:flex;gap:5px}.wz-dots i{width:6px;height:6px;border-radius:50%;background:var(--s3)}.wz-dots i.on{background:var(--tx)}
+.wz-b{flex:1;margin-top:14px}.wz-opts{display:flex;flex-direction:column;gap:8px}.wz-o{display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--bg);border:1px solid var(--s3);border-radius:12px;padding:15px 14px;color:var(--tx);font-size:15px;font-weight:600}.wz-o.on{border-color:var(--tx)}.wz-o em{font-style:normal;font-size:11px;font-weight:700;color:#111;background:var(--tx);border-radius:6px;padding:2px 6px}
+.wz-lv{display:flex;align-items:baseline;gap:10px;margin:6px 0 14px}.wz-lv b{font-size:40px}.wz-lv span{color:var(--mut);font-size:15px}
+.wz-next{width:100%;margin-top:14px;background:var(--chrome);color:#111;font-weight:800}.wz-sec{flex:0 0 auto;width:auto!important;margin-top:14px;padding:15px 18px;align-self:stretch;border-radius:14px;background:var(--s2)!important;color:var(--tx)!important;font-weight:700;border:1px solid var(--s3)}.wz-keep{background:none;border:none;color:var(--mut);margin-top:14px;width:100%;font-size:13px}
+.wz-cnt{font-size:13px;color:var(--mut);font-weight:500;margin-left:6px}.wz-ex{display:flex;flex-direction:column}.wz-er{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);font-size:14px}.wz-er>span:not(.pi){flex:1;min-width:0}.wz-er b{font-size:13px;color:var(--mut)}
+.wz-er input{width:46px;text-align:center;padding:6px;font-size:16px;background:var(--bg);border:1px solid var(--s3);border-radius:8px;color:var(--tx)}.wz-er input+i{font-style:normal;color:var(--mut)}.wz-er input:last-of-type{width:64px}
 </style>
 </head>
 <body>
@@ -407,7 +414,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v224";
+const APP_VERSION="v225";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -983,12 +990,11 @@ function vHome(){
   const fx=v=>String(v).replace(".",",");
   let h='<div class="h-tiles">'
    +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Kraft Zyklus</span><b>'+(()=>{const cg=cycleGrowth();return cg==null?"–":(cg>=0?"+":"")+fx(Math.abs(cg)<10?Math.round(cg*10)/10:Math.round(cg))+" %"})()+'</b></button>'
-   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.raw>0?"+":"")+fx(wr.raw.toFixed(2))+'<small> kg/Wo</small></b>':'<b>–</b>'})()+'</button>'
+   +'<button class="h-t f-t" onclick="go(\'statistik\')"><span>Zuwachs/Wo</span>'+(()=>{const wr=weightRate();return wr?'<b style="'+(wr.ok?'':'color:var(--amb);-webkit-text-fill-color:var(--amb)')+'">'+(wr.raw>0?"+":"")+fx(wr.raw.toFixed(2))+'<small> kg</small></b>':'<b>–</b>'})()+'</button>'
    +(()=>{const fq=fatigueLoad(),rc=recoveryState(),col=rc?["#34d399","#f59e0b","#ef4444"][rc.lvl]:"#444";
      const tip=rc?'Leistung '+rc.pct+' % (Median '+rc.n+' Übungen, '+esc(rc.log.sessionName||"")+' '+(+rc.log.date.slice(8))+"."+(+rc.log.date.slice(5,7))+"."+')'+(rc.prev!=null?' · davor '+rc.prev+' %':'')+(fq?' · Last '+fq.pct+' %':''):'Noch keine Vergleichsdaten (Deload/Wiedereinstieg zählen nicht)';
      return '<button class="h-t f-t" onclick="toast(\''+tip.replace(/'/g,"")+'\')"><span>Leistung</span><b'+(rc?' style="color:'+col+';-webkit-text-fill-color:'+col+'"':'')+'>'+(rc?rc.pct+'<small> %</small>':'–')+'</b></button>'})()+'</div>';
   {const rc=recoveryState();if(rc&&rc.lvl===2)h+='<p class="h-hint" style="color:#ef4444">Leistung 2× in Folge gesunken — Schlaf/Essen prüfen; hält es an: Deload vorziehen.</p>'}
-  {const wr=weightRate();if(wr&&wr.raw>wr.hi)h+='<p class="h-hint" style="color:var(--amb)">Gewicht steigt schneller als Ziel (max. +'+String((Math.round(wr.hi*100)/100)).replace(".",",")+' kg/Woche) — ca. 100 kcal/Tag weniger.</p>'}
   // 2. Zyklus-Ring + Start
   const n=sessionsSinceCycle(),N=DELOAD_AFTER,C=2*Math.PI*84;
   // Ist heute laut Plan Training? (Rhythmus jeden 2. Tag) – sonst Ruhetag mit nächstem Termin
@@ -1596,31 +1602,50 @@ function recSplit(r){const f=perWeek(r);return f<=3?"gk":f<=4.5?"ouk":"ppl"}
 const SPLIT_N={gk:"Ganzkörper",ouk:"Ober/Unter",ppl:"Push/Pull/Beine"};
 // ----- Profil-Fenster -----
 let profTmp=null;
-function showProfile(first){const p=state.settings.profile||{};profTmp=Object.assign({age:"",kg:lastKg()||"",level:8,goal:"aufbau",rhythm:{mode:"n",n:2}},JSON.parse(JSON.stringify(p)));profTmp.first=!!first;drawProfile()}
-function drawProfile(){const p=profTmp,t=profTargets(p),r=p.rhythm;
-  const seg=(k,opts,cur,fn)=>'<div class="seg">'+opts.map(([v,l])=>'<button class="'+(cur===v?'on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
-  const WD=[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]];
-  const row=(a,b)=>'<div class="pf-r"><span>'+a+'</span><b>'+b+'</b></div>';
-  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!profTmp.first)closeProfile()"><div class="sheet pf"><b class="pf-t">Dein Profil</b>'
-   +'<div class="row" style="gap:10px;margin-top:12px"><label class="pf-f"><span>Alter</span><input inputmode="numeric" value="'+esc(ageOf(p)||"")+'" oninput="profTmp.age=num(this.value)||\'\';delete profTmp.birth;pfCalc()"><i>J.</i></label><label class="pf-f"><span>Gewicht</span><input inputmode="decimal" value="'+esc(String(p.kg).replace(".",","))+'" oninput="profTmp.kg=num(this.value);pfCalc()"><i>kg</i></label></div>'
-   +'<div class="pf-l">Level · <b id="pflv">'+p.level+' / 10</b></div><input type="range" min="1" max="10" value="'+p.level+'" oninput="profTmp.level=+this.value;$(\'pflv\').textContent=this.value+\' / 10\';pfCalc()" style="width:100%;accent-color:var(--tx);margin:0">'
-   +'<div class="pf-l">Ziel</div>'+seg("goal",[["aufbau","Aufbau"],["halten","Halten"],["abnehmen","Abnehmen"]],p.goal,"pfGoal")
-   +'<div class="pf-l">Rhythmus</div>'+seg("rh",[["2","alle 2 Tage"],["3","alle 3 Tage"],["days","Wochentage"]],r.mode==="days"?"days":String(r.n),"pfRh")
-   +(r.mode==="days"?'<div class="seg" style="margin-top:6px">'+WD.map(([d,l])=>'<button class="'+((r.days||[]).includes(d)?'on':'')+'" onclick="pfDay('+d+')">'+l+'</button>').join('')+'</div>':'')
-   +'<div id="pfres" class="pf-res">'+pfRes()+'</div>'
-   +'<button class="btn" style="margin-top:12px;width:100%;background:var(--chrome);color:#111;font-weight:800" onclick="saveProfile()">Speichern</button></div></div>'}
-function pfRes(){const p=profTmp,t=profTargets(p);const row=(a,b)=>'<div class="pf-r"><span>'+a+'</span><b>'+b+'</b></div>';
-  return row(p.goal==="abnehmen"?"Abnahme":"Gewicht",f2(t.lo)+" bis "+f2(t.hi).replace(/^[+−±]/,"")+" kg/Wo")+row("Kalorien",t.kcal?f2(t.kcal).replace(",","")+" kcal":"Erhaltung")+row("Protein",t.prot+" g")+row("Split",SPLIT_N[recSplit(p.rhythm)])}
-function pfCalc(){const e=$("pfres");if(e)e.innerHTML=pfRes()}
-function pfGoal(v){profTmp.goal=v;drawProfile()}
-function pfRh(v){profTmp.rhythm=v==="days"?{mode:"days",days:(profTmp.rhythm.days&&profTmp.rhythm.days.length?profTmp.rhythm.days:[1,3,5])}:{mode:"n",n:+v};drawProfile()}
-function pfDay(d){const r=profTmp.rhythm;r.days=r.days||[];r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d].sort();drawProfile()}
-function closeProfile(){$("overlay").innerHTML="";profTmp=null}
 function saveProfile(){const p=profTmp;if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
   delete p.first;state.settings.profile=p;
   const t=profTargets(p),a=(state.settings.assume||[]).find(x=>x.id==="kcal");
   if(a){a.txt="Kalorien "+(t.kcal?f2(t.kcal).replace(",","")+" kcal":"Erhaltung")+" (Profil)";a.since=todayISO();a.due=addDays(todayISO(),28)}
   DELOAD_AFTER=ageOf(p)>=40?18:21;applyRhythm();saveJ("settings",state.settings);closeProfile();buildSchedule(true);render();toast("Profil gespeichert")}
+// ----- Einrichtung (geführt): Profil → Split → Plan Einheit für Einheit -----
+let wz=null;
+const LVL=l=>l<=3?"Einsteiger":l<=6?"Fortgeschritten":l<=9?"Sehr fortgeschritten":"Profi";
+function showProfile(first){const p=state.settings.profile||{};
+  wz={step:0,first:!!first,p:Object.assign({age:"",kg:lastKg()||"",level:first?5:8,goal:"aufbau",typ:"aufbau",rhythm:{mode:"n",n:2}},JSON.parse(JSON.stringify(p)))};
+  if(!wz.p.age&&p.birth)wz.p.age=ageOf(p);drawWz()}
+function wzGo(d){wz.step=Math.max(0,wz.step+d);drawWz()}
+function wzSet(k,v,next){wz.p[k]=v;if(next)wz.step++;drawWz()}
+function drawWz(){const p=wz.p,st=wz.step,N=6+(wz.ses?wz.ses.length:0);
+  const big=(opts,cur,fn)=>'<div class="wz-opts">'+opts.map(([v,l])=>'<button class="wz-o'+(cur===v?' on':'')+'" onclick="'+fn+'(\''+v+'\')">'+l+'</button>').join('')+'</div>';
+  let t="",b="",foot='<button class="btn wz-next" onclick="wzGo(1)">Weiter</button>';
+  if(st===0){t="Über dich";b='<div class="row" style="gap:10px"><label class="pf-f"><span>Alter</span><input inputmode="numeric" value="'+esc(p.age)+'" oninput="wz.p.age=num(this.value)||\'\';delete wz.p.birth"><i>J.</i></label><label class="pf-f"><span>Gewicht</span><input inputmode="decimal" value="'+esc(String(p.kg).replace(".",","))+'" oninput="wz.p.kg=num(this.value)"><i>kg</i></label></div>'}
+  else if(st===1){t="Trainingslevel";b='<div class="wz-lv"><b id="wzlv">'+p.level+'</b><span id="wzlt">'+LVL(p.level)+'</span></div><input type="range" min="1" max="10" value="'+p.level+'" oninput="wz.p.level=+this.value;$(\'wzlv\').textContent=this.value;$(\'wzlt\').textContent=LVL(+this.value)" style="width:100%;accent-color:var(--tx)">'}
+  else if(st===2){t="Ziel";b=big([["aufbau","Muskeln aufbauen"],["halten","Gewicht halten"],["abnehmen","Fett reduzieren"]],p.goal,"wzGoal");foot=""}
+  else if(st===3){t="Trainingsart";b=big(Object.keys(TPL).map(k=>[k,TPL[k].n]),p.typ,"wzTyp");foot=""}
+  else if(st===4){t="Rhythmus";const r=p.rhythm,cur=r.mode==="days"?"days":String(r.n);
+    b=big([["1","Jeden Tag"],["2","Alle 2 Tage"],["3","Alle 3 Tage"],["days","Feste Wochentage"]],cur,"wzRh");
+    if(r.mode==="days")b+='<div class="seg" style="margin-top:10px">'+[[1,"Mo"],[2,"Di"],[3,"Mi"],[4,"Do"],[5,"Fr"],[6,"Sa"],[0,"So"]].map(([d,l])=>'<button class="'+((r.days||[]).includes(d)?'on':'')+'" onclick="wzDay('+d+')">'+l+'</button>').join('')+'</div>';
+    else foot=""}
+  else if(st===5){t="Split";const rs=recSplit(p.rhythm);
+    b=big(["gk","ouk","ppl"].map(k=>[k,SPLIT_N[k]+(k===rs?' <em>Empfohlen</em>':'')]),wz.split||"",'wzSplit');
+    if(!wz.first&&state.logs.length)b+='<button class="wz-keep" onclick="wzFinish(false)">Aktuellen Plan behalten</button>';foot=""}
+  else{const i=st-6,s=wz.ses[i];t=s.name+' <span class="wz-cnt">'+(i+1)+' / '+wz.ses.length+'</span>';
+    b='<div class="wz-ex">'+s.ex.map((e,j)=>wz.edit?'<div class="wz-er"><span>'+esc(e.name)+'</span><input class="mono" value="'+e.sets+'" inputmode="numeric" oninput="wz.ses['+i+'].ex['+j+'].sets=num(this.value)||1"><i>×</i><input class="mono" value="'+esc(e.reps)+'" oninput="wz.ses['+i+'].ex['+j+'].reps=this.value"><button class="del" onclick="wz.ses['+i+'].ex.splice('+j+',1);drawWz()">✕</button></div>'
+      :'<div class="wz-er"><span class="pi s32">'+PICTO.svg(e.id,e.name)+'</span><span>'+esc(e.name)+'</span><b class="mono">'+e.sets+' × '+esc(e.reps)+'</b></div>').join('')+'</div>';
+    foot='<div class="row" style="gap:8px"><button class="btn wz-sec" onclick="wz.edit=!wz.edit;drawWz()">'+(wz.edit?'Fertig':'Bearbeiten')+'</button><button class="btn wz-next" style="flex:1" onclick="wzTake()">Übernehmen</button></div>'}
+  const dots='<div class="wz-dots">'+Array.from({length:N},(_,k)=>'<i class="'+(k<=st?'on':'')+'"></i>').join('')+'</div>';
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this&&!wz.first)closeProfile()"><div class="sheet pf wz"><div class="wz-top">'+(st>0?'<button class="wz-back" onclick="wz.edit=false;wzGo(-1)">‹</button>':'<span></span>')+dots+(wz.first?'<span></span>':'<button class="wz-back" onclick="closeProfile()">✕</button>')+'</div><b class="pf-t">'+t+'</b><div class="wz-b">'+b+'</div>'+foot+'</div></div>'}
+function wzGoal(v){wzSet("goal",v,true)}
+function wzTyp(v){wzSet("typ",v,true)}
+function wzRh(v){wz.p.rhythm=v==="days"?{mode:"days",days:(wz.p.rhythm.days&&wz.p.rhythm.days.length?wz.p.rhythm.days:[1,3,5])}:{mode:"n",n:+v};if(v!=="days")wz.step++;drawWz()}
+function wzDay(d){const r=wz.p.rhythm;r.days=r.days||[];r.days=r.days.includes(d)?r.days.filter(x=>x!==d):[...r.days,d].sort();drawWz()}
+function wzSplit(k){wz.split=k;wz.ses=tplSessions(wz.p.typ,k);wz.edit=false;wz.step=6;drawWz()}
+function wzTake(){wz.edit=false;if(wz.step-6<wz.ses.length-1){wz.step++;drawWz()}else wzFinish(true)}
+function wzFinish(withPlan){const p=wz.p,sp=wz.split,ses=wz.ses;if(p.rhythm.mode==="days"&&!(p.rhythm.days||[]).length){toast("Mindestens einen Wochentag wählen");return}
+  profTmp=p;saveProfile();
+  if(withPlan)createPlan(p.typ,sp,ses)}
+function closeProfile(){$("overlay").innerHTML="";profTmp=null;wz=null}
+
 // ----- Vorlagen -----
 const R3=(id,name,sets,reps,scheme,rest,x)=>Object.assign({id,name,sets,reps,scheme,start:"",rest},x||{});
 const TPL={
@@ -1660,12 +1685,13 @@ function tplSessions(key,split){const t=TPL[key],S=t.s.map(x=>({name:x[0],sub:x[
            {name:"Pull",sub:"Rücken/Bizeps",ex:fix(uniq(up.filter(e=>PULL.includes(grp(e)))).slice(0,6))},
            {name:"Beine",sub:"Beine/Bauch",ex:fix(uniq([S[0].ex[0],S[0].ex[1],S[2].ex[2],...S[0].ex.slice(2),...S[2].ex.slice(3)].filter(Boolean)).slice(0,6))}]}
   return S.map(x=>({name:x.name,sub:x.sub,ex:cp(x.ex)}))}
-function createFromTemplate(key,split){const t=TPL[key],id="tpl-"+key+"-"+uid();
+function createPlan(key,split,sesIn){const t=TPL[key],id="tpl-"+key+"-"+uid();
   const rules=(PLAN_V2.rules||[]).filter(r=>!/^(Rhythmus|Kalorien)/.test(r));
-  const ses=tplSessions(key,split).map((s,i)=>({id:id+"-s"+i,name:s.name,sub:s.sub,warmup:["5 min locker","2 Aufwärmsätze"],exercises:s.ex.map(e=>{e.ss=e.ss||undefined;return e})}));
+  const ses=(sesIn||tplSessions(key,split)).map((s,i)=>({id:id+"-s"+i,name:s.name,sub:s.sub,warmup:["5 min locker","2 Aufwärmsätze"],exercises:JSON.parse(JSON.stringify(s.ex))}));
   const np={id,name:{aufbau:"MA",kraft:"KR",power:"PB",ausdauer:"KA"}[key]+"-"+{gk:"GK",ouk:"OU",ppl:"PPL"}[split]+" · "+t.n+" "+SPLIT_N[split],createdAt:todayISO(),version:1,versions:[],rules,sessions:ses};
-  ses.forEach(s=>s.exercises.forEach(e=>{if(!state.library.some(x=>x.id===e.id)){state.library.push({id:e.id,name:e.name,reps:e.reps,scheme:e.scheme,start:"",note:e.note||""})}}));
-  saveJ("library",state.library);state.plans.push(np);saveJ("plans",state.plans);closeProfile();state.planList=false;activatePlan(np.id);toast("Plan „"+t.n+"“ angelegt und aktiviert")}
+  ses.forEach(s=>s.exercises.forEach(e=>{if(!state.library.some(x=>x.id===e.id))state.library.push({id:e.id,name:e.name,reps:e.reps,scheme:e.scheme,start:"",note:e.note||""})}));
+  saveJ("library",state.library);state.plans.push(np);saveJ("plans",state.plans);state.planList=false;activatePlan(np.id);toast("Plan übernommen")}
+function createFromTemplate(key,split){closeProfile();createPlan(key,split)}
 let tplSplit=null;
 function showTpl(){tplSplit=tplSplit||recSplit();drawTpl()}
 function drawTpl(){const rs=recSplit();
@@ -1735,7 +1761,7 @@ function vPlans(){
   let h='<div class="s-card" id="pcard"><div class="s-h" style="margin:0"><button class="p-sel" onclick="state.planList=!state.planList;render()">'+esc(ap.name.split(" · ")[0])+' <i>'+(state.planList?'▴':'▾')+'</i></button><span class="row" style="gap:6px"><button class="chip'+(state.libOpen?' on-r':'')+'" onclick="showLibSheet()">Übungen</button><button class="chip'+(state.rulesOpen?' on-r':'')+'" onclick="showRules()">Regeln</button><button class="chip" style="color:#e2e2e2" onclick="editPlan(\''+ap.id+'\')">✎ Bearbeiten</button></span></div>';
   if(state.planList){const ord=[ap].concat(sorted.filter(p=>p.id!==ap.id));const shown=state.planAll?ord:ord.slice(0,4);
     h+='<div style="margin-top:10px;border-top:1px solid var(--s2)">'+shown.map(pcard).join("")+'</div>'
-     +'<div class="row" style="gap:6px;margin-top:8px"><button class="chip" style="flex:1;padding:9px" onclick="showTpl()">+ Plan aus Vorlage</button><button class="chip" style="flex:1;padding:9px" onclick="showProfile()">Profil</button></div>'
+     +'<div class="row" style="gap:6px;margin-top:8px"><button class="chip" style="flex:1;padding:9px" onclick="showProfile();wz.step=3;drawWz()">+ Neuer Plan</button><button class="chip" style="flex:1;padding:9px" onclick="showProfile()">Profil</button></div>'
      +(sorted.length>4&&!state.planAll?'<button class="chip" style="width:100%;padding:8px;margin-top:6px;background:none" onclick="state.planAll=true;render()">+ '+(sorted.length-4)+' ältere Versionen</button>':'')
      +(showNewPlan?'<div class="row" style="margin-top:8px"><input type="text" id="npname" placeholder="Name des Plans"><button class="btn red" style="width:auto;padding:10px 14px" onclick="addPlan()">OK</button><button class="chip" onclick="showNewPlan=false;render()">✕</button></div>'
        :'<button class="chip" style="width:100%;padding:10px;margin-top:8px" onclick="showNewPlan=true;render();setTimeout(()=>$(\'npname\')&&$(\'npname\').focus(),50)">+ Neuen Plan anlegen</button>')}
