@@ -438,7 +438,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v249";
+const APP_VERSION="v250";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -457,7 +457,7 @@ const ASSUME_SEED=[
  {id:"re1",txt:"Krank 1 Tag ohne Fieber: kein Wiedereinstieg, normal trainieren · ab 2 Tagen RIR 2 im letzten Satz · ab 3 Tagen −10 %",why:"Festgelegt 01.11.",since:"2026-11-01",due:"2026-11-29"}];
 function lvPending(){const p=state.settings.profile;if(!p||!p.exp||p.levelManual)return null;const c=levelCalc(p),cur=num(p.level)||c;
   if(c===cur||p.lvDismiss===c)return null;return{id:"lvl",txt:"Trainingslevel "+cur+" → "+c,why:"aus Trainingszeit, Pausen und Kraftniveau",due:todayISO(),sys:true,c}}
-function asDue(){const l=lvPending();return (l?[l]:[]).concat((state.settings.assume||[]).filter(a=>a.due&&a.due<=todayISO()))}
+function asDue(){const l=lvPending(),c=crPending();return (c?[c]:[]).concat(l?[l]:[]).concat((state.settings.assume||[]).filter(a=>a.due&&a.due<=todayISO()))}
 function asRefresh(){if(document.querySelector("#overlay .sheet")&&state.rulesOpen)drawRules();else render()}
 function asOk(id){if(id==="lvl"){const p=state.settings.profile,c=levelCalc(p);p.level=c;delete p.lvDismiss;saveJ("settings",state.settings);toast("Trainingslevel "+c+" übernommen");asRefresh();return}const a=(state.settings.assume||[]).find(x=>x.id===id);if(!a)return;a.checked=todayISO();a.due=addDays(todayISO(),28);saveJ("settings",state.settings);toast("Gilt weiter — nächste Prüfung "+fmtD(a.due));asRefresh()}
 function asDel(id){if(id==="lvl"){const p=state.settings.profile;p.lvDismiss=levelCalc(p);saveJ("settings",state.settings);asRefresh();return}if(!setConfirmQ("ad:"+id))return;state.settings.assume=(state.settings.assume||[]).filter(x=>x.id!==id);saveJ("settings",state.settings);asRefresh()}
@@ -467,12 +467,54 @@ function setConfirmQ(k){if(state.confirmDel===k){state.confirmDel=null;return tr
 const AS_GRP=[["Übungen",["bank3","rud95","bfly","hack","sat12","dl","lr45","ss2"]],["Reha & Gesundheit",["face10","ellb","wrist","re1"]],["Training & Ernährung",["rir1","kcal"]]];
 function asGrp(a){const g=AS_GRP.find(x=>x[1].includes(a.id));return g?g[0]:(a.grp||"Sonstiges")}
 function asToggle(id){state.asOpen=state.asOpen===id?null:id;asRefresh()}
+// ===== Zyklus-Auswertung: nach jedem Zyklus (vor dem Deload) Entscheidungen für den nächsten Zyklus =====
+// Leistung je Übung im Zyklus (Ø der ersten 2 vs. letzten 2 Einheiten, erste 2 Arbeitssätze Last×(1+Wdh/30)) + Wochensätze je Muskel.
+// Regeln (Heuristik auf Basis Dosis-Wirkung Volumen / Übungsvariation): Muskel steigt → beibehalten · stagniert & < 10 Sätze → +1 Satz ·
+// stagniert & ≥ 10 Sätze → stagnierende Übung variieren · fällt deutlich & ≥ 16 Sätze → −1 Satz (Ermüdung)
+const fN=v=>String(Math.round(v*10)/10).replace(".",",");
+function cycleReview(){const cs=state.settings.cycleStart||"",ap=activePlan(),vol=(setsPerWeek(8)||{sets:{}}).sets;
+  const L=state.logs.filter(l=>!l.deload&&!l.reentry&&!l.altGym&&l.date>=cs).sort((a,b)=>a.date.localeCompare(b.date));
+  const ex={};ap.sessions.forEach(se=>se.exercises.forEach(e=>{if(/prehab|reha/i.test((e.scheme||"")+(e.note||"")))return;const m=MUSCLE_MAP[e.id];if(!m)return;
+    // objektiv: Ø der ersten 2 Arbeitssätze Last×(1+Wdh/30) – Zusatzsätze (Meso) verfälschen sonst; RIR-Schätzungen schwanken zu stark
+    const v=L.map(l=>l.entries.find(x=>x.exerciseId===e.id)).filter(Boolean).map(x=>{const s0=x.sets.filter(t=>num(t.w)>0&&num(t.r)>0),mw=Math.max(0,...s0.map(t=>num(t.w))),ss=s0.filter(t=>num(t.w)===mw).slice(0,2);return ss.length?ss.reduce((a,t)=>a+num(t.w)*(1+num(t.r)/30),0)/ss.length:0}).filter(x=>x>0);
+    let pct=null;if(v.length>=4){const a=(v[0]+v[1])/2,b=(v[v.length-2]+v[v.length-1])/2;pct=Math.round((b/a-1)*1000)/10}
+    ex[e.id]={id:e.id,name:e.name,g:m.p,sets:e.sets,n:v.length,pct,cls:pct==null?"?":pct>=2?"up":pct<=-2?"down":"flat"}}));
+  const G={};Object.values(ex).forEach(e=>(G[e.g]=G[e.g]||[]).push(e));
+  const items=Object.keys(G).map(g=>{const es=G[g],known=es.filter(e=>e.cls!=="?"),up=known.filter(e=>e.cls==="up").length,v=Math.round((vol[g]||0)*10)/10;
+    let act=null;
+    if(known.length<Math.ceil(es.length/2))act={type:"none",txt:"noch zu wenig Daten (mind. 4 Einheiten je Übung)"};
+    else if(up>=known.length/2)act={type:"keep",txt:"steigt → beibehalten"};
+    else if(known.some(e=>e.pct!=null&&e.pct<=-5)&&v>=16){const e=known.filter(x=>x.sets>2).sort((a,b)=>a.pct-b.pct)[0];act=e?{type:"sub",ex:e.id,txt:"Leistung fällt bei hohem Volumen → "+e.name+" −1 Satz"}:{type:"keep",txt:"beobachten"}}
+    else if(v<10){const e=es.filter(x=>x.sets<MAX_SETS_PER_EX).sort((a,b)=>a.sets-b.sets)[0];act=e?{type:"add",ex:e.id,txt:"stagniert bei "+fN(v)+" Sätzen/Woche → "+e.name+" +1 Satz"}:{type:"keep",txt:"stagniert, Übungen schon bei "+MAX_SETS_PER_EX+" Sätzen → Übung ergänzen prüfen"}}
+    else{const e=known.filter(x=>x.cls!=="up").sort((a,b)=>a.pct-b.pct)[0];act={type:"swap",ex:e.id,txt:"stagniert trotz "+fN(v)+" Sätzen/Woche → "+e.name+" variieren (andere Übung/Griff/Wdh-Bereich)"}}
+    return{g,v,es,act}}).sort((a,b)=>MUSCLE_ORDER.indexOf(a.g)-MUSCLE_ORDER.indexOf(b.g));
+  return{cs,n:L.length,items}}
+function crPending(){if(!state.settings.profile&&!state.logs.length)return null;const cs=state.settings.cycleStart||"";
+  if(sessionsSinceCycle()<8||state.settings.cycRev===cs||!deloadDueNow())return null;
+  return{id:"cyc",txt:"Zyklus-Auswertung bereit",why:"Entscheidungen für den nächsten Zyklus",due:todayISO(),sys:true,cyc:true}}
+function showCycleReview(){const r=cycleReview(),D=state.cycAct||(state.cycAct={}),fin=crPending();
+  const icon=c=>c==="up"?'<span style="color:var(--grn)">▲</span>':c==="down"?'<span style="color:var(--red)">▼</span>':c==="flat"?'<span style="color:var(--mut)">■</span>':'<span style="color:var(--s3)">·</span>';
+  const b=r.items.map(it=>{const a=it.act,done=D[it.g];
+    return '<div class="pv-g"><div class="pv-h" style="display:flex;justify-content:space-between"><span>'+esc(it.g)+'</span><span>'+fN(it.v)+' Sätze/Wo</span></div>'
+     +it.es.map(e=>'<div class="pv-r" style="padding:6px 0"><span>'+icon(e.cls)+' '+esc(e.name)+'</span><b>'+(e.pct==null?'–':(e.pct>0?'+':'')+fN(e.pct)+' %')+'</b></div>').join('')
+     +'<div class="tiny" style="padding:8px 0 10px;line-height:1.45">'+esc(a.txt)+'</div>'
+     +(fin&&(a.type==="add"||a.type==="sub"||a.type==="swap")?'<div class="row" style="gap:8px;padding-bottom:10px">'+(done?'<span class="tiny">'+(done==="ok"?"✓ übernommen":"✕ verworfen")+'</span>'
+       :'<button class="chip as-p" onclick="cycApply(\''+it.g+'\')">✓ übernehmen</button><button class="chip" onclick="state.cycAct[\''+it.g+'\']=\'no\';showCycleReview()">✕ verwerfen</button>')+'</div>':'')+'</div>'}).join('');
+  $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)closeSub()"><div class="sheet pf"><div class="wz-top"><span></span><b class="pf-t" style="margin:0">Zyklus-Auswertung</b><button class="wz-back" onclick="closeSub()">✕</button></div>'
+   +'<p class="tiny" style="text-align:center;margin:-4px 0 12px">seit '+fmtD(r.cs)+' · '+r.n+' Einheiten · ▲ steigt ■ gleich ▼ fällt'+(fin?'':'<br>Zwischenstand – entschieden wird am Zyklusende')+'</p><div class="wz-b">'+b+'</div>'
+   +(fin?'<button class="btn wz-next" style="width:100%;margin-top:12px" onclick="cycDone()">Auswertung abschließen</button>':'')+'</div></div>'}
+function cycApply(g){const it=cycleReview().items.find(x=>x.g===g);if(!it)return;const a=it.act,ap=activePlan();
+  if(a.type==="swap"){state.cycAct[g]="ok";state.settings.cycSwap=(state.settings.cycSwap||[]).concat(a.ex);saveJ("settings",state.settings);closeSub();editPlan(ap.id);toast("Übung im Plan tauschen");return}
+  ap.sessions.forEach(se=>se.exercises.forEach(e=>{if(e.id===a.ex)e.sets=Math.max(2,Math.min(MAX_SETS_PER_EX,e.sets+(a.type==="add"?1:-1)))}));
+  saveJ("plans",state.plans);state.cycAct[g]="ok";toast(a.type==="add"?"+1 Satz übernommen":"−1 Satz übernommen");showCycleReview()}
+function cycDone(){state.settings.cycRev=state.settings.cycleStart||"";saveJ("settings",state.settings);state.cycAct={};closeSub();toast("Zyklus-Auswertung abgeschlossen");render()}
 function asRow(a,forceOpen){const due=a.due<=todayISO(),open=forceOpen||due||state.asOpen===a.id||state.asEdit===a.id;
   const days=Math.round((new Date(a.due)-new Date(todayISO()))/864e5);
   return '<div class="as-row'+(due?' due':'')+'"><div class="as-top" onclick="asToggle(\''+a.id+'\')"><span class="as-dot"></span><div class="as-tx">'
    +(state.asEdit===a.id?'<input id="as-'+a.id+'" type="text" value="'+esc(a.txt)+'" onclick="event.stopPropagation()">':'<b>'+esc(a.txt)+'</b>')
    +'<span>'+esc(a.why||"")+(a.since?' · seit '+fmtD(a.since):'')+(a.checked?' · geprüft '+fmtD(a.checked):'')+'</span></div><span class="as-pill">'+(due?'fällig':'in '+days+' T')+'</span></div>'
    +(open?'<div class="as-act">'+(state.asEdit===a.id?'<button class="chip as-p" onclick="asSave(\''+a.id+'\')">Speichern</button><button class="chip" onclick="asEdit(\''+a.id+'\')">Abbrechen</button>'
+   :a.cyc?'<button class="chip as-p" onclick="showCycleReview()">Auswertung ansehen</button>'
    :a.sys?'<button class="chip as-p" onclick="asOk(\''+a.id+'\')">✓ übernehmen</button><button class="chip" onclick="asDel(\''+a.id+'\')">✕ behalten</button>'
    :'<button class="chip as-p" onclick="asOk(\''+a.id+'\')">✓ gilt weiter</button><button class="chip" onclick="asEdit(\''+a.id+'\')">✎ ändern</button><button class="chip'+(state.confirmDel==="ad:"+a.id?" sure":"")+'" onclick="asDel(\''+a.id+'\')">'+(state.confirmDel==="ad:"+a.id?"Wirklich?":"✕ streichen")+'</button>')+'</div>':'')+'</div>'}
 function asDueBox(){const ad=asDue();return ad.length?'<div class="as-box"><div class="as-cap" style="color:var(--amb)">JETZT PRÜFEN · '+ad.length+'</div>'+ad.map(a=>asRow(a,true)).join("")+'</div>':''}
@@ -616,6 +658,7 @@ function boot(){
   state.settings.pf1115=true;
   if(state.settings.pfConfirm){delete state.settings.pfConfirm;saveJ("settings",state.settings);setTimeout(()=>showProfile(),1500)}
   if(!state.settings.pr1121){state.plans.forEach(p=>{p.rules=(p.rules||[]).map(r=>/^Progression/.test(r)?"Progression (fortgeschritten): steigern, wenn Summe Wdh ≥ Sätze × oberer Rand, kein Satz unter dem unteren Rand, RIR max. 1 unter Ziel · Sprung >7,5 % erst bei Summe +2 Wdh je Satz · senken nur nach 2 Einheiten unter dem Bereich und gesunkener Leistung (1 Stufe) · Schritt 2,5 % Grund-/5 % Isoübung":r)});saveJ("plans",state.plans);state.settings.pr1121=true;saveJ("settings",state.settings)}
+  if(!state.settings.elb1121){(state.plans||[]).forEach(pl=>(pl.sessions||[]).forEach(se=>(se.exercises||[]).forEach(e=>{if(e.note&&/Ellenbogen beschwerdefrei/.test(e.note))e.note=e.note.replace(/\s*·?\s*Gewicht halten bis Ellenbogen beschwerdefrei\s*·?\s*/," · ").replace(/^\s*·\s*|\s*·\s*$/g,"").trim()})));saveJ("plans",state.plans);state.settings.elb1121=true;saveJ("settings",state.settings)}
   // Einmalig 21.11.: Summen-Regel ersetzt „Satz 1 bei 12 beenden“ (Annahme + Notizen entfernen)
   if(!state.settings.sum1121){state.settings.assume=(state.settings.assume||[]).filter(a=>a.id!=="sat12");
     (state.plans||[]).forEach(pl=>(pl.sessions||[]).forEach(se=>(se.exercises||[]).forEach(e=>{if(e.note)e.note=e.note.replace(/\s*·?\s*Satz 1 bei 12 (Wdh )?beenden(, nicht weiter)?\s*·?\s*/g," · ").replace(/^\s*·\s*|\s*·\s*$/g,"").trim()})));
@@ -1475,6 +1518,7 @@ function drawRules(){const ap=activePlan();
   $("overlay").innerHTML='<div class="sheet-bg" onclick="if(event.target===this)this.remove()"><div class="sheet"><div class="s-h"><b style="font-size:17px">Regeln · '+esc(ap.name.split(" ·")[0])+'</b><button class="c-x" onclick="closeSub()">✕</button></div>'
    +'<p class="tiny" style="margin:2px 0 8px;line-height:1.5">'+esc(ap.name.split(" · ").slice(1).join(" · "))+(ap.name.includes(" · ")?' · ':'')+'aktiv seit '+fmtD(ap.createdAt)+' · '+ap.sessions.length+' Einheiten</p>'
    +asList()
+   +(sessionsSinceCycle()>=4?'<button class="chip" style="margin-top:10px;width:100%" onclick="showCycleReview()">Zyklus-Auswertung · Zwischenstand ('+sessionsSinceCycle()+' Einheiten)</button>':'')
    +'<div class="s-h" style="margin-top:14px"><b>Regeln</b></div>'
    +ap.rules.map(r=>{if(state.settings.profile){if(/^Kalorien/.test(r))r=profRule();else if(/^Rhythmus/.test(r)){const R=rhy(),W=["So","Mo","Di","Mi","Do","Fr","Sa"];r="Rhythmus: "+(R.mode==="days"?R.days.map(d=>W[d]).join(", "):"alle "+R.n+" Tage")+" | "+ap.sessions.map(x=>x.name).join(" → ")}}return '<p class="r-li">'+esc(r)+'</p>'}).join("")
 
