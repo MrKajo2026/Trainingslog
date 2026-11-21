@@ -439,7 +439,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v247";
+const APP_VERSION="v248";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -473,7 +473,7 @@ function asList(){const all=state.settings.assume||[],nx=all.filter(a=>a.due>tod
 const fmtD=iso=>{try{return new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}catch(e){return iso}};
 const e1rm=(w0,r0,rir)=>{const w=num(w0),r=num(r0); // Epley mit RIR-Korrektur; nur im validen Bereich
   const eff=r+(rir==null?0:Math.min(rir,4));
-  if(!(w>0)||!(r>0)||eff<3||eff>12)return 0;
+  if(!(w>0)||!(r>0)||eff<3||eff>15)return 0;   // bis 15: deckt 8–12 Wdh mit RIR 2–3 ab (Epley wird darüber ungenau)
   return Math.round(w*(1+eff/30)*10)/10;};
 const volLoad=sets=>sets.reduce((a,x)=>Math.max(a,num(x.w)*num(x.r)),0); // bester Satz, satzzahl-unabhängig
 // Kennzahl je Übung: e1RM wenn im validen Bereich, sonst Last×Wdh
@@ -604,6 +604,7 @@ function boot(){
   if(!state.settings.pf1115&&!state.settings.profile&&state.logs.length>20){state.settings.profile={age:"",kg:lastKg()||"",level:8,goal:"aufbau",rhythm:{mode:"n",n:2}};state.settings.pfConfirm=true}
   state.settings.pf1115=true;
   if(state.settings.pfConfirm){delete state.settings.pfConfirm;saveJ("settings",state.settings);setTimeout(()=>showProfile(),1500)}
+  if(!state.settings.pr1121){state.plans.forEach(p=>{p.rules=(p.rules||[]).map(r=>/^Progression/.test(r)?"Progression (fortgeschritten): steigern, wenn Summe Wdh ≥ Sätze × oberer Rand, kein Satz unter dem unteren Rand, RIR max. 1 unter Ziel · Sprung >7,5 % erst bei Summe +2 Wdh je Satz · senken nur nach 2 Einheiten unter dem Bereich und gesunkener Leistung (1 Stufe) · Schritt 2,5 % Grund-/5 % Isoübung":r)});saveJ("plans",state.plans);state.settings.pr1121=true;saveJ("settings",state.settings)}
   // Einmalig 21.11.: Summen-Regel ersetzt „Satz 1 bei 12 beenden“ (Annahme + Notizen entfernen)
   if(!state.settings.sum1121){state.settings.assume=(state.settings.assume||[]).filter(a=>a.id!=="sat12");
     (state.plans||[]).forEach(pl=>(pl.sessions||[]).forEach(se=>(se.exercises||[]).forEach(e=>{if(e.note)e.note=e.note.replace(/\s*·?\s*Satz 1 bei 12 (Wdh )?beenden(, nicht weiter)?\s*·?\s*/g," · ").replace(/^\s*·\s*|\s*·\s*$/g,"").trim()})));
@@ -711,23 +712,26 @@ function performanceDrop(){
 const absSoon=()=>{const a=(state.settings.absences||[]).map(x=>x).sort((p,q)=>p.from.localeCompare(q.from));
   const t=todayISO();return a.find(x=>x.to>=t&&(new Date(x.from)-new Date(t))/864e5<=10)||null};
 const inAbsence=()=>{const t=todayISO();return (state.settings.absences||[]).find(x=>x.from<=t&&x.to>=t)||null};
+function rirTargets(sc){sc=sc||"";if(/^\s*\d(\s*\/\s*\d)+/.test(sc))return sc.split("/").map(x=>parseInt(x));const m=sc.match(/RIR\s*(\d)/i);return m?[+m[1]]:null}
 function stagnationFor(exId){
-  const pts=state.logs.filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>a.date.localeCompare(b.date))
+  // Aktueller Zyklus + 2 Einheiten davor als Referenz – ältere Pläne/Bestwerte verfälschen sonst
+  const from=state.settings.cycleStart||"";
+  const all=state.logs.filter(l=>!l.deload&&!l.reentry&&!l.altGym&&l.entries.some(x=>x.exerciseId===exId)).sort((a,b)=>a.date.localeCompare(b.date));
+  const pre=all.filter(l=>l.date<from).slice(-2);   // Referenz: die 2 Einheiten vor dem Zyklus (vor dem Deload)
+  const pts=pre.concat(all.filter(l=>l.date>=from))
     .map(l=>{const e=l.entries.find(x=>x.exerciseId===exId);if(!e)return null;
-      const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r)),0);return b>0?{v:b,date:l.date,rir:e.sets.map(s=>s.rir)}:null}).filter(Boolean);
-  if(pts.length<(ADV()?5:3))return null;
-  const last3=pts.slice(ADV()?-4:-3);   // Fortgeschritten: Stillstand erst über 4 Einheiten werten
-  const best=Math.max(...pts.slice(0,-last3.length).map(p=>p.v),last3[0].v);
-  const noGain=last3.every(p=>p.v<=best*1.005);
-  if(!noGain)return null;
-  const n=pts.length-pts.findIndex(p=>p.v>=best*0.995);
-  const allOut=last3.every(p=>p.rir.some(r=>r===0));
-  if(pts.length>=7&&last3.every((p,i)=>i===0||p.v<=last3[i-1].v*1.001)&&allOut)
-    return{lvl:2,txt:"Stagnation über "+last3.length+" Einheiten trotz RIR0 → Übungs-Deload empfohlen: −10% für 1 Einheit, dann neu aufbauen",w:null};
-  return{lvl:1,txt:"Kein Zuwachs über "+last3.length+" Einheiten → Gewicht halten, Wdh im Zielbereich ausreizen (Technik/Tempo sauber)",w:null};
+      const b=e.sets.reduce((a,s)=>Math.max(a,e1rm(s.w,s.r,s.rir)),0);const tg=rirTargets(e.planScheme||e.scheme);
+      const under=e.sets.some((s,i)=>tg&&s.rir!=null&&s.rir!==""&&num(s.rir)<tg[Math.min(i,tg.length-1)]);   // härter als vorgesehen
+      return b>0?{v:b,date:l.date,under}:null}).filter(Boolean);
+  const n=ADV()?4:3;if(pts.length<n+1)return null;
+  const last=pts.slice(-n),best=Math.max(...pts.slice(0,-n).map(p=>p.v));
+  if(!last.every(p=>p.v<=best*1.005))return null;
+  if(last.every(p=>p.under))
+    return{lvl:2,txt:"Kein Zuwachs über "+n+" Einheiten, obwohl härter als vorgesehen trainiert → Übungs-Deload: −10 % für 1 Einheit, dann neu aufbauen",w:null};
+  return{lvl:1,txt:"Kein Zuwachs über "+n+" Einheiten → Gewicht halten, Wdh im Zielbereich ausreizen (Technik/Tempo sauber)",w:null};
 }
 // Doppelte Progression (Wdh-Bereich lo–hi):
-//  · Steigern erst, wenn ALLE Sätze am oberen Rand sind. Ist der nächste Schritt > 7,5 % (kleine Gewichte, KH-Sprünge), vorher hi+2 Wdh.
+//  · Steigern, wenn Summe Wdh ≥ Sätze × oberer Rand, kein Satz < unterer Rand, RIR max. 1 unter Ziel. Schritt > 7,5 % → Ziel hi+2.
 //  · Nach einer Steigerung fallen die Wdh normal ab → halten, solange die Leistung (e1RM) hält; außer klar zu schwer (Mehrheit < lo−2).
 //  · Senken nur, wenn 2 Einheiten in Folge unter dem Bereich UND die Leistung jeweils ≥3 % gesunken ist, und nur um 1 Stufe (fortgeschrittenes Niveau).
 function exHist(id,n){const out=[];[...state.logs].filter(l=>!l.deload&&!l.reentry&&!l.altGym).sort((a,b)=>b.date.localeCompare(a.date)).some(l=>{const e=l.entries.find(x=>x.exerciseId===id);
@@ -2636,7 +2640,7 @@ function mesoState(){
     base={};
     activePlan().sessions.forEach(se=>se.exercises.forEach(ex=>{const m=MUSCLE_MAP[ex.id];if(!m)return;
       base[m.p]=(base[m.p]||0)+ex.sets;(m.s||[]).forEach(g=>base[g]=(base[g]||0)+ex.sets*0.5)}));
-    Object.keys(base).forEach(k=>base[k]=Math.round(base[k]*7/8*10)/10);
+    {const f=perWeek()/Math.max(1,activePlan().sessions.length);Object.keys(base).forEach(k=>base[k]=Math.round(base[k]*f*10)/10)}   // Plan-Sätze je Durchlauf → pro Woche
     st.base=base;state.settings.meso=st;saveJ("settings",state.settings);
   }
   const stop=sessionsSinceCycle()>=4&&(performanceDrop()>0||recoverySignals()>0);
@@ -2994,7 +2998,8 @@ function recoverySignals(){
   const cut=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
   const from=[state.settings.cycleStart||"",cut].sort().pop();      // späteres Datum gewinnt
   const r=[...state.logs].filter(l=>!l.deload&&l.date>=from).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const bad=r.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht")).length;
+  const SL={};(state.sleep||[]).forEach(x=>{if(x.h!=null&&x.h!=="")SL[x.date]=num(x.h)});   // Schlaf der Nacht vor dem Training (Kalender)
+  const bad=r.filter(l=>(l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht"))||(SL[l.date]!=null&&SL[l.date]<6)).length;
   return r.length>=3&&bad>=2?bad:0;
 }
 // Zyklusstart reparieren: nur Deload, lange Pause oder manueller Neustart dürfen ihn setzen (Planwechsel nicht)
