@@ -439,7 +439,7 @@ function stepFor(w,iso){
   return Math.max(inc,Math.round(w*pct/inc)*inc);
 }
 // ================= Helpers =================
-const APP_VERSION="v248";
+const APP_VERSION="v249";
 const uid=()=>Math.random().toString(36).slice(2,10);
 const todayISO=()=>new Date().toISOString().slice(0,10);
 // Annahmen mit Begründung und Prüftermin (fällige erscheinen im Logger + Startseite)
@@ -2998,8 +2998,9 @@ function recoverySignals(){
   const cut=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
   const from=[state.settings.cycleStart||"",cut].sort().pop();      // späteres Datum gewinnt
   const r=[...state.logs].filter(l=>!l.deload&&l.date>=from).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const SL={};(state.sleep||[]).forEach(x=>{if(x.h!=null&&x.h!=="")SL[x.date]=num(x.h)});   // Schlaf der Nacht vor dem Training (Kalender)
-  const bad=r.filter(l=>(l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach"||l.checkin.schlaf==="schlecht"))||(SL[l.date]!=null&&SL[l.date]<6)).length;
+  // Schlaf löst bewusst keinen Deload aus (chronisch kurz durch Arbeitszeit, Deload ändert daran nichts) –
+  // wirkt er sich aus, zeigt das der Leistungsabfall (performanceDrop)
+  const bad=r.filter(l=>l.checkin&&((l.checkin.befinden!=null&&l.checkin.befinden<=4)||l.checkin.gefuehl==="schwach")).length;
   return r.length>=3&&bad>=2?bad:0;
 }
 // Zyklusstart reparieren: nur Deload, lange Pause oder manueller Neustart dürfen ihn setzen (Planwechsel nicht)
